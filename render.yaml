@@ -2,7 +2,7 @@ services:
   - type: web
     name: djplatform-api
     runtime: node
-    buildCommand: npm ci && npm run build --workspace=shared && npm run build --workspace=server
+    buildCommand: npm ci --include=dev && npm run build --workspace=shared && npm run build --workspace=server
     startCommand: node server/dist/index.js
     healthCheckPath: /api/health
     envVars:
