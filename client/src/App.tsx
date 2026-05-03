@@ -1,0 +1,60 @@
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { Header } from './components/ui/Header.js'
+import { RequireAuth } from './components/auth/RequireAuth.js'
+import Landing from './pages/Landing.js'
+import Login from './pages/Login.js'
+import Register from './pages/Register.js'
+import Me from './pages/Me.js'
+import NotFound from './pages/NotFound.js'
+import ProfileSetup from './pages/ProfileSetup.js'
+import ProfileEdit from './pages/ProfileEdit.js'
+import PublicProfile from './pages/PublicProfile.js'
+import EventsFeed from './pages/EventsFeed.js'
+import EventNew from './pages/EventNew.js'
+import EventDetail from './pages/EventDetail.js'
+import Profiles from './pages/Profiles.js'
+import AdminLayout from './pages/admin/AdminLayout.js'
+import AdminDashboard from './pages/admin/AdminDashboard.js'
+import AdminProfiles from './pages/admin/AdminProfiles.js'
+import AdminEvents from './pages/admin/AdminEvents.js'
+import AdminUsers from './pages/admin/AdminUsers.js'
+import ChangePassword from './pages/ChangePassword.js'
+
+const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
+
+export default function App() {
+  const { pathname } = useLocation()
+  const showHeader = !HIDE_HEADER_PATHS.includes(pathname)
+
+  return (
+    <>
+      {showHeader && <Header />}
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/auth/login" element={<Login />} />
+        <Route path="/auth/register" element={<Register />} />
+        <Route path="/profiles" element={<Profiles />} />
+        <Route path="/p/:id" element={<PublicProfile />} />
+        <Route path="/events" element={<EventsFeed />} />
+        <Route path="/events/:id" element={<EventDetail />} />
+
+        <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
+        <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
+        <Route path="/profile/edit" element={<RequireAuth><ProfileEdit /></RequireAuth>} />
+        <Route path="/events/new" element={<RequireAuth><EventNew /></RequireAuth>} />
+
+        <Route
+          path="/admin"
+          element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="profiles" element={<AdminProfiles />} />
+          <Route path="events" element={<AdminEvents />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  )
+}

@@ -1,0 +1,31 @@
+export const INITIAL_GENRES = [
+  'Techno',
+  'House',
+  'Minimal',
+  'Afro House',
+  'Deep House',
+  'Melodic Techno',
+  'Trance',
+  'Drum & Bass',
+  'Ambient',
+  'Electronica',
+  'Progressive',
+  'Tech House',
+  'Organic House',
+  'Nu Disco',
+  'Industrial',
+  'Otro',
+] as const
+
+export const INITIAL_EVENT_TYPES = [
+  'Boliche',
+  'Fiesta privada',
+  'Festival',
+  'Casamiento',
+  'Cumpleanos',
+  'Corporativo',
+  'After',
+  'Cumple de 15',
+  'Fiesta de empresa',
+  'Otro',
+] as const

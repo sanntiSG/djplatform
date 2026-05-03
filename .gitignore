@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.cache/
+.turbo/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+# Allow example files
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE & tools
+.vscode/settings.json
+.idea/
+.claude/
+
+# Coverage
+coverage/

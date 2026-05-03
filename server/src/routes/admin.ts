@@ -1,0 +1,28 @@
+import { Router } from 'express'
+import { requireAuth } from '../middleware/requireAuth.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
+import {
+  stats,
+  listProfiles,
+  setProfileVisibility,
+  deleteProfile,
+  listEvents,
+  setEventVisibility,
+  deleteEvent,
+  listUsers,
+} from '../controllers/adminController.js'
+
+const router = Router()
+
+router.use(requireAuth, requireAdmin)
+
+router.get('/stats', stats)
+router.get('/profiles', listProfiles)
+router.patch('/profiles/:id/visibility', setProfileVisibility)
+router.delete('/profiles/:id', deleteProfile)
+router.get('/events', listEvents)
+router.patch('/events/:id/visibility', setEventVisibility)
+router.delete('/events/:id', deleteEvent)
+router.get('/users', listUsers)
+
+export default router
