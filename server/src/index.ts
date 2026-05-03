@@ -13,7 +13,12 @@ import { logger } from './utils/logger.js'
 const app = express()
 
 app.set('trust proxy', 1)
-app.use(helmet())
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginEmbedderPolicy: false,
+  }),
+)
 app.use(compression())
 const allowedOrigins = env.CLIENT_URL.split(',').map(o => o.trim())
 
