@@ -1,6 +1,6 @@
 [build]
   base    = "."
-  command = "npm ci && npm run build --workspace=shared && npm run build --workspace=client"
+  command = "npm ci --include=dev && npm run build --workspace=shared && npm run build --workspace=client"
   publish = "client/dist"
 
 [build.environment]
