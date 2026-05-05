@@ -12,6 +12,8 @@ export type {
   CreateProfileInput,
   UpdateProfileInput,
   ProfileResponse,
+  ProfileSocial,
+  ProfileComment,
   CreateEventInput,
   UpdateEventInput,
   EventResponse,

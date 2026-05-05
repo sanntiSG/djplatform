@@ -4,19 +4,28 @@ import { ProfileForm } from '../components/profile/ProfileForm.js'
 import { AvatarUploader } from '../components/profile/AvatarUploader.js'
 import { CoverUploader } from '../components/profile/CoverUploader.js'
 import { ThemeSelector } from '../components/profile/ThemeSelector.js'
+import { ProfilePhotoGrid } from '../components/profile/ProfilePhotoGrid.js'
 import { MediaInput } from '../components/media/MediaInput.js'
 import { MediaList } from '../components/media/MediaList.js'
 import { Button } from '../components/ui/Button.js'
 import { Tabs } from '../components/ui/Tabs.js'
 import { profilePath } from '../utils/slug.js'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { uploadImage } from '../services/uploadService.js'
 import type { CreateProfileInput, MediaItem, ProfileTheme } from '../types/index.js'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
+  { id: 'fotos', label: 'Fotos' },
   { id: 'visual', label: 'Visual' },
   { id: 'media', label: 'Musica y Videos' },
 ]
+
+const TYPE_LABEL: Record<string, string> = {
+  dj: 'DJ',
+  producer: 'Productor',
+  other: 'Artista',
+}
 
 export default function ProfileEdit() {
   const navigate = useNavigate()
@@ -27,7 +36,11 @@ export default function ProfileEdit() {
   const [localTheme, setLocalTheme] = useState<ProfileTheme>('minimal')
   const [localAccent, setLocalAccent] = useState('')
   const [localCover, setLocalCover] = useState<string | undefined>(undefined)
+  const [localPhotos, setLocalPhotos] = useState<string[]>([])
   const [visualSaved, setVisualSaved] = useState(false)
+  const [photosSaved, setPhotosSaved] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (profile) {
@@ -35,6 +48,7 @@ export default function ProfileEdit() {
       setLocalTheme((profile.theme as ProfileTheme) ?? 'minimal')
       setLocalAccent(profile.accentColor ?? '')
       setLocalCover(profile.coverImage)
+      setLocalPhotos(profile.photos ?? [])
     }
   }, [profile])
 
@@ -52,8 +66,8 @@ export default function ProfileEdit() {
   }
 
   async function handleInfoSubmit(data: CreateProfileInput) {
-    await update(data)
-    navigate(profilePath(profile!.slug, profile!.id))
+    const updated = await update(data)
+    navigate(profilePath(updated.slug, updated.id))
   }
 
   async function handleAvatarUploaded(url: string) {
@@ -78,6 +92,29 @@ export default function ProfileEdit() {
     await update({ media: mediaItems })
   }
 
+  async function handleSavePhotos() {
+    await update({ photos: localPhotos })
+    setPhotosSaved(true)
+    setTimeout(() => setPhotosSaved(false), 2000)
+  }
+
+  async function handleAddPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingPhoto(true)
+    try {
+      const url = await uploadImage(file, 'dj/profile-photos')
+      setLocalPhotos((prev) => [...prev, url])
+    } finally {
+      setUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
+
+  function handleRemovePhoto(index: number) {
+    setLocalPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
   function handleAddMedia(item: MediaItem) {
     setMediaItems((prev) => [...prev, item])
   }
@@ -89,15 +126,33 @@ export default function ProfileEdit() {
   return (
     <div className="min-h-screen bg-[var(--bg)] px-6 py-24">
       <div className="max-w-xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1
-              className="font-display font-semibold text-[var(--text)]"
-              style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
-            >
-              Editar perfil
-            </h1>
-            <p className="font-sans text-sm text-[var(--text-muted)] mt-1">{profile.artistName}</p>
+
+        {/* Live profile preview strip */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] mb-6"
+          style={{ background: 'var(--surface-elevated)' }}
+        >
+          {profile.avatar ? (
+            <img
+              src={profile.avatar}
+              alt={profile.artistName}
+              className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-[var(--surface)] flex items-center justify-center flex-shrink-0">
+              <span className="font-display font-semibold text-base text-[var(--text-muted)]">
+                {profile.artistName.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-semibold text-[var(--text)] text-sm leading-tight truncate">
+              {profile.artistName}
+            </p>
+            <p className="font-sans text-xs text-[var(--text-muted)] mt-0.5 truncate">
+              {TYPE_LABEL[profile.type] ?? profile.type}
+              {profile.location ? ` · ${profile.location}` : ''}
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -106,6 +161,15 @@ export default function ProfileEdit() {
           >
             Ver perfil
           </Button>
+        </div>
+
+        <div className="flex items-center justify-between mb-8">
+          <h1
+            className="font-display font-semibold text-[var(--text)]"
+            style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
+          >
+            Editar perfil
+          </h1>
         </div>
 
         <Tabs tabs={TABS} active={tab} onChange={setTab} className="mb-8" />
@@ -132,6 +196,65 @@ export default function ProfileEdit() {
               onSubmit={handleInfoSubmit}
               submitLabel="Guardar cambios"
             />
+          </div>
+        )}
+
+        {/* ─── FOTOS ─── */}
+        {tab === 'fotos' && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Fotos del perfil
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)]">
+                Agrega fotos para decorar tu perfil. Max 30 fotos · JPG, PNG o WebP · Max 5 MB c/u
+              </p>
+            </div>
+
+            {/* Photo grid preview */}
+            {localPhotos.length > 0 && (
+              <ProfilePhotoGrid
+                photos={localPhotos}
+                editable
+                onRemove={handleRemovePhoto}
+              />
+            )}
+
+            {/* Add photo button */}
+            {localPhotos.length < 30 && (
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)]/50 transition-colors duration-150 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-50"
+              >
+                {uploadingPhoto ? (
+                  <span className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span>+ Agregar foto</span>
+                )}
+              </button>
+            )}
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAddPhoto}
+              className="hidden"
+            />
+
+            {localPhotos.length > 0 && (
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                loading={isPending}
+                onClick={handleSavePhotos}
+              >
+                {photosSaved ? 'Guardado' : 'Guardar fotos'}
+              </Button>
+            )}
           </div>
         )}
 

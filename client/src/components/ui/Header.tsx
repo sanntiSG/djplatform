@@ -26,6 +26,13 @@ export function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
+          <NavLink to="/feed">
+            {({ isActive }) => (
+              <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
+                Inicio
+              </Button>
+            )}
+          </NavLink>
           <NavLink to="/profiles">
             {({ isActive }) => (
               <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
@@ -98,6 +105,12 @@ export function Header() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-[var(--border)] bg-[var(--surface)] px-6 py-4 flex flex-col gap-1">
+          <Link
+            to="/feed"
+            className="py-3 font-sans text-sm text-[var(--text)] border-b border-[var(--border)]"
+          >
+            Inicio
+          </Link>
           <Link
             to="/profiles"
             className="py-3 font-sans text-sm text-[var(--text)] border-b border-[var(--border)]"

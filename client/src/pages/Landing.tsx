@@ -192,6 +192,17 @@ export default function Landing() {
               </Button>
             </Link>
           </div>
+
+          <Link
+            to="/feed"
+            className="hero-cta font-sans text-sm text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors duration-200 flex items-center gap-1.5 mt-1"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Ir a la pagina principal
+          </Link>
         </div>
 
         {/* Bottom hero image strip */}

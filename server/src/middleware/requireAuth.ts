@@ -8,6 +8,7 @@ declare global {
       user?: {
         id: string
         role: 'user' | 'admin'
+        email: string
       }
     }
   }
@@ -28,7 +29,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       res.status(401).json({ error: 'Usuario no encontrado' })
       return
     }
-    req.user = { id: user._id.toString(), role: user.role }
+    req.user = { id: user._id.toString(), role: user.role, email: user.email }
     next()
   } catch {
     res.status(401).json({ error: 'Token invalido' })

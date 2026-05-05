@@ -13,7 +13,7 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
     const payload = verifyToken(token)
     const user = await findUserById(payload.sub)
     if (user) {
-      req.user = { id: user._id.toString(), role: user.role }
+      req.user = { id: user._id.toString(), role: user.role, email: user.email }
     }
   } catch {
     // token invalid — proceed as anonymous

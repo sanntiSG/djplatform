@@ -19,6 +19,7 @@ import AdminProfiles from './pages/admin/AdminProfiles.js'
 import AdminEvents from './pages/admin/AdminEvents.js'
 import AdminUsers from './pages/admin/AdminUsers.js'
 import ChangePassword from './pages/ChangePassword.js'
+import MainFeed from './pages/MainFeed.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
@@ -33,8 +34,10 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
+        <Route path="/auth/change-password" element={<ChangePassword />} />
         <Route path="/profiles" element={<Profiles />} />
         <Route path="/p/:id" element={<PublicProfile />} />
+        <Route path="/feed" element={<MainFeed />} />
         <Route path="/events" element={<EventsFeed />} />
         <Route path="/events/:id" element={<EventDetail />} />
 

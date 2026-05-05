@@ -100,6 +100,7 @@ export function serializeProfile(p: IProfile) {
       type: m.type,
       title: m.title,
     })),
+    photos: p.photos ?? [],
     priceRange: p.priceRange,
     isVisible: p.isVisible,
     createdAt: p.createdAt.toISOString(),

@@ -25,6 +25,7 @@ export interface IProfile extends Document {
   availability: 'available' | 'contact' | 'unavailable'
   whatsapp?: string
   media: IMediaItem[]
+  photos: string[]
   priceRange?: string
   isVisible: boolean
   createdAt: Date
@@ -63,6 +64,7 @@ const profileSchema = new mongoose.Schema<IProfile>(
     },
     whatsapp: { type: String },
     media: [mediaItemSchema],
+    photos: [{ type: String }],
     priceRange: { type: String },
     isVisible: { type: Boolean, default: true },
   },

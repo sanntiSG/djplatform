@@ -63,7 +63,8 @@ export function useUpdateProfile() {
     mutationFn: (data: UpdateProfileInput) => profileService.updateMine(data),
     onSuccess: (profile) => {
       qc.setQueryData(['profiles', 'me'], profile)
-      qc.invalidateQueries({ queryKey: ['profiles', profile.id] })
+      // The public profile cache key uses the full "slug-id" format from profilePath()
+      qc.setQueryData(['profiles', `${profile.slug}-${profile.id}`], profile)
     },
   })
 }

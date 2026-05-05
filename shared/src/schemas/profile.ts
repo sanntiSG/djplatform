@@ -29,6 +29,7 @@ export const UpdateProfileSchema = CreateProfileSchema.partial().extend({
   theme: ProfileThemeSchema.optional(),
   accentColor: z.string().max(20).optional(),
   media: z.array(MediaItemSchema).max(20).optional(),
+  photos: z.array(z.string().url()).max(30).optional(),
 })
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 
@@ -49,8 +50,27 @@ export const ProfileResponseSchema = z.object({
   availability: AvailabilitySchema,
   whatsapp: z.string().optional(),
   media: z.array(MediaItemSchema),
+  photos: z.array(z.string()).default([]),
   priceRange: z.string().optional(),
   isVisible: z.boolean(),
   createdAt: z.string(),
 })
 export type ProfileResponse = z.infer<typeof ProfileResponseSchema>
+
+export const ProfileSocialSchema = z.object({
+  followerCount: z.number(),
+  likeCount: z.number(),
+  commentCount: z.number(),
+  isFollowing: z.boolean(),
+  isLiked: z.boolean(),
+})
+export type ProfileSocial = z.infer<typeof ProfileSocialSchema>
+
+export const ProfileCommentSchema = z.object({
+  id: z.string(),
+  userEmail: z.string(),
+  text: z.string(),
+  createdAt: z.string(),
+  isOwn: z.boolean(),
+})
+export type ProfileComment = z.infer<typeof ProfileCommentSchema>
