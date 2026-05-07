@@ -19,6 +19,7 @@ import { ProfileComments } from '../components/profile/ProfileComments.js'
 import { ProfileFeed } from '../components/profile/ProfileFeed.js'
 import { ProfileMusicTab } from '../components/profile/ProfileMusicTab.js'
 import { ProfileMediaTab } from '../components/profile/ProfileMediaTab.js'
+import { ContentViewer } from '../components/profile/viewer/ContentViewer.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
 
@@ -199,6 +200,8 @@ export default function PublicProfile() {
   const [tab, setTab] = useState('feed')
   const [shareNotice, setShareNotice] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [viewerItem, setViewerItem] = useState<{ kind: 'photo' | 'media' | 'event'; id: string } | null>(null)
+  const [viewerOrigin, setViewerOrigin] = useState<DOMRect | null>(null)
   const scopeRef = useRef<HTMLDivElement>(null)
   const commentsRef = useRef<HTMLDivElement>(null)
 
@@ -278,6 +281,11 @@ export default function PublicProfile() {
     setTimeout(() => {
       commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 100)
+  }
+
+  const handleOpenViewer = (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => {
+    setViewerOrigin(rect)
+    setViewerItem(item)
   }
 
   if (isLoading) {
@@ -720,15 +728,27 @@ export default function PublicProfile() {
         {/* TAB CONTENT */}
         <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-8">
           {tab === 'feed' && (
-            <ProfileFeed profile={profile} events={events ?? []} />
+            <ProfileFeed
+              profile={profile}
+              events={events ?? []}
+              onItemClick={handleOpenViewer}
+            />
           )}
 
           {tab === 'musica' && (
-            <ProfileMusicTab profile={profile} isOwner={isOwner} />
+            <ProfileMusicTab
+              profile={profile}
+              isOwner={isOwner}
+              onItemClick={handleOpenViewer}
+            />
           )}
 
           {tab === 'media' && (
-            <ProfileMediaTab profile={profile} isOwner={isOwner} />
+            <ProfileMediaTab
+              profile={profile}
+              isOwner={isOwner}
+              onItemClick={handleOpenViewer}
+            />
           )}
 
           {tab === 'events' && (
@@ -798,6 +818,16 @@ export default function PublicProfile() {
           </div>
         </div>
       </div>
+      {/* VIEWER MODAL */}
+      {viewerItem && (
+        <ContentViewer
+          profile={profile}
+          events={events ?? []}
+          initialItem={viewerItem}
+          originRect={viewerOrigin}
+          onClose={() => setViewerItem(null)}
+        />
+      )}
     </div>
   )
 }

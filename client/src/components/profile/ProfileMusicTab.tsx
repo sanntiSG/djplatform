@@ -6,9 +6,10 @@ import type { ProfileResponse } from '../../types/index.js'
 interface ProfileMusicTabProps {
   profile: ProfileResponse
   isOwner: boolean
+  onItemClick: (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => void
 }
 
-export function ProfileMusicTab({ profile, isOwner }: ProfileMusicTabProps) {
+export function ProfileMusicTab({ profile, isOwner, onItemClick }: ProfileMusicTabProps) {
   const musicItems = profile.media
 
   if (musicItems.length === 0) {
@@ -29,5 +30,5 @@ export function ProfileMusicTab({ profile, isOwner }: ProfileMusicTabProps) {
     )
   }
 
-  return <MediaList items={musicItems} />
+  return <MediaList items={musicItems} onItemClick={onItemClick} />
 }

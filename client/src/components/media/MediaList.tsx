@@ -8,9 +8,10 @@ interface MediaListProps {
   items: MediaItem[]
   editable?: boolean
   onRemove?: (index: number) => void
+  onItemClick?: (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => void
 }
 
-export function MediaList({ items, editable = false, onRemove }: MediaListProps) {
+export function MediaList({ items, editable = false, onRemove, onItemClick }: MediaListProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +33,16 @@ export function MediaList({ items, editable = false, onRemove }: MediaListProps)
   return (
     <div ref={listRef} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {items.map((item, i) => (
-        <div key={i} className="media-item relative group">
+        <div
+          key={i}
+          className="media-item relative group"
+          onClick={(e) => {
+            if (!editable && onItemClick && item.id) {
+              const rect = e.currentTarget.getBoundingClientRect()
+              onItemClick({ kind: 'media', id: item.id }, rect)
+            }
+          }}
+        >
           <MediaEmbed item={item} />
           {item.title && (
             <p className="mt-1.5 text-xs text-[var(--text-muted)] font-sans">{item.title}</p>

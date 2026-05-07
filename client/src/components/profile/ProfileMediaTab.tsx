@@ -7,9 +7,10 @@ import type { ProfileResponse } from '../../types/index.js'
 interface ProfileMediaTabProps {
   profile: ProfileResponse
   isOwner: boolean
+  onItemClick: (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => void
 }
 
-export function ProfileMediaTab({ profile, isOwner }: ProfileMediaTabProps) {
+export function ProfileMediaTab({ profile, isOwner, onItemClick }: ProfileMediaTabProps) {
   const [lightbox, setLightbox] = useState<string | null>(null)
 
   const photos = profile.photos ?? []
@@ -41,7 +42,12 @@ export function ProfileMediaTab({ profile, isOwner }: ProfileMediaTabProps) {
           <div
             key={photo.url + i}
             className="relative aspect-square overflow-hidden rounded-xl bg-[var(--surface-elevated)] cursor-pointer group"
-            onClick={() => setLightbox(photo.url)}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              if (photo.id) {
+                onItemClick({ kind: 'photo', id: photo.id }, rect)
+              }
+            }}
           >
             <img
               src={photo.url}
