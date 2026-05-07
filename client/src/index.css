@@ -73,3 +73,20 @@ body {
     display: none;
   }
 }
+
+@keyframes heart-pop {
+  0% { scale: 1; }
+  30% { scale: 1.35; }
+  60% { scale: 0.88; }
+  100% { scale: 1; }
+}
+
+.heart-pop {
+  animation: heart-pop 0.28s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-pop {
+    animation: none;
+  }
+}

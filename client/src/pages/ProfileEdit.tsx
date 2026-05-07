@@ -12,13 +12,13 @@ import { Tabs } from '../components/ui/Tabs.js'
 import { profilePath } from '../utils/slug.js'
 import { useState, useEffect, useRef } from 'react'
 import { uploadImage } from '../services/uploadService.js'
-import type { CreateProfileInput, MediaItem, ProfileTheme } from '../types/index.js'
+import type { CreateProfileInput, MediaItem, Photo, ProfileTheme } from '../types/index.js'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
-  { id: 'fotos', label: 'Fotos' },
+  { id: 'media', label: 'Media' },
   { id: 'visual', label: 'Visual' },
-  { id: 'media', label: 'Musica y Videos' },
+  { id: 'musica', label: 'Musica' },
 ]
 
 const TYPE_LABEL: Record<string, string> = {
@@ -36,7 +36,7 @@ export default function ProfileEdit() {
   const [localTheme, setLocalTheme] = useState<ProfileTheme>('minimal')
   const [localAccent, setLocalAccent] = useState('')
   const [localCover, setLocalCover] = useState<string | undefined>(undefined)
-  const [localPhotos, setLocalPhotos] = useState<string[]>([])
+  const [localPhotos, setLocalPhotos] = useState<Photo[]>([])
   const [visualSaved, setVisualSaved] = useState(false)
   const [photosSaved, setPhotosSaved] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -104,7 +104,7 @@ export default function ProfileEdit() {
     setUploadingPhoto(true)
     try {
       const url = await uploadImage(file, 'dj/profile-photos')
-      setLocalPhotos((prev) => [...prev, url])
+      setLocalPhotos((prev) => [...prev, { url, addedAt: new Date().toISOString() }])
     } finally {
       setUploadingPhoto(false)
       e.target.value = ''
@@ -112,7 +112,7 @@ export default function ProfileEdit() {
   }
 
   function handleRemovePhoto(index: number) {
-    setLocalPhotos((prev) => prev.filter((_, i) => i !== index))
+    setLocalPhotos((prev: Photo[]) => prev.filter((_, i) => i !== index))
   }
 
   function handleAddMedia(item: MediaItem) {
@@ -199,15 +199,15 @@ export default function ProfileEdit() {
           </div>
         )}
 
-        {/* ─── FOTOS ─── */}
-        {tab === 'fotos' && (
+        {/* ─── MEDIA ─── */}
+        {tab === 'media' && (
           <div className="flex flex-col gap-6">
             <div>
               <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                Fotos del perfil
+                Media del perfil
               </p>
               <p className="font-sans text-xs text-[var(--text-muted)]">
-                Agrega fotos para decorar tu perfil. Max 30 fotos · JPG, PNG o WebP · Max 5 MB c/u
+                Agrega fotos para tu perfil. Max 30 · JPG, PNG o WebP · 5 MB c/u. Para musica y videos, usa la pestana Musica.
               </p>
             </div>
 
@@ -316,9 +316,17 @@ export default function ProfileEdit() {
           </div>
         )}
 
-        {/* ─── MEDIA ─── */}
-        {tab === 'media' && (
+        {/* ─── MUSICA ─── */}
+        {tab === 'musica' && (
           <div className="flex flex-col gap-6">
+            <div>
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Musica y videos embebidos
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)]">
+                Pega un link de YouTube, SoundCloud o Spotify. Lo embebemos automaticamente.
+              </p>
+            </div>
             <MediaInput onAdd={handleAddMedia} />
             <MediaList items={mediaItems} editable onRemove={handleRemoveMedia} />
             {mediaItems.length > 0 && (
@@ -329,7 +337,7 @@ export default function ProfileEdit() {
                 loading={isPending}
                 onClick={handleSaveMedia}
               >
-                Guardar cambios de media
+                Guardar cambios
               </Button>
             )}
           </div>

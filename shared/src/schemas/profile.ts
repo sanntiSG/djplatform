@@ -1,6 +1,13 @@
 import { z } from 'zod'
 import { MediaItemSchema } from './media.js'
 
+export const PhotoSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().url(),
+  addedAt: z.string().datetime(),
+})
+export type Photo = z.infer<typeof PhotoSchema>
+
 export const ProfileTypeSchema = z.enum(['dj', 'producer', 'other'])
 export type ProfileType = z.infer<typeof ProfileTypeSchema>
 
@@ -29,7 +36,7 @@ export const UpdateProfileSchema = CreateProfileSchema.partial().extend({
   theme: ProfileThemeSchema.optional(),
   accentColor: z.string().max(20).optional(),
   media: z.array(MediaItemSchema).max(20).optional(),
-  photos: z.array(z.string().url()).max(30).optional(),
+  photos: z.array(PhotoSchema).max(30).optional(),
 })
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 
@@ -50,7 +57,7 @@ export const ProfileResponseSchema = z.object({
   availability: AvailabilitySchema,
   whatsapp: z.string().optional(),
   media: z.array(MediaItemSchema),
-  photos: z.array(z.string()).default([]),
+  photos: z.array(PhotoSchema).default([]),
   priceRange: z.string().optional(),
   isVisible: z.boolean(),
   createdAt: z.string(),

@@ -212,7 +212,7 @@ export default function Landing() {
             style={{ aspectRatio: '16/7' }}
           >
             <img
-              src="https://picsum.photos/seed/dj-stage-dark/1280/560"
+              src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="DJ en escena"
               className="w-full h-full object-cover"
               style={{ filter: 'brightness(0.7) contrast(1.1)' }}
@@ -412,7 +412,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-10">
           <div className="flex flex-col gap-2">
             <span className="font-display font-semibold text-lg text-[var(--text)]">
-              DJ<span style={{ color: 'var(--accent)' }}>Platform</span>
+              RE<span style={{ color: 'var(--accent)' }}>SONAR</span>
             </span>
             <span className="font-sans text-sm text-[var(--text-muted)]">
               Plataforma de DJs y servicios musicales en Argentina.
@@ -436,7 +436,7 @@ export default function Landing() {
         </div>
         <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-[var(--border)]">
           <p className="font-sans text-xs text-[var(--text-muted)]">
-            2026 DJPlatform. Solo Argentina.
+            2026 REsonar. Solo Argentina.
           </p>
         </div>
       </footer>

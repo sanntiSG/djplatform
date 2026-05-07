@@ -14,6 +14,7 @@ export type {
   ProfileResponse,
   ProfileSocial,
   ProfileComment,
+  Photo,
   CreateEventInput,
   UpdateEventInput,
   EventResponse,

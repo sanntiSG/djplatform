@@ -7,6 +7,12 @@ interface IMediaItem {
   embedHtml?: string
   type: 'audio' | 'video'
   title?: string
+  addedAt?: Date
+}
+
+interface IPhoto {
+  url: string
+  addedAt: Date
 }
 
 export interface IProfile extends Document {
@@ -25,7 +31,7 @@ export interface IProfile extends Document {
   availability: 'available' | 'contact' | 'unavailable'
   whatsapp?: string
   media: IMediaItem[]
-  photos: string[]
+  photos: IPhoto[]
   priceRange?: string
   isVisible: boolean
   createdAt: Date
@@ -40,6 +46,7 @@ const mediaItemSchema = new mongoose.Schema<IMediaItem>(
     embedHtml: { type: String },
     type: { type: String, enum: ['audio', 'video'], required: true },
     title: { type: String },
+    addedAt: { type: Date, default: Date.now },
   },
   { _id: true },
 )
@@ -64,7 +71,10 @@ const profileSchema = new mongoose.Schema<IProfile>(
     },
     whatsapp: { type: String },
     media: [mediaItemSchema],
-    photos: [{ type: String }],
+    photos: [{
+      url: { type: String, required: true },
+      addedAt: { type: Date, default: Date.now },
+    }],
     priceRange: { type: String },
     isVisible: { type: Boolean, default: true },
   },

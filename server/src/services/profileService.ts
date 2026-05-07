@@ -99,8 +99,18 @@ export function serializeProfile(p: IProfile) {
       embedHtml: m.embedHtml,
       type: m.type,
       title: m.title,
+      addedAt: m.addedAt instanceof Date ? m.addedAt.toISOString() : (m.addedAt ?? p.createdAt.toISOString()),
     })),
-    photos: p.photos ?? [],
+    photos: (p.photos ?? []).map((photo: unknown) => {
+      if (typeof photo === 'string') {
+        return { url: photo, addedAt: p.updatedAt?.toISOString() ?? p.createdAt.toISOString() }
+      }
+      const ph = photo as { _id?: { toString(): string }; url: string; addedAt?: Date | string }
+      const addedAt = ph.addedAt instanceof Date
+        ? ph.addedAt.toISOString()
+        : (ph.addedAt ?? p.createdAt.toISOString())
+      return { id: ph._id?.toString(), url: ph.url, addedAt }
+    }),
     priceRange: p.priceRange,
     isVisible: p.isVisible,
     createdAt: p.createdAt.toISOString(),

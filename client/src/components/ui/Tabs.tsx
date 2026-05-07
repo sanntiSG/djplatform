@@ -1,8 +1,10 @@
+import { useRef, useEffect, type ReactNode } from 'react'
 import { cn } from '../../utils/cn.js'
 
 interface Tab {
   id: string
   label: string
+  icon?: ReactNode
 }
 
 interface TabsProps {
@@ -10,9 +12,76 @@ interface TabsProps {
   active: string
   onChange: (id: string) => void
   className?: string
+  variant?: 'pill' | 'instagram'
 }
 
-export function Tabs({ tabs, active, onChange, className }: TabsProps) {
+export function Tabs({ tabs, active, onChange, className, variant = 'pill' }: TabsProps) {
+  const indicatorRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  useEffect(() => {
+    if (variant !== 'instagram') return
+    const container = containerRef.current
+    const indicator = indicatorRef.current
+    if (!container || !indicator) return
+
+    const activeIndex = tabs.findIndex((t) => t.id === active)
+    const btn = buttonRefs.current[activeIndex]
+    if (!btn) return
+
+    const containerRect = container.getBoundingClientRect()
+    const btnRect = btn.getBoundingClientRect()
+    const left = btnRect.left - containerRect.left
+    const width = btnRect.width
+
+    indicator.style.transition = 'left 0.3s cubic-bezier(0.23, 1, 0.32, 1), width 0.3s cubic-bezier(0.23, 1, 0.32, 1)'
+    indicator.style.left = `${left}px`
+    indicator.style.width = `${width}px`
+  }, [active, tabs, variant])
+
+  if (variant === 'instagram') {
+    return (
+      <div
+        ref={containerRef}
+        className={cn('relative flex border-b border-[var(--border)]', className)}
+      >
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.id}
+            ref={(el) => { buttonRefs.current[i] = el }}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              'flex-1 flex flex-col items-center justify-center gap-1.5 py-3 transition-colors duration-150',
+              active === tab.id
+                ? 'text-[var(--text)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text)]',
+            )}
+          >
+            {tab.icon && (
+              <span className="block" style={{ width: 20, height: 20 }}>
+                {tab.icon}
+              </span>
+            )}
+            <span
+              className="font-sans uppercase tracking-widest leading-none"
+              style={{ fontSize: 9 }}
+            >
+              {tab.label}
+            </span>
+          </button>
+        ))}
+
+        <div
+          ref={indicatorRef}
+          className="absolute bottom-0 h-[2px] bg-[var(--accent)]"
+          style={{ left: 0, width: 0 }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(

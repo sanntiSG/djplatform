@@ -32,7 +32,7 @@ export function MediaInput({ onAdd }: MediaInputProps) {
 
   function handleAdd() {
     if (!preview) return
-    onAdd(preview)
+    onAdd({ ...preview, addedAt: new Date().toISOString() })
     setUrl('')
     setPreview(null)
   }

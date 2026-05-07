@@ -21,7 +21,7 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="font-display font-semibold text-lg tracking-tight text-[var(--text)]">
-          DJ<span className="text-[var(--accent)]">Platform</span>
+          RE<span className="text-[var(--accent)]">sonar</span>
         </Link>
 
         {/* Desktop nav */}

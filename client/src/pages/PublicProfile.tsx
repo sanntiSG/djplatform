@@ -10,14 +10,15 @@ import {
   useFollow,
   useProfileLike,
 } from '../hooks/useProfileSocial.js'
-import { MediaList } from '../components/media/MediaList.js'
 import { EventCard } from '../components/events/EventCard.js'
 import { WhatsAppButton } from '../components/ui/WhatsAppButton.js'
 import { Pill } from '../components/ui/Pill.js'
 import { Tabs } from '../components/ui/Tabs.js'
 import { Button } from '../components/ui/Button.js'
-import { ProfilePhotoGrid } from '../components/profile/ProfilePhotoGrid.js'
 import { ProfileComments } from '../components/profile/ProfileComments.js'
+import { ProfileFeed } from '../components/profile/ProfileFeed.js'
+import { ProfileMusicTab } from '../components/profile/ProfileMusicTab.js'
+import { ProfileMediaTab } from '../components/profile/ProfileMediaTab.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
 
@@ -42,10 +43,45 @@ const TYPE_LABEL: Record<string, string> = {
 }
 
 const PROFILE_TABS = [
-  { id: 'sets', label: 'Sets y Musica' },
-  { id: 'fotos', label: 'Fotos' },
-  { id: 'events', label: 'Eventos' },
-  { id: 'comments', label: 'Comentarios' },
+  {
+    id: 'feed',
+    label: 'Feed',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    id: 'musica',
+    label: 'Musica',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'media',
+    label: 'Media',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    ),
+  },
+  {
+    id: 'events',
+    label: 'Eventos',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
 ]
 
 function ThemeBackground({ theme }: { theme: ProfileTheme }) {
@@ -160,12 +196,12 @@ export default function PublicProfile() {
   const { data: profile, isLoading } = useProfile(id!)
   const { data: events } = useProfileEvents(id!)
   const { user, token } = useAuthStore()
-  const [tab, setTab] = useState('sets')
+  const [tab, setTab] = useState('feed')
   const [shareNotice, setShareNotice] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const scopeRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const commentsRef = useRef<HTMLDivElement>(null)
 
-  // Social hooks - use profile's MongoDB ID extracted from slug-id
   const profileMongoId = id ? id.match(/[0-9a-fA-F]{24}$/)?.[0] ?? '' : ''
   const { data: social } = useProfileSocial(profileMongoId)
   const { mutate: toggleFollow, isPending: followPending } = useFollow(profileMongoId)
@@ -175,16 +211,13 @@ export default function PublicProfile() {
   const themeConfig = THEMES.find((t) => t.id === theme) ?? THEMES[0]
   const profileAccent = profile?.accentColor || themeConfig.particle
 
-  // Inject OG meta tags for link sharing
   useEffect(() => {
     if (!profile) return
-
     const title = `${profile.artistName} | DJPlatform`
     const description = profile.bio
       ? profile.bio.slice(0, 160)
       : `Perfil de ${profile.artistName} en DJPlatform Argentina`
     const image = profile.coverImage || profile.avatar || ''
-
     document.title = title
 
     const setMeta = (attr: 'property' | 'name', key: string, content: string) => {
@@ -207,40 +240,21 @@ export default function PublicProfile() {
     setMeta('name', 'twitter:description', description)
     setMeta('name', 'twitter:image', image)
 
-    return () => {
-      document.title = 'DJPlatform'
-    }
+    return () => { document.title = 'DJPlatform' }
   }, [profile])
 
-  // GSAP entrance animations
   useEffect(() => {
     if (!profile || !scopeRef.current) return
-
     const ctx = gsap.context(() => {
       gsap.from('.pi', {
-        y: 20,
+        y: 22,
         opacity: 0,
         duration: 0.75,
-        stagger: 0.08,
+        stagger: 0.07,
         ease: 'expo.out',
         delay: 0.1,
       })
-
-      if (contentRef.current) {
-        gsap.from('.pct', {
-          y: 22,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: 'expo.out',
-          scrollTrigger: {
-            trigger: contentRef.current,
-            start: 'top 83%',
-          },
-        })
-      }
     }, scopeRef)
-
     return () => ctx.revert()
   }, [profile])
 
@@ -248,11 +262,7 @@ export default function PublicProfile() {
     const url = window.location.href
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: profile?.artistName ?? 'DJPlatform',
-          text: profile?.bio ?? '',
-          url,
-        })
+        await navigator.share({ title: profile?.artistName ?? 'DJPlatform', url })
       } catch {
         // user cancelled
       }
@@ -262,6 +272,13 @@ export default function PublicProfile() {
       setTimeout(() => setShareNotice(false), 2000)
     }
   }, [profile])
+
+  function scrollToComments() {
+    setCommentsOpen(true)
+    setTimeout(() => {
+      commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
 
   if (isLoading) {
     return (
@@ -275,9 +292,7 @@ export default function PublicProfile() {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center gap-4">
         <p className="font-display text-[var(--text-muted)] text-xl">Perfil no encontrado</p>
-        <Link to="/">
-          <Button variant="outline" size="md">Volver al inicio</Button>
-        </Link>
+        <Link to="/"><Button variant="outline" size="md">Volver al inicio</Button></Link>
       </div>
     )
   }
@@ -300,10 +315,10 @@ export default function PublicProfile() {
   return (
     <div className="min-h-screen bg-[var(--bg)]" style={accentStyle}>
 
-      {/* ─── HERO ─── */}
+      {/* HERO */}
       <div
         className="relative w-full overflow-hidden"
-        style={{ height: 'clamp(290px, 50vw, 480px)' }}
+        style={{ height: 'clamp(220px, 50vh, 640px)' }}
       >
         <ThemeBackground theme={theme} />
 
@@ -313,25 +328,19 @@ export default function PublicProfile() {
               src={profile.coverImage}
               alt="Portada"
               className="w-full h-full object-cover"
-              style={{ opacity: 0.4, filter: 'brightness(0.55)' }}
+              style={{ opacity: 0.45, filter: 'brightness(0.55)' }}
             />
           </div>
         )}
 
         <div
           className="absolute bottom-0 left-0 right-0 pointer-events-none"
-          style={{
-            height: '58%',
-            background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)',
-          }}
+          style={{ height: '62%', background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)' }}
         />
 
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse 110% 70% at 50% 0%, transparent 38%, rgba(0,0,0,0.52) 100%)',
-          }}
+          style={{ background: 'radial-gradient(ellipse 110% 70% at 50% 0%, transparent 38%, rgba(0,0,0,0.5) 100%)' }}
         />
 
         {isOwner && (
@@ -351,40 +360,176 @@ export default function PublicProfile() {
             </Link>
           </div>
         )}
-      </div>
 
-      {/* ─── PROFILE CONTENT ─── */}
-      <div ref={scopeRef} className="pb-28">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8">
-
-          {/* Avatar — centered, overlaps hero */}
-          <div className="pi flex flex-col items-center" style={{ marginTop: '-52px', marginBottom: '12px' }}>
-            <div style={{ filter: `drop-shadow(0 0 28px ${profileAccent}2a)` }}>
+        {/* Desktop: identidad flotando en el hero */}
+        <div className="hidden lg:flex absolute inset-0 items-end justify-center z-10" style={{ paddingBottom: 56 }}>
+          <div className="max-w-4xl w-full px-8 flex flex-col items-center text-center gap-4">
+            <div className="pi" style={{ filter: `drop-shadow(0 0 48px ${profileAccent}3a)` }}>
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={profile.artistName}
                   className="rounded-full object-cover"
-                  style={{
-                    width: 104,
-                    height: 104,
-                    border: '4px solid var(--bg)',
-                  }}
+                  style={{ width: 156, height: 156, border: '5px solid var(--bg)' }}
                 />
               ) : (
                 <div
                   className="rounded-full flex items-center justify-center"
+                  style={{ width: 156, height: 156, background: `${profileAccent}1c`, border: '5px solid var(--bg)' }}
+                >
+                  <span className="font-display font-bold" style={{ fontSize: 56, color: profileAccent }}>
+                    {profile.artistName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <h1
+                className="pi font-display font-semibold text-[var(--text)] leading-none"
+                style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}
+              >
+                {profile.artistName}
+              </h1>
+              <div className="pi flex items-center gap-2 flex-wrap justify-center">
+                <span className="font-sans text-sm text-[var(--text-muted)]">
+                  {TYPE_LABEL[profile.type] ?? profile.type}
+                </span>
+                {profile.location && (
+                  <>
+                    <span className="text-[var(--text-muted)] opacity-40">·</span>
+                    <span className="font-sans text-sm text-[var(--text-muted)]">{profile.location}</span>
+                  </>
+                )}
+                <Pill
+                  label={AVAILABILITY_LABEL[profile.availability]}
+                  variant={AVAILABILITY_VARIANT[profile.availability]}
+                />
+              </div>
+            </div>
+
+            <div className="pi flex items-center justify-center gap-0">
+              {stats.map((stat, i) => (
+                <div key={stat.label} className="flex items-center">
+                  <div className="flex flex-col items-center gap-0.5 px-8">
+                    <span
+                      className="font-display font-semibold text-[var(--text)] leading-none"
+                      style={{ fontSize: 32 }}
+                    >
+                      {stat.value}
+                    </span>
+                    <span
+                      className="font-sans uppercase tracking-widest text-[var(--text-muted)]"
+                      style={{ fontSize: 9 }}
+                    >
+                      {stat.label}
+                    </span>
+                  </div>
+                  {i < stats.length - 1 && (
+                    <div className="h-10 bg-[var(--border)]" style={{ width: 1 }} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {profile.genres.length > 0 && (
+              <div className="pi flex flex-wrap gap-1.5 justify-center">
+                {profile.genres.slice(0, 6).map((g) => (
+                  <Pill key={g} label={g} variant="default" />
+                ))}
+              </div>
+            )}
+
+            <div className="pi flex flex-wrap items-center justify-center gap-2">
+              {token && !isOwner && (
+                <button
+                  type="button"
+                  disabled={followPending}
+                  onClick={() => toggleFollow()}
+                  className="font-sans text-sm font-medium px-6 py-2.5 rounded-full transition-all duration-150 disabled:opacity-50 active:scale-95"
+                  style={
+                    social?.isFollowing
+                      ? { background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', color: 'var(--text-muted)' }
+                      : { background: 'var(--accent)', border: '1.5px solid var(--accent)', color: 'var(--bg)' }
+                  }
+                >
+                  {social?.isFollowing ? 'Siguiendo' : 'Seguir'}
+                </button>
+              )}
+              {profile.whatsapp && (
+                <WhatsAppButton
+                  number={profile.whatsapp}
+                  message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
+                  size="md"
+                />
+              )}
+              {token && !isOwner && (
+                <button
+                  type="button"
+                  disabled={likePending}
+                  onClick={() => toggleLike()}
+                  className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border border-[var(--border)] transition-all duration-150 disabled:opacity-50 active:scale-95"
                   style={{
-                    width: 104,
-                    height: 104,
-                    background: `${profileAccent}1c`,
-                    border: '4px solid var(--bg)',
+                    color: social?.isLiked ? profileAccent : 'var(--text-muted)',
+                    borderColor: social?.isLiked ? `${profileAccent}40` : undefined,
+                    background: social?.isLiked ? `${profileAccent}0d` : undefined,
                   }}
                 >
-                  <span
-                    className="font-display font-bold"
-                    style={{ fontSize: 38, color: profileAccent }}
-                  >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill={social?.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  {likeCount > 0 && <span>{likeCount}</span>}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+                <span>{shareNotice ? 'Copiado' : 'Compartir'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={scrollToComments}
+                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {commentCount > 0 && <span>{commentCount}</span>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PROFILE INFO */}
+      <div ref={scopeRef}>
+
+        {/* Mobile / tablet: info vertical debajo del hero */}
+        <div className="lg:hidden">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8">
+
+          {/* Avatar */}
+          <div className="pi flex justify-center md:justify-start" style={{ marginTop: '-54px', marginBottom: 16 }}>
+            <div style={{ filter: `drop-shadow(0 0 32px ${profileAccent}2e)` }}>
+              {profile.avatar ? (
+                <img
+                  src={profile.avatar}
+                  alt={profile.artistName}
+                  className="rounded-full object-cover"
+                  style={{ width: 108, height: 108, border: '4px solid var(--bg)' }}
+                />
+              ) : (
+                <div
+                  className="rounded-full flex items-center justify-center"
+                  style={{ width: 108, height: 108, background: `${profileAccent}1c`, border: '4px solid var(--bg)' }}
+                >
+                  <span className="font-display font-bold" style={{ fontSize: 40, color: profileAccent }}>
                     {profile.artistName.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -392,26 +537,24 @@ export default function PublicProfile() {
             </div>
           </div>
 
-          {/* Name + type + availability — centered */}
-          <div className="flex flex-col items-center gap-1 text-center">
+          {/* Identity */}
+          <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
             <h1
               className="pi font-display font-semibold text-[var(--text)] leading-none"
-              style={{ fontSize: 'clamp(1.85rem, 5vw, 2.85rem)' }}
+              style={{ fontSize: 'clamp(1.85rem, 5vw, 2.75rem)' }}
             >
               {profile.artistName}
             </h1>
-            <div className="pi flex items-center gap-2 flex-wrap justify-center">
+            <div className="pi flex items-center gap-2 flex-wrap justify-center md:justify-start">
               <span className="font-sans text-sm text-[var(--text-muted)]">
                 {TYPE_LABEL[profile.type] ?? profile.type}
               </span>
               {profile.location && (
                 <>
-                  <span className="text-[var(--text-muted)] opacity-40 select-none">·</span>
+                  <span className="text-[var(--text-muted)] opacity-40">·</span>
                   <span className="font-sans text-sm text-[var(--text-muted)]">{profile.location}</span>
                 </>
               )}
-            </div>
-            <div className="pi mt-1">
               <Pill
                 label={AVAILABILITY_LABEL[profile.availability]}
                 variant={AVAILABILITY_VARIANT[profile.availability]}
@@ -419,56 +562,58 @@ export default function PublicProfile() {
             </div>
           </div>
 
-          {/* Stats row — centered */}
-          <div className="pi flex items-center justify-center gap-8 mt-5">
+          {/* Stats */}
+          <div className="pi flex items-center justify-center md:justify-start gap-0 mt-5">
             {stats.map((stat, i) => (
-              <div key={stat.label} className="flex items-center gap-8">
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="font-display font-semibold text-[var(--text)] leading-none" style={{ fontSize: 22 }}>
+              <div key={stat.label} className="flex items-center">
+                <div className="flex flex-col items-center md:items-start gap-0.5 px-5 first:pl-0">
+                  <span
+                    className="font-display font-semibold text-[var(--text)] leading-none"
+                    style={{ fontSize: 22 }}
+                  >
                     {stat.value}
                   </span>
                   <span
                     className="font-sans uppercase tracking-widest text-[var(--text-muted)]"
-                    style={{ fontSize: 10 }}
+                    style={{ fontSize: 9 }}
                   >
                     {stat.label}
                   </span>
                 </div>
                 {i < stats.length - 1 && (
-                  <div className="h-7 bg-[var(--border)]" style={{ width: 1 }} />
+                  <div className="h-8 bg-[var(--border)]" style={{ width: 1 }} />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Bio — centered for short bios, left for long */}
+          {/* Bio */}
           {profile.bio && (
             <p
-              className="pi font-sans text-sm leading-relaxed mt-4 text-center mx-auto"
-              style={{ color: 'rgba(242,242,247,0.72)', maxWidth: '48ch' }}
+              className="pi font-sans text-sm leading-relaxed mt-4 text-center md:text-left"
+              style={{ color: 'rgba(242,242,247,0.70)', maxWidth: '54ch' }}
             >
               {profile.bio}
             </p>
           )}
 
-          {/* Genre pills — centered */}
+          {/* Genre pills */}
           {profile.genres.length > 0 && (
-            <div className="pi flex flex-wrap gap-1.5 mt-4 justify-center">
+            <div className="pi flex flex-wrap gap-1.5 mt-3 justify-center md:justify-start">
               {profile.genres.map((g) => (
                 <Pill key={g} label={g} variant="default" />
               ))}
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="pi flex flex-wrap items-center justify-center gap-3 mt-6">
-            {/* Follow button */}
+          {/* Action row */}
+          <div className="pi flex flex-wrap items-center justify-center md:justify-start gap-2 mt-6">
             {token && !isOwner && (
               <button
                 type="button"
                 disabled={followPending}
                 onClick={() => toggleFollow()}
-                className="font-sans text-sm font-medium px-6 py-2.5 rounded-full transition-all duration-150 disabled:opacity-50"
+                className="font-sans text-sm font-medium px-6 py-2.5 rounded-full transition-all duration-150 disabled:opacity-50 active:scale-95"
                 style={
                   social?.isFollowing
                     ? {
@@ -487,13 +632,20 @@ export default function PublicProfile() {
               </button>
             )}
 
-            {/* Like button */}
+            {profile.whatsapp && (
+              <WhatsAppButton
+                number={profile.whatsapp}
+                message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
+                size="md"
+              />
+            )}
+
             {token && !isOwner && (
               <button
                 type="button"
                 disabled={likePending}
                 onClick={() => toggleLike()}
-                className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border border-[var(--border)] transition-all duration-150 disabled:opacity-50"
+                className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border border-[var(--border)] transition-all duration-150 disabled:opacity-50 active:scale-95"
                 style={{
                   color: social?.isLiked ? profileAccent : 'var(--text-muted)',
                   borderColor: social?.isLiked ? `${profileAccent}40` : undefined,
@@ -507,102 +659,139 @@ export default function PublicProfile() {
               </button>
             )}
 
-            {/* WhatsApp */}
-            {profile.whatsapp && (
-              <WhatsAppButton
-                number={profile.whatsapp}
-                message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
-                size="md"
-              />
-            )}
-
-            {/* Share */}
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150"
+              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
-              {shareNotice ? 'Link copiado' : 'Compartir'}
+              <span className="hidden sm:inline">{shareNotice ? 'Copiado' : 'Compartir'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={scrollToComments}
+              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {commentCount > 0 && <span className="hidden sm:inline">{commentCount}</span>}
             </button>
           </div>
+        </div>
+        </div>{/* /lg:hidden */}
 
-          {/* Content tabs */}
-          <div ref={contentRef} className="mt-10">
-            <div className="pct">
-              <Tabs tabs={PROFILE_TABS} active={tab} onChange={setTab} className="mb-6" />
-            </div>
+        {/* Desktop: bio debajo del hero */}
+        {profile.bio && (
+          <div className="hidden lg:block max-w-2xl mx-auto px-5 pt-8 pb-2 text-center">
+            <p
+              className="pi font-sans text-sm leading-relaxed"
+              style={{ color: 'rgba(242,242,247,0.70)' }}
+            >
+              {profile.bio}
+            </p>
+          </div>
+        )}
 
-            {tab === 'sets' && (
-              <div className="pct">
-                {profile.media.length > 0 ? (
-                  <MediaList items={profile.media} />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 gap-4">
-                    <p className="font-sans text-sm text-[var(--text-muted)]">
-                      {isOwner
-                        ? 'Agrega sets o videos desde la edicion de perfil.'
-                        : 'Todavia no hay contenido publicado.'}
-                    </p>
-                    {isOwner && (
-                      <Link to="/profile/edit">
-                        <Button variant="outline" size="sm">Agregar musica</Button>
-                      </Link>
-                    )}
-                  </div>
+        {/* STICKY TABS */}
+        <div
+          className="sticky z-30 mt-8 -mx-0"
+          style={{
+            top: 64,
+            background: 'rgba(8,8,10,0.78)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="max-w-6xl mx-auto px-5 sm:px-8">
+            <Tabs
+              variant="instagram"
+              tabs={PROFILE_TABS}
+              active={tab}
+              onChange={setTab}
+            />
+          </div>
+        </div>
+
+        {/* TAB CONTENT */}
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-8">
+          {tab === 'feed' && (
+            <ProfileFeed profile={profile} events={events ?? []} />
+          )}
+
+          {tab === 'musica' && (
+            <ProfileMusicTab profile={profile} isOwner={isOwner} />
+          )}
+
+          {tab === 'media' && (
+            <ProfileMediaTab profile={profile} isOwner={isOwner} />
+          )}
+
+          {tab === 'events' && (
+            <>
+              {events && events.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {events.map((e) => (
+                    <EventCard key={e.id} event={e} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--text-muted)]">
+                    <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  <p className="font-sans text-sm text-[var(--text-muted)]">
+                    {isOwner ? 'No publicaste eventos todavia.' : 'Sin eventos publicados.'}
+                  </p>
+                  {isOwner && (
+                    <Link to="/events/new">
+                      <Button variant="outline" size="sm">Publicar evento</Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* COMMENTS — collapsible section */}
+        <div ref={commentsRef} className="max-w-3xl mx-auto px-5 sm:px-8 pb-24">
+          <div className="border-t border-[var(--border)] pt-6">
+            <button
+              type="button"
+              onClick={() => setCommentsOpen((v) => !v)}
+              className="flex items-center justify-between w-full group"
+            >
+              <span
+                className="font-sans font-medium text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors duration-150"
+                style={{ fontSize: 13 }}
+              >
+                Comentarios
+                {commentCount > 0 && (
+                  <span className="ml-1.5 text-[var(--text-muted)]">({commentCount})</span>
                 )}
-              </div>
-            )}
+              </span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-[var(--text-muted)] transition-transform duration-200"
+                style={{ transform: commentsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
 
-            {tab === 'fotos' && (
-              <div className="pct">
-                {profile.photos && profile.photos.length > 0 ? (
-                  <ProfilePhotoGrid photos={profile.photos} />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 gap-4">
-                    <p className="font-sans text-sm text-[var(--text-muted)]">
-                      {isOwner
-                        ? 'Agrega fotos desde la edicion de perfil para decorar tu espacio.'
-                        : 'Sin fotos publicadas todavia.'}
-                    </p>
-                    {isOwner && (
-                      <Link to="/profile/edit">
-                        <Button variant="outline" size="sm">Agregar fotos</Button>
-                      </Link>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tab === 'events' && (
-              <div className="pct">
-                {events && events.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {events.map((e) => (
-                      <EventCard key={e.id} event={e} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 gap-4">
-                    <p className="font-sans text-sm text-[var(--text-muted)]">
-                      {isOwner ? 'No publicaste eventos todavia.' : 'Sin eventos publicados.'}
-                    </p>
-                    {isOwner && (
-                      <Link to="/events/new">
-                        <Button variant="outline" size="sm">Publicar evento</Button>
-                      </Link>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tab === 'comments' && (
-              <div className="pct">
+            {commentsOpen && (
+              <div className="mt-6">
                 <ProfileComments profileId={profileMongoId} />
               </div>
             )}

@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import type { Photo } from '../../types/index.js'
 
 interface ProfilePhotoGridProps {
-  photos: string[]
+  photos: Photo[]
   editable?: boolean
   onRemove?: (index: number) => void
 }
@@ -14,14 +15,14 @@ export function ProfilePhotoGrid({ photos, editable, onRemove }: ProfilePhotoGri
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {photos.map((url, i) => (
+        {photos.map((photo, i) => (
           <div
-            key={url + i}
+            key={photo.url + i}
             className="relative group aspect-square overflow-hidden rounded-xl bg-[var(--surface-elevated)] cursor-pointer"
-            onClick={() => !editable && setLightbox(url)}
+            onClick={() => !editable && setLightbox(photo.url)}
           >
             <img
-              src={url}
+              src={photo.url}
               alt={`Foto ${i + 1}`}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
@@ -40,7 +41,6 @@ export function ProfilePhotoGrid({ photos, editable, onRemove }: ProfilePhotoGri
         ))}
       </div>
 
-      {/* Lightbox */}
       {lightbox && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
