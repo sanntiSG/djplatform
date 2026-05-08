@@ -45,6 +45,20 @@ export async function updateProfile(
     update.whatsapp = normalizeWhatsApp(data.whatsapp)
   }
 
+  // Map 'id' to '_id' for subdocuments to preserve them
+  if (update.media) {
+    update.media = update.media.map((m: any) => {
+      const { id, ...rest } = m
+      return id ? { _id: id, ...rest } : rest
+    })
+  }
+  if (update.photos) {
+    update.photos = update.photos.map((p: any) => {
+      const { id, ...rest } = p
+      return id ? { _id: id, ...rest } : rest
+    })
+  }
+
   return Profile.findOneAndUpdate({ userId }, { $set: update }, { new: true, runValidators: true })
 }
 

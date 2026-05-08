@@ -51,6 +51,14 @@ const mediaItemSchema = new mongoose.Schema<IMediaItem>(
   { _id: true },
 )
 
+const photoSchema = new mongoose.Schema<IPhoto>(
+  {
+    url: { type: String, required: true },
+    addedAt: { type: Date, default: Date.now },
+  },
+  { _id: true },
+)
+
 const profileSchema = new mongoose.Schema<IProfile>(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
@@ -71,10 +79,7 @@ const profileSchema = new mongoose.Schema<IProfile>(
     },
     whatsapp: { type: String },
     media: [mediaItemSchema],
-    photos: [{
-      url: { type: String, required: true },
-      addedAt: { type: Date, default: Date.now },
-    }],
+    photos: [photoSchema],
     priceRange: { type: String },
     isVisible: { type: Boolean, default: true },
   },
