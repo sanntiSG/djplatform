@@ -23,6 +23,15 @@ export const profileSocialService = {
   postComment: (profileId: string, text: string) =>
     apiClient.post<ProfileComment>(`/profiles/${profileId}/comments`, { text }),
 
+  editComment: (profileId: string, commentId: string, text: string) =>
+    apiClient.patch<ProfileComment>(`/profiles/${profileId}/comments/${commentId}`, { text }),
+
+  likeComment: (profileId: string, commentId: string) =>
+    apiClient.post<{ liked: boolean; likeCount: number }>(
+      `/profiles/${profileId}/comments/${commentId}/like`,
+      {},
+    ),
+
   deleteComment: (profileId: string, commentId: string) =>
     apiClient.delete<void>(`/profiles/${profileId}/comments/${commentId}`),
 }

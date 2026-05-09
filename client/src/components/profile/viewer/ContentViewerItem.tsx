@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { eventPath } from '../../../utils/slug.js'
+import { CaptionEditor } from './CaptionEditor.js'
 import type { FeedItem } from '../../../utils/profileFeed.js'
 import type { ProfileResponse } from '../../../types/index.js'
 import { THEMES } from '../ThemeSelector.js'
@@ -9,6 +10,8 @@ interface ContentViewerItemProps {
   profile: ProfileResponse
   isActive: boolean
   isNear: boolean
+  isOwner?: boolean
+  profileQueryKey?: string
 }
 
 function formatDate(d: Date) {
@@ -91,13 +94,15 @@ export function ContentViewerItem({
   profile,
   isActive,
   isNear,
+  isOwner,
+  profileQueryKey,
 }: ContentViewerItemProps) {
   const themeConfig = THEMES.find((t) => t.id === (profile.theme ?? 'minimal')) ?? THEMES[0]
 
   if (item.kind === 'photo') {
     return (
       <div
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full relative flex items-center justify-center"
         style={{ background: themeConfig.gradient }}
       >
         <img
@@ -108,6 +113,14 @@ export function ContentViewerItem({
           className="max-w-full max-h-full object-contain"
           style={{ maxHeight: '90svh' }}
         />
+        {(item.data.caption || isOwner) && profileQueryKey && (
+          <CaptionEditor
+            photoId={item.id}
+            caption={item.data.caption}
+            isOwner={!!isOwner}
+            profileQueryKey={profileQueryKey}
+          />
+        )}
       </div>
     )
   }

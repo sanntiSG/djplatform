@@ -13,10 +13,22 @@ export function useSocialStats(eventId: string) {
 
 export function useToggleLike(eventId: string) {
   const qc = useQueryClient()
+  type Stats = { likeCount: number; userLiked: boolean }
   return useMutation({
     mutationFn: () => socialService.toggleLike(eventId),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['social', 'stats', eventId] })
+      const prev = qc.getQueryData<Stats>(['social', 'stats', eventId])
+      qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
+        old ? { ...old, userLiked: !old.userLiked, likeCount: old.userLiked ? old.likeCount - 1 : old.likeCount + 1 } : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['social', 'stats', eventId], ctx.prev)
+    },
     onSuccess: (data) => {
-      qc.setQueryData(['social', 'stats', eventId], (old: { likeCount: number; userLiked: boolean } | undefined) =>
+      qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
         old ? { ...old, likeCount: data.count, userLiked: data.liked } : old,
       )
     },
@@ -25,10 +37,22 @@ export function useToggleLike(eventId: string) {
 
 export function useToggleAttend(eventId: string) {
   const qc = useQueryClient()
+  type Stats = { attendCount: number; userAttending: boolean }
   return useMutation({
     mutationFn: () => socialService.toggleAttend(eventId),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['social', 'stats', eventId] })
+      const prev = qc.getQueryData<Stats>(['social', 'stats', eventId])
+      qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
+        old ? { ...old, userAttending: !old.userAttending, attendCount: old.userAttending ? old.attendCount - 1 : old.attendCount + 1 } : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['social', 'stats', eventId], ctx.prev)
+    },
     onSuccess: (data) => {
-      qc.setQueryData(['social', 'stats', eventId], (old: { attendCount: number; userAttending: boolean } | undefined) =>
+      qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
         old ? { ...old, attendCount: data.count, userAttending: data.attending } : old,
       )
     },
@@ -60,7 +84,6 @@ export function usePostComment(eventId: string) {
 }
 
 export function useDeleteComment(eventId: string) {
-  const { user } = useAuthStore()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (commentId: string) => socialService.deleteComment(eventId, commentId),
@@ -71,6 +94,56 @@ export function useDeleteComment(eventId: string) {
       )
       qc.setQueryData(['social', 'stats', eventId], (old: { commentCount: number } | undefined) =>
         old ? { ...old, commentCount: Math.max(0, old.commentCount - 1) } : old,
+      )
+    },
+  })
+}
+
+export function useEditComment(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, text }: { commentId: string; text: string }) =>
+      socialService.editComment(eventId, commentId, text),
+    onSuccess: (updated) => {
+      qc.setQueryData(
+        ['social', 'comments', eventId],
+        (old: { id: string; text?: string; editedAt?: string | null }[] | undefined) =>
+          (old ?? []).map((c) =>
+            c.id === updated.id ? { ...c, text: updated.text, editedAt: updated.editedAt } : c,
+          ),
+      )
+    },
+  })
+}
+
+export function useToggleCommentLike(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: string) => socialService.likeComment(eventId, commentId),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: ['social', 'comments', eventId] })
+      const prev = qc.getQueryData<{ id: string; likeCount: number; isLiked: boolean }[]>(['social', 'comments', eventId])
+      qc.setQueryData(
+        ['social', 'comments', eventId],
+        (old: { id: string; likeCount: number; isLiked: boolean }[] | undefined) =>
+          (old ?? []).map((c) =>
+            c.id === commentId
+              ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
+              : c,
+          ),
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['social', 'comments', eventId], ctx.prev)
+    },
+    onSuccess: (result, commentId) => {
+      qc.setQueryData(
+        ['social', 'comments', eventId],
+        (old: { id: string; likeCount: number; isLiked: boolean }[] | undefined) =>
+          (old ?? []).map((c) =>
+            c.id === commentId ? { ...c, isLiked: result.liked, likeCount: result.likeCount } : c,
+          ),
       )
     },
   })

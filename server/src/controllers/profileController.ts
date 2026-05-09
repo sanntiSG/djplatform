@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
 import { CreateProfileSchema, UpdateProfileSchema } from '@dj/shared'
 import {
   createProfile,
@@ -8,6 +9,7 @@ import {
   listProfiles,
   serializeProfile,
 } from '../services/profileService.js'
+import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
 
 export async function create(req: Request, res: Response, next: NextFunction) {
@@ -55,6 +57,26 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
       return
     }
     res.json(serializeProfile(profile))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updatePhotoCaption(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { photoId } = req.params
+    const { caption } = z.object({ caption: z.string().max(500).trim() }).parse(req.body)
+
+    const profile = await Profile.findOne({ userId: req.user!.id })
+    if (!profile) { res.status(404).json({ error: 'Perfil no encontrado' }); return }
+
+    const photo = profile.photos?.find((p) => p._id?.toString() === photoId)
+    if (!photo) { res.status(404).json({ error: 'Foto no encontrada' }); return }
+
+    photo.caption = caption
+    await profile.save()
+
+    res.json({ id: photo._id?.toString(), caption: photo.caption })
   } catch (err) {
     next(err)
   }

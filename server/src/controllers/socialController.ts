@@ -6,7 +6,10 @@ import {
   getSocialStats,
   listComments,
   addComment,
+  editComment,
+  toggleCommentLike,
   deleteComment,
+  getEventOwnerId,
 } from '../services/socialService.js'
 
 export async function getStats(req: Request, res: Response, next: NextFunction) {
@@ -36,18 +39,26 @@ export async function attend(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+function serializeComment(c: ReturnType<typeof Object.assign>, userId?: string) {
+  return {
+    id: (c._id ?? c.id)?.toString(),
+    userId: c.userId?.toString(),
+    userEmail: c.userEmail,
+    text: c.text,
+    createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : c.createdAt,
+    editedAt: c.editedAt instanceof Date ? c.editedAt.toISOString() : c.editedAt,
+    parentId: c.parentId?.toString() ?? null,
+    likeCount: c.likeCount ?? 0,
+    isLiked: c.isLiked ?? false,
+    isOwn: userId ? c.userId?.toString() === userId : false,
+    replies: (c.replies ?? []).map((r: typeof c) => serializeComment(r, userId)),
+  }
+}
+
 export async function getComments(req: Request, res: Response, next: NextFunction) {
   try {
-    const comments = await listComments(req.params.id)
-    res.json(
-      comments.map((c) => ({
-        id: c._id.toString(),
-        userId: c.userId.toString(),
-        userEmail: c.userEmail,
-        text: c.text,
-        createdAt: c.createdAt.toISOString(),
-      })),
-    )
+    const comments = await listComments(req.params.id, req.user?.id)
+    res.json(comments.map((c) => serializeComment(c, req.user?.id)))
   } catch (err) {
     next(err)
   }
@@ -55,15 +66,30 @@ export async function getComments(req: Request, res: Response, next: NextFunctio
 
 export async function postComment(req: Request, res: Response, next: NextFunction) {
   try {
+    const { text, parentId } = z
+      .object({ text: z.string().min(1).max(500).trim(), parentId: z.string().optional() })
+      .parse(req.body)
+    const comment = await addComment(req.params.id, req.user!.id, text, parentId)
+    res.status(201).json(serializeComment({ ...comment.toObject(), isLiked: false, isOwn: true, replies: [] }, req.user!.id))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function patchComment(req: Request, res: Response, next: NextFunction) {
+  try {
     const { text } = z.object({ text: z.string().min(1).max(500).trim() }).parse(req.body)
-    const comment = await addComment(req.params.id, req.user!.id, text)
-    res.status(201).json({
-      id: comment._id.toString(),
-      userId: comment.userId.toString(),
-      userEmail: comment.userEmail,
-      text: comment.text,
-      createdAt: comment.createdAt.toISOString(),
-    })
+    const comment = await editComment(req.params.commentId, req.user!.id, text)
+    res.json(serializeComment({ ...comment.toObject(), isLiked: false, isOwn: true, replies: [] }, req.user!.id))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function likeComment(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await toggleCommentLike(req.params.commentId, req.user!.id)
+    res.json(result)
   } catch (err) {
     next(err)
   }
@@ -71,7 +97,8 @@ export async function postComment(req: Request, res: Response, next: NextFunctio
 
 export async function removeComment(req: Request, res: Response, next: NextFunction) {
   try {
-    await deleteComment(req.params.commentId, req.user!.id)
+    const eventOwnerId = await getEventOwnerId(req.params.id)
+    await deleteComment(req.params.commentId, req.user!.id, req.user!.role === 'admin', eventOwnerId)
     res.status(204).send()
   } catch (err) {
     next(err)

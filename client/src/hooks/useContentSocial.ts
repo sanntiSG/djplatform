@@ -7,7 +7,7 @@ export function useProfileContentSocial(profileId: string) {
     queryKey: ['profiles', profileId, 'content-social'],
     queryFn: () => contentSocialService.getSocial(profileId),
     enabled: Boolean(profileId),
-    staleTime: 30_000,
+    staleTime: 10_000,
   })
 }
 
@@ -115,6 +115,69 @@ export function useDeleteContentComment(
         const cur = old[key] ?? { likeCount: 0, commentCount: 0, isLiked: false }
         return { ...old, [key]: { ...cur, commentCount: Math.max(0, cur.commentCount - 1) } }
       })
+    },
+  })
+}
+
+export function useEditContentComment(
+  profileId: string,
+  kind: 'photo' | 'media',
+  targetId: string,
+) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, text }: { commentId: string; text: string }) =>
+      contentSocialService.editComment(profileId, kind, targetId, commentId, text),
+    onSuccess: (updated) => {
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'content-comments', kind, targetId],
+        (old) =>
+          old
+            ? old.map((c) => (c.id === updated.id ? { ...c, text: updated.text, editedAt: updated.editedAt } : c))
+            : old,
+      )
+    },
+  })
+}
+
+export function useToggleContentCommentLike(
+  profileId: string,
+  kind: 'photo' | 'media',
+  targetId: string,
+) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      contentSocialService.likeComment(profileId, kind, targetId, commentId),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileId, 'content-comments', kind, targetId] })
+      const prev = qc.getQueryData<ProfileComment[]>(['profiles', profileId, 'content-comments', kind, targetId])
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'content-comments', kind, targetId],
+        (old) =>
+          old
+            ? old.map((c) =>
+                c.id === commentId
+                  ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
+                  : c,
+              )
+            : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'content-comments', kind, targetId], ctx.prev)
+    },
+    onSuccess: (result, commentId) => {
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'content-comments', kind, targetId],
+        (old) =>
+          old
+            ? old.map((c) =>
+                c.id === commentId ? { ...c, isLiked: result.liked, likeCount: result.likeCount } : c,
+              )
+            : old,
+      )
     },
   })
 }

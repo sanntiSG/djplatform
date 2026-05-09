@@ -4,6 +4,7 @@ import { buildFeed } from '../../../utils/profileFeed.js'
 import { ContentViewerItem } from './ContentViewerItem.js'
 import { ContentViewerHUD } from './ContentViewerHUD.js'
 import { THEMES } from '../ThemeSelector.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
 import type { ProfileResponse, EventResponse } from '../../../types/index.js'
 
 interface ContentViewerProps {
@@ -26,6 +27,10 @@ export function ContentViewer({
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
   const currentIndexRef = useRef(0)
   const closingRef = useRef(false)
+
+  const { user } = useAuthStore()
+  const isOwner = !!user && user.id === profile.userId
+  const profileQueryKey = `${profile.slug}-${profile.id}`
 
   const feed = buildFeed(profile, events)
   const initialIndex = Math.max(
@@ -206,6 +211,8 @@ export function ContentViewer({
                 profile={profile}
                 isActive={isActive}
                 isNear={isNear}
+                isOwner={isOwner}
+                profileQueryKey={profileQueryKey}
               />
               <ContentViewerHUD
                 item={item}

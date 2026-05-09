@@ -6,6 +6,9 @@ export const profileService = {
   getMine: () => apiClient.get<ProfileResponse>('/profiles/me'),
   updateMine: (data: UpdateProfileInput) => apiClient.patch<ProfileResponse>('/profiles/me', data),
   getById: (id: string) => apiClient.get<ProfileResponse>(`/profiles/${id}`),
+  updatePhotoCaption: (photoId: string, caption: string) =>
+    apiClient.patch<{ id: string; caption: string }>(`/profiles/me/photos/${photoId}`, { caption }),
+
   list: (params?: {
     type?: string
     location?: string

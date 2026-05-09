@@ -8,6 +8,24 @@ function extractProfileId(param: string): string | null {
   return id.length === 24 ? id : null
 }
 
+function serializeComment(c: Record<string, unknown>, userId?: string): Record<string, unknown> {
+  return {
+    id: String(c._id ?? c.id ?? ''),
+    userId: String(c.userId ?? ''),
+    userEmail: String(c.userEmail ?? ''),
+    text: String(c.text ?? ''),
+    createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : String(c.createdAt ?? ''),
+    editedAt: c.editedAt instanceof Date ? (c.editedAt as Date).toISOString() : (c.editedAt ?? null),
+    parentId: c.parentId ? String(c.parentId) : null,
+    likeCount: Number(c.likeCount ?? 0),
+    isLiked: Boolean(c.isLiked ?? false),
+    isOwn: userId ? String(c.userId ?? '') === userId : false,
+    replies: Array.isArray(c.replies)
+      ? (c.replies as Record<string, unknown>[]).map((r) => serializeComment(r, userId))
+      : [],
+  }
+}
+
 export async function getProfileSocial(req: Request, res: Response, next: NextFunction) {
   try {
     const profileId = extractProfileId(req.params.id)
@@ -49,16 +67,8 @@ export async function getProfileComments(req: Request, res: Response, next: Next
     const profileId = extractProfileId(req.params.id)
     if (!profileId) return res.status(400).json({ message: 'ID invalido' })
 
-    const comments = await service.getComments(profileId)
-    res.json(
-      comments.map((c) => ({
-        id: c._id.toString(),
-        userEmail: c.userEmail,
-        text: c.text,
-        createdAt: c.createdAt.toISOString(),
-        isOwn: req.user?.id === c.userId.toString(),
-      })),
-    )
+    const comments = await service.getComments(profileId, req.user?.id)
+    res.json(comments.map((c) => serializeComment(c as unknown as Record<string, unknown>, req.user?.id)))
   } catch (err) {
     next(err)
   }
@@ -69,21 +79,45 @@ export async function postProfileComment(req: Request, res: Response, next: Next
     const profileId = extractProfileId(req.params.id)
     if (!profileId) return res.status(400).json({ message: 'ID invalido' })
 
-    const { text } = z.object({ text: z.string().min(1).max(500).trim() }).parse(req.body)
+    const { text, parentId } = z
+      .object({ text: z.string().min(1).max(500).trim(), parentId: z.string().optional() })
+      .parse(req.body)
+
     const comment = await service.addComment(
       req.user!.id,
       profileId,
       req.user!.email,
       text,
+      parentId,
     )
 
-    res.status(201).json({
-      id: comment._id.toString(),
-      userEmail: comment.userEmail,
-      text: comment.text,
-      createdAt: comment.createdAt.toISOString(),
-      isOwn: true,
-    })
+    res.status(201).json(serializeComment(
+      { ...comment.toObject?.() ?? comment, isLiked: false, isOwn: true, replies: [] } as Record<string, unknown>,
+      req.user!.id,
+    ))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function patchProfileComment(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { commentId } = req.params
+    const { text } = z.object({ text: z.string().min(1).max(500).trim() }).parse(req.body)
+    const comment = await service.editComment(commentId, req.user!.id, text)
+    res.json(serializeComment(
+      { ...comment.toObject?.() ?? comment, isLiked: false, isOwn: true, replies: [] } as Record<string, unknown>,
+      req.user!.id,
+    ))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function likeProfileComment(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await service.toggleCommentLike(req.params.commentId, req.user!.id)
+    res.json(result)
   } catch (err) {
     next(err)
   }
@@ -91,8 +125,11 @@ export async function postProfileComment(req: Request, res: Response, next: Next
 
 export async function deleteProfileComment(req: Request, res: Response, next: NextFunction) {
   try {
-    const { commentId } = req.params
-    await service.deleteComment(req.user!.id, commentId, req.user!.role === 'admin')
+    const profileId = extractProfileId(req.params.id)
+    if (!profileId) return res.status(400).json({ message: 'ID invalido' })
+
+    const profileOwnerId = await service.getProfileOwnerId(profileId)
+    await service.deleteComment(req.user!.id, req.params.commentId, req.user!.role === 'admin', profileOwnerId)
     res.status(204).send()
   } catch (err) {
     next(err)

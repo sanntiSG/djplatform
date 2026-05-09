@@ -8,6 +8,8 @@ import {
   attend,
   getComments,
   postComment,
+  patchComment,
+  likeComment,
   removeComment,
 } from '../controllers/socialController.js'
 
@@ -24,6 +26,8 @@ router.post('/:id/like', requireAuth, like)
 router.post('/:id/attend', requireAuth, attend)
 router.get('/:id/comments', getComments)
 router.post('/:id/comments', requireAuth, postComment)
+router.patch('/:id/comments/:commentId', requireAuth, patchComment)
+router.post('/:id/comments/:commentId/like', requireAuth, likeComment)
 router.delete('/:id/comments/:commentId', requireAuth, removeComment)
 
 export default router

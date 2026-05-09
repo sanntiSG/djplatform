@@ -13,6 +13,8 @@ import {
 import { EventCard } from '../components/events/EventCard.js'
 import { WhatsAppButton } from '../components/ui/WhatsAppButton.js'
 import { Pill } from '../components/ui/Pill.js'
+import { FollowButton } from '../components/ui/FollowButton.js'
+import { LikeButton } from '../components/ui/LikeButton.js'
 import { Tabs } from '../components/ui/Tabs.js'
 import { Button } from '../components/ui/Button.js'
 import { ProfileComments } from '../components/profile/ProfileComments.js'
@@ -195,7 +197,7 @@ function ThemeBackground({ theme }: { theme: ProfileTheme }) {
 export default function PublicProfile() {
   const { id } = useParams<{ id: string }>()
   const { data: profile, isLoading } = useProfile(id!)
-  const { data: events } = useProfileEvents(id!)
+  const { data: events, isLoading: eventsLoading } = useProfileEvents(id!)
   const { user, token } = useAuthStore()
   const [tab, setTab] = useState('feed')
   const [shareNotice, setShareNotice] = useState(false)
@@ -321,12 +323,11 @@ export default function PublicProfile() {
   ]
 
   return (
-    <div className="min-h-screen bg-[var(--bg)]" style={accentStyle}>
+    <div className="min-h-screen bg-[var(--bg)] pt-16" style={accentStyle}>
 
       {/* HERO */}
       <div
-        className="relative w-full overflow-hidden"
-        style={{ height: 'clamp(220px, 50vh, 640px)' }}
+        className="relative w-full overflow-hidden h-[240px] md:h-[320px] lg:h-[500px]"
       >
         <ThemeBackground theme={theme} />
 
@@ -370,20 +371,20 @@ export default function PublicProfile() {
         )}
 
         {/* Desktop: identidad flotando en el hero */}
-        <div className="hidden lg:flex absolute inset-0 items-end justify-center z-10" style={{ paddingBottom: 56 }}>
+        <div className="hidden lg:flex absolute inset-x-0 bottom-0 items-end justify-center z-20" style={{ paddingBottom: 48 }}>
           <div className="max-w-4xl w-full px-8 flex flex-col items-center text-center gap-4">
             <div className="pi" style={{ filter: `drop-shadow(0 0 48px ${profileAccent}3a)` }}>
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={profile.artistName}
-                  className="rounded-full object-cover"
-                  style={{ width: 156, height: 156, border: '5px solid var(--bg)' }}
+                  className="rounded-full object-cover shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                  style={{ width: 160, height: 160, border: '6px solid var(--bg)', position: 'relative', zIndex: 30 }}
                 />
               ) : (
                 <div
-                  className="rounded-full flex items-center justify-center"
-                  style={{ width: 156, height: 156, background: `${profileAccent}1c`, border: '5px solid var(--bg)' }}
+                  className="rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                  style={{ width: 160, height: 160, background: `${profileAccent}1c`, border: '6px solid var(--bg)', position: 'relative', zIndex: 30 }}
                 >
                   <span className="font-display font-bold" style={{ fontSize: 56, color: profileAccent }}>
                     {profile.artistName.charAt(0).toUpperCase()}
@@ -392,10 +393,10 @@ export default function PublicProfile() {
               )}
             </div>
 
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1.5">
               <h1
                 className="pi font-display font-semibold text-[var(--text)] leading-none"
-                style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}
+                style={{ fontSize: 'clamp(2.5rem, 4.5vw, 3.5rem)', textShadow: '0 4px 32px rgba(0,0,0,0.6)' }}
               >
                 {profile.artistName}
               </h1>
@@ -450,19 +451,11 @@ export default function PublicProfile() {
 
             <div className="pi flex flex-wrap items-center justify-center gap-2">
               {token && !isOwner && (
-                <button
-                  type="button"
-                  disabled={followPending}
-                  onClick={() => toggleFollow()}
-                  className="font-sans text-sm font-medium px-6 py-2.5 rounded-full transition-all duration-150 disabled:opacity-50 active:scale-95"
-                  style={
-                    social?.isFollowing
-                      ? { background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', color: 'var(--text-muted)' }
-                      : { background: 'var(--accent)', border: '1.5px solid var(--accent)', color: 'var(--bg)' }
-                  }
-                >
-                  {social?.isFollowing ? 'Siguiendo' : 'Seguir'}
-                </button>
+                <FollowButton
+                  isFollowing={!!social?.isFollowing}
+                  onToggle={() => toggleFollow()}
+                  isPending={followPending}
+                />
               )}
               {profile.whatsapp && (
                 <WhatsAppButton
@@ -472,27 +465,29 @@ export default function PublicProfile() {
                 />
               )}
               {token && !isOwner && (
-                <button
-                  type="button"
-                  disabled={likePending}
-                  onClick={() => toggleLike()}
-                  className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border border-[var(--border)] transition-all duration-150 disabled:opacity-50 active:scale-95"
+                <div
+                  className="flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
                   style={{
-                    color: social?.isLiked ? profileAccent : 'var(--text-muted)',
-                    borderColor: social?.isLiked ? `${profileAccent}40` : undefined,
+                    borderColor: social?.isLiked ? `${profileAccent}40` : 'var(--border)',
                     background: social?.isLiked ? `${profileAccent}0d` : undefined,
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={social?.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                  </svg>
-                  {likeCount > 0 && <span>{likeCount}</span>}
-                </button>
+                  <LikeButton
+                    isLiked={!!social?.isLiked}
+                    likeCount={likeCount > 0 ? likeCount : undefined}
+                    onToggle={() => toggleLike()}
+                    disabled={likePending}
+                    accentColor={profileAccent}
+                    size="sm"
+                    layout="row"
+                  />
+                </div>
               )}
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+                style={{ transition: 'color 0.15s ease, transform 0.14s cubic-bezier(0.32,0.72,0,1)' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -503,7 +498,8 @@ export default function PublicProfile() {
               <button
                 type="button"
                 onClick={scrollToComments}
-                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+                style={{ transition: 'color 0.15s ease, transform 0.14s cubic-bezier(0.32,0.72,0,1)' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -617,27 +613,11 @@ export default function PublicProfile() {
           {/* Action row */}
           <div className="pi flex flex-wrap items-center justify-center md:justify-start gap-2 mt-6">
             {token && !isOwner && (
-              <button
-                type="button"
-                disabled={followPending}
-                onClick={() => toggleFollow()}
-                className="font-sans text-sm font-medium px-6 py-2.5 rounded-full transition-all duration-150 disabled:opacity-50 active:scale-95"
-                style={
-                  social?.isFollowing
-                    ? {
-                        background: 'transparent',
-                        border: '1.5px solid rgba(255,255,255,0.15)',
-                        color: 'var(--text-muted)',
-                      }
-                    : {
-                        background: 'var(--accent)',
-                        border: '1.5px solid var(--accent)',
-                        color: 'var(--bg)',
-                      }
-                }
-              >
-                {social?.isFollowing ? 'Siguiendo' : 'Seguir'}
-              </button>
+              <FollowButton
+                isFollowing={!!social?.isFollowing}
+                onToggle={() => toggleFollow()}
+                isPending={followPending}
+              />
             )}
 
             {profile.whatsapp && (
@@ -649,28 +629,30 @@ export default function PublicProfile() {
             )}
 
             {token && !isOwner && (
-              <button
-                type="button"
-                disabled={likePending}
-                onClick={() => toggleLike()}
-                className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border border-[var(--border)] transition-all duration-150 disabled:opacity-50 active:scale-95"
+              <div
+                className="flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
                 style={{
-                  color: social?.isLiked ? profileAccent : 'var(--text-muted)',
-                  borderColor: social?.isLiked ? `${profileAccent}40` : undefined,
+                  borderColor: social?.isLiked ? `${profileAccent}40` : 'var(--border)',
                   background: social?.isLiked ? `${profileAccent}0d` : undefined,
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={social?.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                {likeCount > 0 && <span>{likeCount}</span>}
-              </button>
+                <LikeButton
+                  isLiked={!!social?.isLiked}
+                  likeCount={likeCount > 0 ? likeCount : undefined}
+                  onToggle={() => toggleLike()}
+                  disabled={likePending}
+                  accentColor={profileAccent}
+                  size="sm"
+                  layout="row"
+                />
+              </div>
             )}
 
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+              style={{ transition: 'color 0.15s ease' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -682,7 +664,8 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={scrollToComments}
-              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] transition-colors duration-150 active:scale-95"
+              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+              style={{ transition: 'color 0.15s ease' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -731,6 +714,7 @@ export default function PublicProfile() {
             <ProfileFeed
               profile={profile}
               events={events ?? []}
+              isLoading={eventsLoading}
               onItemClick={handleOpenViewer}
             />
           )}

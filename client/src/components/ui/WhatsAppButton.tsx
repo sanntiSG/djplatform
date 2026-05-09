@@ -18,7 +18,7 @@ export function WhatsAppButton({ number, message, size = 'md', className }: What
       rel="noopener noreferrer"
       className={cn(
         'inline-flex items-center justify-center gap-2 font-sans font-medium rounded-md',
-        'bg-emerald-500 text-white hover:bg-emerald-400 active:scale-95 transition-all duration-150',
+        'bg-emerald-500 text-white hover:bg-emerald-400 active:scale-[0.93] transition-[transform,background-color] duration-[140ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
         {
           'px-4 py-2 text-sm': size === 'sm',
           'px-6 py-3 text-sm': size === 'md',

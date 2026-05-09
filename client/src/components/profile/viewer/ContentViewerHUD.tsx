@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import gsap from 'gsap'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useToggleContentLike, useProfileContentSocial } from '../../../hooks/useContentSocial.js'
 import { useSocialStats, useToggleLike as useToggleEventLike, useToggleAttend } from '../../../hooks/useSocial.js'
 import { ContentComments } from './ContentComments.js'
+import { LikeButton } from '../../ui/LikeButton.js'
+import { useTapAnim } from '../../../hooks/useTapAnim.js'
 import type { FeedItem } from '../../../utils/profileFeed.js'
 import type { ProfileResponse } from '../../../types/index.js'
+import { DURATION, EASE, prefersReducedMotion } from '../../../utils/motion.js'
 
 interface ContentViewerHUDProps {
   item: FeedItem
@@ -23,14 +27,6 @@ function formatRelative(date: Date) {
   if (d < 30) return `hace ${Math.floor(d / 7)}sem`
   if (d < 365) return `hace ${Math.floor(d / 30)}m`
   return `hace ${Math.floor(d / 365)}a`
-}
-
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  )
 }
 
 function CommentIcon() {
@@ -59,6 +55,33 @@ function AttendIcon({ filled }: { filled: boolean }) {
   )
 }
 
+function HUDButton({
+  onClick,
+  ariaLabel,
+  color,
+  children,
+}: {
+  onClick: () => void
+  ariaLabel: string
+  color?: string
+  children: React.ReactNode
+}) {
+  const { ref, tapHandlers } = useTapAnim<HTMLButtonElement>(0.9)
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="flex flex-col items-center gap-1 select-none"
+      style={{ color: color ?? 'rgba(255,255,255,0.85)' }}
+      {...tapHandlers}
+    >
+      {children}
+    </button>
+  )
+}
+
 // HUD para items de foto/media
 function ContentHUDButtons({
   item,
@@ -83,52 +106,32 @@ function ContentHUDButtons({
   return (
     <>
       {token && (
-        <button
-          type="button"
+        <LikeButton
+          isLiked={stats.isLiked}
+          likeCount={stats.likeCount}
+          onToggle={() => toggleLike()}
           disabled={liking}
-          onClick={() => toggleLike()}
-          aria-label={stats.isLiked ? 'Quitar like' : 'Dar like'}
-          className="flex flex-col items-center gap-1 disabled:opacity-50 active:scale-95 transition-transform duration-[120ms]"
-          style={{ color: stats.isLiked ? profileAccent : 'rgba(255,255,255,0.85)' }}
-        >
-          <span className={stats.isLiked ? 'heart-pop' : ''}>
-            <HeartIcon filled={stats.isLiked} />
-          </span>
-          {stats.likeCount > 0 && (
-            <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              {stats.likeCount}
-            </span>
-          )}
-        </button>
+          accentColor={profileAccent}
+          size="md"
+          layout="column"
+        />
       )}
-      <button
-        type="button"
-        onClick={onOpenComments}
-        aria-label="Ver comentarios"
-        className="flex flex-col items-center gap-1 active:scale-95 transition-transform duration-[120ms]"
-        style={{ color: 'rgba(255,255,255,0.85)' }}
-      >
+      <HUDButton onClick={onOpenComments} ariaLabel="Ver comentarios">
         <CommentIcon />
         {stats.commentCount > 0 && (
           <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {stats.commentCount}
           </span>
         )}
-      </button>
-      <button
-        type="button"
-        onClick={onShare}
-        aria-label="Compartir"
-        className="flex flex-col items-center gap-1 active:scale-95 transition-transform duration-[120ms]"
-        style={{ color: 'rgba(255,255,255,0.85)' }}
-      >
+      </HUDButton>
+      <HUDButton onClick={onShare} ariaLabel="Compartir">
         <ShareIcon />
-      </button>
+      </HUDButton>
     </>
   )
 }
 
-// HUD para eventos (reusan social de evento)
+// HUD para eventos
 function EventHUDButtons({
   eventId,
   profileAccent,
@@ -143,32 +146,41 @@ function EventHUDButtons({
   const { mutate: toggleLike } = useToggleEventLike(eventId)
   const { mutate: toggleAttend } = useToggleAttend(eventId)
 
+  const attendRef = useRef<HTMLButtonElement>(null)
+  const isAttending = !!stats?.userAttending
+
+  const handleAttend = () => {
+    toggleAttend()
+    if (attendRef.current && !prefersReducedMotion()) {
+      gsap.fromTo(
+        attendRef.current,
+        { scale: 0.88 },
+        { scale: 1, duration: DURATION.base, ease: EASE.pop },
+      )
+    }
+  }
+
   return (
     <>
       {token && (
         <>
+          <LikeButton
+            isLiked={!!stats?.userLiked}
+            likeCount={stats?.likeCount}
+            onToggle={() => toggleLike()}
+            accentColor={profileAccent}
+            size="md"
+            layout="column"
+          />
           <button
+            ref={attendRef}
             type="button"
-            onClick={() => toggleLike()}
-            aria-label="Like evento"
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform duration-[120ms]"
-            style={{ color: stats?.userLiked ? profileAccent : 'rgba(255,255,255,0.85)' }}
-          >
-            <HeartIcon filled={!!stats?.userLiked} />
-            {(stats?.likeCount ?? 0) > 0 && (
-              <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                {stats?.likeCount}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleAttend()}
+            onClick={handleAttend}
             aria-label="Asistir al evento"
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform duration-[120ms]"
-            style={{ color: stats?.userAttending ? profileAccent : 'rgba(255,255,255,0.85)' }}
+            className="flex flex-col items-center gap-1 select-none"
+            style={{ color: isAttending ? profileAccent : 'rgba(255,255,255,0.85)' }}
           >
-            <AttendIcon filled={!!stats?.userAttending} />
+            <AttendIcon filled={isAttending} />
             {((stats as { attendCount?: number })?.attendCount ?? 0) > 0 && (
               <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 {(stats as { attendCount?: number })?.attendCount}
@@ -177,16 +189,32 @@ function EventHUDButtons({
           </button>
         </>
       )}
-      <button
-        type="button"
-        onClick={onShare}
-        aria-label="Compartir"
-        className="flex flex-col items-center gap-1 active:scale-95 transition-transform duration-[120ms]"
-        style={{ color: 'rgba(255,255,255,0.85)' }}
-      >
+      <HUDButton onClick={onShare} ariaLabel="Compartir">
         <ShareIcon />
-      </button>
+      </HUDButton>
     </>
+  )
+}
+
+function CloseButton({ onClick, size }: { onClick: () => void; size: 'sm' | 'md' }) {
+  const { ref, tapHandlers } = useTapAnim<HTMLButtonElement>(0.88)
+  const wh = size === 'sm' ? 'w-9 h-9' : 'w-10 h-10'
+  const iconSz = size === 'sm' ? 16 : 18
+  const sw = size === 'sm' ? '2.2' : '2.5'
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      aria-label="Cerrar visor"
+      className={`${wh} rounded-full flex items-center justify-center select-none flex-shrink-0`}
+      style={{ background: size === 'sm' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.9)' }}
+      {...tapHandlers}
+    >
+      <svg width={iconSz} height={iconSz} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw}>
+        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
   )
 }
 
@@ -224,17 +252,7 @@ export function ContentViewerHUD({
             {formatRelative(item.addedAt)}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar visor"
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform duration-[120ms]"
-          style={{ background: 'rgba(0,0,0,0.4)', color: 'rgba(255,255,255,0.9)' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        <CloseButton onClick={onClose} size="sm" />
       </div>
 
       {/* Mobile bottom bar */}
@@ -261,34 +279,22 @@ export function ContentViewerHUD({
 
       {/* Desktop right sidebar */}
       <div
-        className="hidden lg:flex absolute right-0 top-0 bottom-0 z-20 w-20 flex-col items-center py-8 gap-6"
-        style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.55) 0%, transparent 100%)' }}
+        className="hidden lg:flex absolute right-0 top-0 bottom-0 z-20 w-20 flex-col items-center py-10 gap-8"
+        style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.65) 0%, transparent 100%)' }}
       >
-        {/* Avatar + close at top */}
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-5">
           {profile.avatar && (
             <img
               src={profile.avatar}
               alt={profile.artistName}
-              className="w-10 h-10 rounded-full object-cover"
-              style={{ border: '2px solid rgba(255,255,255,0.2)' }}
+              className="w-11 h-11 rounded-full object-cover"
+              style={{ border: '2px solid rgba(255,255,255,0.25)' }}
             />
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar visor"
-            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform duration-[120ms]"
-            style={{ background: 'rgba(0,0,0,0.4)', color: 'rgba(255,255,255,0.9)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <CloseButton onClick={onClose} size="md" />
         </div>
 
-        {/* Social buttons */}
-        <div className="flex flex-col items-center gap-6 mt-auto mb-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-10">
           {isContentItem ? (
             <ContentHUDButtons
               item={item as FeedItem & { kind: 'photo' | 'media' }}
@@ -307,12 +313,12 @@ export function ContentViewerHUD({
         </div>
       </div>
 
-      {/* Comments drawer (photo/media only) */}
       {commentsOpen && isContentItem && (
         <ContentComments
           profileId={profile.id}
           kind={(item as FeedItem & { kind: 'photo' | 'media' }).kind}
           targetId={item.id}
+          ownerUserId={profile.userId}
           onClose={() => setCommentsOpen(false)}
         />
       )}

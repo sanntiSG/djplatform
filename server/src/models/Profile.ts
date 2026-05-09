@@ -11,7 +11,9 @@ interface IMediaItem {
 }
 
 interface IPhoto {
+  _id?: Types.ObjectId
   url: string
+  caption?: string
   addedAt: Date
 }
 
@@ -54,6 +56,7 @@ const mediaItemSchema = new mongoose.Schema<IMediaItem>(
 const photoSchema = new mongoose.Schema<IPhoto>(
   {
     url: { type: String, required: true },
+    caption: { type: String, maxlength: 500 },
     addedAt: { type: Date, default: Date.now },
   },
   { _id: true },

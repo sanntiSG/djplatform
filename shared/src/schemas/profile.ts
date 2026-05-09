@@ -4,6 +4,7 @@ import { MediaItemSchema } from './media.js'
 export const PhotoSchema = z.object({
   id: z.string().optional(),
   url: z.string().url(),
+  caption: z.string().max(500).optional(),
   addedAt: z.string().datetime(),
 })
 export type Photo = z.infer<typeof PhotoSchema>
@@ -73,11 +74,25 @@ export const ProfileSocialSchema = z.object({
 })
 export type ProfileSocial = z.infer<typeof ProfileSocialSchema>
 
-export const ProfileCommentSchema = z.object({
+const BaseProfileCommentSchema = z.object({
   id: z.string(),
+  userId: z.string(),
   userEmail: z.string(),
   text: z.string(),
   createdAt: z.string(),
   isOwn: z.boolean(),
+  parentId: z.string().nullable().optional(),
+  likeCount: z.number().default(0),
+  isLiked: z.boolean().default(false),
+  editedAt: z.string().nullable().optional(),
+})
+
+export const ProfileCommentSchema = BaseProfileCommentSchema.extend({
+  replies: BaseProfileCommentSchema.array().default([]),
 })
 export type ProfileComment = z.infer<typeof ProfileCommentSchema>
+
+export const UpdatePhotoCaptionSchema = z.object({
+  caption: z.string().max(500).optional(),
+})
+export type UpdatePhotoCaptionInput = z.infer<typeof UpdatePhotoCaptionSchema>

@@ -7,7 +7,7 @@ export function useProfileSocial(profileId: string) {
     queryKey: ['profiles', profileId, 'social'],
     queryFn: () => profileSocialService.getSocial(profileId),
     enabled: Boolean(profileId),
-    staleTime: 30_000,
+    staleTime: 10_000,
   })
 }
 
@@ -15,13 +15,22 @@ export function useFollow(profileId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => profileSocialService.follow(profileId),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileId, 'social'] })
+      const prev = qc.getQueryData<ProfileSocial>(['profiles', profileId, 'social'])
+      qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
+        old
+          ? { ...old, isFollowing: !old.isFollowing, followerCount: old.isFollowing ? old.followerCount - 1 : old.followerCount + 1 }
+          : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'social'], ctx.prev)
+    },
     onSuccess: (result) => {
-      qc.setQueryData<ProfileSocial>(
-        ['profiles', profileId, 'social'],
-        (old) =>
-          old
-            ? { ...old, isFollowing: result.followed, followerCount: result.followerCount }
-            : old,
+      qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
+        old ? { ...old, isFollowing: result.followed, followerCount: result.followerCount } : old,
       )
     },
   })
@@ -31,11 +40,22 @@ export function useProfileLike(profileId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => profileSocialService.like(profileId),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileId, 'social'] })
+      const prev = qc.getQueryData<ProfileSocial>(['profiles', profileId, 'social'])
+      qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
+        old
+          ? { ...old, isLiked: !old.isLiked, likeCount: old.isLiked ? old.likeCount - 1 : old.likeCount + 1 }
+          : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'social'], ctx.prev)
+    },
     onSuccess: (result) => {
-      qc.setQueryData<ProfileSocial>(
-        ['profiles', profileId, 'social'],
-        (old) =>
-          old ? { ...old, isLiked: result.liked, likeCount: result.likeCount } : old,
+      qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
+        old ? { ...old, isLiked: result.liked, likeCount: result.likeCount } : old,
       )
     },
   })
@@ -79,6 +99,60 @@ export function useDeleteProfileComment(profileId: string) {
       qc.setQueryData<ProfileSocial>(
         ['profiles', profileId, 'social'],
         (old) => (old ? { ...old, commentCount: Math.max(0, old.commentCount - 1) } : old),
+      )
+    },
+  })
+}
+
+export function useEditProfileComment(profileId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, text }: { commentId: string; text: string }) =>
+      profileSocialService.editComment(profileId, commentId, text),
+    onSuccess: (updated) => {
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'comments'],
+        (old) =>
+          old
+            ? old.map((c) => (c.id === updated.id ? { ...c, text: updated.text, editedAt: updated.editedAt } : c))
+            : old,
+      )
+    },
+  })
+}
+
+export function useToggleProfileCommentLike(profileId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: string) => profileSocialService.likeComment(profileId, commentId),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileId, 'comments'] })
+      const prev = qc.getQueryData<ProfileComment[]>(['profiles', profileId, 'comments'])
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'comments'],
+        (old) =>
+          old
+            ? old.map((c) =>
+                c.id === commentId
+                  ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
+                  : c,
+              )
+            : old,
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'comments'], ctx.prev)
+    },
+    onSuccess: (result, commentId) => {
+      qc.setQueryData<ProfileComment[]>(
+        ['profiles', profileId, 'comments'],
+        (old) =>
+          old
+            ? old.map((c) =>
+                c.id === commentId ? { ...c, isLiked: result.liked, likeCount: result.likeCount } : c,
+              )
+            : old,
       )
     },
   })

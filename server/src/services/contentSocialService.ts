@@ -41,7 +41,7 @@ export async function getProfileContentSocial(
       { $group: { _id: { kind: '$targetKind', id: '$targetId' }, count: { $sum: 1 } } },
     ]),
     ContentComment.aggregate([
-      { $match: { profileId: new mongoose.Types.ObjectId(profileId), targetId: { $in: allIds } } },
+      { $match: { profileId: new mongoose.Types.ObjectId(profileId), targetId: { $in: allIds }, parentId: null } },
       { $group: { _id: { kind: '$targetKind', id: '$targetId' }, count: { $sum: 1 } } },
     ]),
     userId
@@ -126,16 +126,34 @@ export async function getContentComments(
   profileId: string,
   targetKind: TargetKind,
   targetId: string,
-): Promise<IContentComment[]> {
-  const docs = await ContentComment.find({
-    profileId: new mongoose.Types.ObjectId(profileId),
-    targetKind,
-    targetId: new mongoose.Types.ObjectId(targetId),
-  })
+  userId?: string,
+): Promise<unknown[]> {
+  const pid = new mongoose.Types.ObjectId(profileId)
+  const tid = new mongoose.Types.ObjectId(targetId)
+
+  const roots = await ContentComment.find({ profileId: pid, targetKind, targetId: tid, parentId: null })
     .sort({ createdAt: -1 })
     .limit(50)
     .lean()
-  return docs as unknown as IContentComment[]
+
+  const rootIds = roots.map((c) => c._id)
+  const replies = await ContentComment.find({ parentId: { $in: rootIds } })
+    .sort({ createdAt: 1 })
+    .lean()
+
+  const replyMap = new Map<string, typeof replies>()
+  for (const r of replies) {
+    const parentKey = r.parentId!.toString()
+    if (!replyMap.has(parentKey)) replyMap.set(parentKey, [])
+    replyMap.get(parentKey)!.push(r)
+  }
+
+  return roots.map((c) => ({
+    ...c,
+    replies: replyMap.get(c._id.toString()) ?? [],
+    isOwn: userId ? c.userId.toString() === userId : false,
+    isLiked: userId ? (c.likedBy ?? []).some((id: mongoose.Types.ObjectId) => id.toString() === userId) : false,
+  }))
 }
 
 export async function addContentComment(
@@ -145,6 +163,7 @@ export async function addContentComment(
   targetId: string,
   userEmail: string,
   text: string,
+  parentId?: string,
 ): Promise<IContentComment> {
   return ContentComment.create({
     userId,
@@ -153,18 +172,67 @@ export async function addContentComment(
     targetId,
     userEmail,
     text,
+    parentId: parentId ? new mongoose.Types.ObjectId(parentId) : null,
   }) as unknown as IContentComment
+}
+
+export async function editContentComment(
+  commentId: string,
+  userId: string,
+  text: string,
+): Promise<IContentComment> {
+  const comment = await ContentComment.findById(commentId)
+  if (!comment) throw Object.assign(new Error('Comentario no encontrado'), { status: 404 })
+  if (comment.userId.toString() !== userId) {
+    throw Object.assign(new Error('Sin permiso'), { status: 403 })
+  }
+  comment.text = text.trim()
+  comment.editedAt = new Date()
+  await comment.save()
+  return comment as unknown as IContentComment
+}
+
+export async function toggleContentCommentLike(
+  commentId: string,
+  userId: string,
+): Promise<{ liked: boolean; likeCount: number }> {
+  const comment = await ContentComment.findById(commentId)
+  if (!comment) throw Object.assign(new Error('Comentario no encontrado'), { status: 404 })
+
+  const uid = new mongoose.Types.ObjectId(userId)
+  const alreadyLiked = (comment.likedBy ?? []).some((id) => id.toString() === userId)
+
+  if (alreadyLiked) {
+    comment.likedBy = (comment.likedBy ?? []).filter((id) => id.toString() !== userId)
+    comment.likeCount = Math.max(0, (comment.likeCount ?? 0) - 1)
+  } else {
+    comment.likedBy = [...(comment.likedBy ?? []), uid]
+    comment.likeCount = (comment.likeCount ?? 0) + 1
+  }
+
+  await comment.save()
+  return { liked: !alreadyLiked, likeCount: comment.likeCount }
 }
 
 export async function deleteContentComment(
   userId: string,
   commentId: string,
   isAdmin: boolean,
+  profileOwnerId?: string,
 ): Promise<void> {
   const comment = await ContentComment.findById(commentId)
   if (!comment) throw Object.assign(new Error('Comentario no encontrado'), { status: 404 })
-  if (!isAdmin && comment.userId.toString() !== userId) {
+
+  const isAuthor = comment.userId.toString() === userId
+  const isOwner = profileOwnerId === userId
+
+  if (!isAuthor && !isAdmin && !isOwner) {
     throw Object.assign(new Error('Sin permiso'), { status: 403 })
   }
   await comment.deleteOne()
+}
+
+export async function getProfileOwnerId(profileId: string): Promise<string | undefined> {
+  const profile = await Profile.findById(profileId).select('userId').lean()
+  return profile?.userId?.toString()
 }

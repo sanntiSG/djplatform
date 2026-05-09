@@ -17,6 +17,15 @@ export const socialService = {
   postComment: (eventId: string, text: string) =>
     apiClient.post<CommentResponse>(`/events/${eventId}/comments`, { text }),
 
+  editComment: (eventId: string, commentId: string, text: string) =>
+    apiClient.patch<CommentResponse>(`/events/${eventId}/comments/${commentId}`, { text }),
+
+  likeComment: (eventId: string, commentId: string) =>
+    apiClient.post<{ liked: boolean; likeCount: number }>(
+      `/events/${eventId}/comments/${commentId}/like`,
+      {},
+    ),
+
   deleteComment: (eventId: string, commentId: string) =>
     apiClient.delete<void>(`/events/${eventId}/comments/${commentId}`),
 }

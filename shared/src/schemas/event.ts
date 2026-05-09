@@ -40,12 +40,21 @@ export const EventResponseSchema = z.object({
 })
 export type EventResponse = z.infer<typeof EventResponseSchema>
 
-export const CommentResponseSchema = z.object({
+const BaseCommentSchema = z.object({
   id: z.string(),
   userId: z.string(),
   userEmail: z.string(),
   text: z.string(),
   createdAt: z.string(),
+  editedAt: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  likeCount: z.number().default(0),
+  isLiked: z.boolean().default(false),
+  isOwn: z.boolean().default(false),
+})
+
+export const CommentResponseSchema = BaseCommentSchema.extend({
+  replies: BaseCommentSchema.array().default([]),
 })
 export type CommentResponse = z.infer<typeof CommentResponseSchema>
 

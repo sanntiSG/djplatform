@@ -30,6 +30,18 @@ export const contentSocialService = {
       { text },
     ),
 
+  editComment: (profileId: string, kind: 'photo' | 'media', targetId: string, commentId: string, text: string) =>
+    apiClient.patch<ProfileComment>(
+      `/profiles/${profileId}/content/${kind}/${targetId}/comments/${commentId}`,
+      { text },
+    ),
+
+  likeComment: (profileId: string, kind: 'photo' | 'media', targetId: string, commentId: string) =>
+    apiClient.post<{ liked: boolean; likeCount: number }>(
+      `/profiles/${profileId}/content/${kind}/${targetId}/comments/${commentId}/like`,
+      {},
+    ),
+
   deleteComment: (profileId: string, kind: 'photo' | 'media', targetId: string, commentId: string) =>
     apiClient.delete<void>(
       `/profiles/${profileId}/content/${kind}/${targetId}/comments/${commentId}`,

@@ -68,3 +68,39 @@ export function useUpdateProfile() {
     },
   })
 }
+
+export function useUpdatePhotoCaption(profileQueryKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ photoId, caption }: { photoId: string; caption: string }) =>
+      profileService.updatePhotoCaption(photoId, caption),
+    onMutate: async ({ photoId, caption }) => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileQueryKey] })
+      const prev = qc.getQueryData<ProfileResponse>(['profiles', profileQueryKey])
+      qc.setQueryData<ProfileResponse>(['profiles', profileQueryKey], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          photos: (old.photos ?? []).map((p) =>
+            p.id === photoId ? { ...p, caption } : p,
+          ),
+        }
+      })
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileQueryKey], ctx.prev)
+    },
+    onSuccess: (result, { photoId }) => {
+      qc.setQueryData<ProfileResponse>(['profiles', profileQueryKey], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          photos: (old.photos ?? []).map((p) =>
+            p.id === photoId ? { ...p, caption: result.caption } : p,
+          ),
+        }
+      })
+    },
+  })
+}
