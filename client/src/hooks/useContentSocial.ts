@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { contentSocialService, type ContentSocialMap } from '../services/contentSocialService.js'
+import { useToastStore } from '../store/useToastStore.js'
 import type { ProfileComment } from '../types/index.js'
+
+const errToast = () => useToastStore.getState().show('No se pudo guardar. Intenta de nuevo.')
 
 export function useProfileContentSocial(profileId: string) {
   return useQuery({
@@ -42,6 +45,7 @@ export function useToggleContentLike(
       if (ctx?.prev) {
         qc.setQueryData(['profiles', profileId, 'content-social'], ctx.prev)
       }
+      errToast()
     },
     onSuccess: (result) => {
       qc.setQueryData<ContentSocialMap>(['profiles', profileId, 'content-social'], (old) => {
@@ -104,6 +108,7 @@ export function usePostContentComment(
         )
       }
     },
+    onError: () => errToast(),
   })
 }
 
@@ -129,6 +134,7 @@ export function useDeleteContentComment(
         return { ...old, [key]: { ...cur, commentCount: Math.max(0, cur.commentCount - 1) } }
       })
     },
+    onError: () => errToast(),
   })
 }
 
@@ -150,6 +156,7 @@ export function useEditContentComment(
             : old,
       )
     },
+    onError: () => errToast(),
   })
 }
 
@@ -180,6 +187,7 @@ export function useToggleContentCommentLike(
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'content-comments', kind, targetId], ctx.prev)
+      errToast()
     },
     onSuccess: (result, commentId) => {
       qc.setQueryData<ProfileComment[]>(

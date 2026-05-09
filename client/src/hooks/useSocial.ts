@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { socialService } from '../services/socialService.js'
 import { useAuthStore } from '../store/useAuthStore.js'
+import { useToastStore } from '../store/useToastStore.js'
+
+const errToast = () => useToastStore.getState().show('No se pudo guardar. Intenta de nuevo.')
 
 export function useSocialStats(eventId: string) {
   return useQuery({
@@ -26,6 +29,7 @@ export function useToggleLike(eventId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['social', 'stats', eventId], ctx.prev)
+      errToast()
     },
     onSuccess: (data) => {
       qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
@@ -50,6 +54,7 @@ export function useToggleAttend(eventId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['social', 'stats', eventId], ctx.prev)
+      errToast()
     },
     onSuccess: (data) => {
       qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
@@ -89,6 +94,7 @@ export function usePostComment(eventId: string) {
         )
       }
     },
+    onError: () => errToast(),
   })
 }
 
@@ -105,6 +111,7 @@ export function useDeleteComment(eventId: string) {
         old ? { ...old, commentCount: Math.max(0, old.commentCount - 1) } : old,
       )
     },
+    onError: () => errToast(),
   })
 }
 
@@ -122,6 +129,7 @@ export function useEditComment(eventId: string) {
           ),
       )
     },
+    onError: () => errToast(),
   })
 }
 
@@ -145,6 +153,7 @@ export function useToggleCommentLike(eventId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['social', 'comments', eventId], ctx.prev)
+      errToast()
     },
     onSuccess: (result, commentId) => {
       qc.setQueryData(

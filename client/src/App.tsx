@@ -1,5 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Header } from './components/ui/Header.js'
+import { Toast } from './components/ui/Toast.js'
+import { useToastStore } from './store/useToastStore.js'
 import { RequireAuth } from './components/auth/RequireAuth.js'
 import Landing from './pages/Landing.js'
 import Login from './pages/Login.js'
@@ -23,6 +25,12 @@ import MainFeed from './pages/MainFeed.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
+function ToastRenderer() {
+  const { message, variant, dismiss } = useToastStore()
+  if (!message) return null
+  return <Toast message={message} variant={variant} onDismiss={dismiss} />
+}
+
 export default function App() {
   const { pathname } = useLocation()
   const showHeader = !HIDE_HEADER_PATHS.includes(pathname)
@@ -30,6 +38,7 @@ export default function App() {
   return (
     <>
       {showHeader && <Header />}
+      <ToastRenderer />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth/login" element={<Login />} />

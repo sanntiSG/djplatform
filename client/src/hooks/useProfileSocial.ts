@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { profileSocialService } from '../services/profileSocialService.js'
+import { useToastStore } from '../store/useToastStore.js'
 import type { ProfileSocial, ProfileComment } from '../types/index.js'
+
+const errToast = () => useToastStore.getState().show('No se pudo guardar. Intenta de nuevo.')
 
 export function useProfileSocial(profileId: string) {
   return useQuery({
@@ -27,6 +30,7 @@ export function useFollow(profileId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'social'], ctx.prev)
+      errToast()
     },
     onSuccess: (result) => {
       qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
@@ -52,6 +56,7 @@ export function useProfileLike(profileId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'social'], ctx.prev)
+      errToast()
     },
     onSuccess: (result) => {
       qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
@@ -91,6 +96,7 @@ export function usePostProfileComment(profileId: string) {
         )
       }
     },
+    onError: () => errToast(),
   })
 }
 
@@ -109,6 +115,7 @@ export function useDeleteProfileComment(profileId: string) {
         (old) => (old ? { ...old, commentCount: Math.max(0, old.commentCount - 1) } : old),
       )
     },
+    onError: () => errToast(),
   })
 }
 
@@ -126,6 +133,7 @@ export function useEditProfileComment(profileId: string) {
             : old,
       )
     },
+    onError: () => errToast(),
   })
 }
 
@@ -151,6 +159,7 @@ export function useToggleProfileCommentLike(profileId: string) {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['profiles', profileId, 'comments'], ctx.prev)
+      errToast()
     },
     onSuccess: (result, commentId) => {
       qc.setQueryData<ProfileComment[]>(
