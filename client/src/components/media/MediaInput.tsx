@@ -68,9 +68,17 @@ export function MediaInput({ onAdd }: MediaInputProps) {
       )}
 
       {preview && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bg-[var(--surface-elevated)] p-4 rounded-xl border border-[var(--border)]">
           <MediaEmbed item={preview} />
-          <Button type="button" variant="primary" size="sm" onClick={handleAdd}>
+          <div className="flex flex-col gap-1.5 mt-2">
+            <label className="font-sans text-xs text-[var(--text-muted)] ml-1">Título o descripción</label>
+            <Input 
+              value={preview.title || ''}
+              onChange={(e) => setPreview({ ...preview, title: e.target.value })}
+              placeholder="Ej: Mi último set en vivo..."
+            />
+          </div>
+          <Button type="button" variant="primary" size="sm" onClick={handleAdd} className="mt-1">
             Agregar al perfil
           </Button>
         </div>

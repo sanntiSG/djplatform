@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useToggleContentLike, useProfileContentSocial } from '../../../hooks/useContentSocial.js'
@@ -257,9 +258,10 @@ export function ContentViewerHUD({
 
       {/* Mobile bottom bar */}
       <div
-        className="lg:hidden absolute bottom-0 left-0 right-0 z-20 flex items-center justify-around px-6 pb-8 pt-6"
+        className="lg:hidden absolute bottom-0 left-0 right-0 z-20 flex items-center justify-around px-6 pb-8 pt-6 pointer-events-none"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)' }}
       >
+        <div className="flex items-center justify-around w-full pointer-events-auto">
         {isContentItem ? (
           <ContentHUDButtons
             item={item as FeedItem & { kind: 'photo' | 'media' }}
@@ -275,6 +277,7 @@ export function ContentViewerHUD({
             onShare={onShare}
           />
         )}
+        </div>
       </div>
 
       {/* Desktop right sidebar */}
@@ -313,14 +316,15 @@ export function ContentViewerHUD({
         </div>
       </div>
 
-      {commentsOpen && isContentItem && (
+      {commentsOpen && isContentItem && createPortal(
         <ContentComments
           profileId={profile.id}
           kind={(item as FeedItem & { kind: 'photo' | 'media' }).kind}
           targetId={item.id}
           ownerUserId={profile.userId}
           onClose={() => setCommentsOpen(false)}
-        />
+        />,
+        document.body
       )}
     </>
   )

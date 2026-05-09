@@ -9,7 +9,7 @@ gsap.registerPlugin(ScrollTrigger)
 const GENRES = [
   'Techno', 'House', 'Minimal', 'Afro House', 'Deep House', 'Melodic Techno',
   'Trance', 'Drum & Bass', 'Ambient', 'Electronic', 'Progressive', 'Nu Disco',
-  'Tech House', 'Organic House', 'Industrial', 'EBM',
+  'Tech House', 'Organic House', 'Industrial', 'EBM, Remix, Cumbia, Enganche',
 ]
 
 const FEATURES = [

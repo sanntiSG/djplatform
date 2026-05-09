@@ -21,6 +21,7 @@ import { ProfileComments } from '../components/profile/ProfileComments.js'
 import { ProfileFeed } from '../components/profile/ProfileFeed.js'
 import { ProfileMusicTab } from '../components/profile/ProfileMusicTab.js'
 import { ProfileMediaTab } from '../components/profile/ProfileMediaTab.js'
+import { PublishMenu } from '../components/profile/PublishMenu.js'
 import { ContentViewer } from '../components/profile/viewer/ContentViewer.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
@@ -450,6 +451,7 @@ export default function PublicProfile() {
             )}
 
             <div className="pi flex flex-wrap items-center justify-center gap-2">
+              {isOwner && <PublishMenu />}
               {token && !isOwner && (
                 <FollowButton
                   isFollowing={!!social?.isFollowing}
@@ -612,6 +614,7 @@ export default function PublicProfile() {
 
           {/* Action row */}
           <div className="pi flex flex-wrap items-center justify-center md:justify-start gap-2 mt-6">
+            {isOwner && <PublishMenu />}
             {token && !isOwner && (
               <FollowButton
                 isFollowing={!!social?.isFollowing}

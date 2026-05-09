@@ -132,7 +132,7 @@ export function ContentViewerItem({
 
     return (
       <div
-        className="w-full h-full flex items-center justify-center px-4 sm:px-8"
+        className="w-full h-full flex items-center justify-center px-4 sm:px-8 relative"
         style={{ background: 'var(--bg)' }}
       >
         {shouldMount ? (
@@ -152,6 +152,18 @@ export function ContentViewerItem({
           </>
         ) : (
           <MediaPlaceholder item={data} />
+        )}
+        
+        {/* Render media title at the bottom */}
+        {data.title && (
+          <div
+            className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-24 pt-10 pointer-events-none"
+            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }}
+          >
+            <p className="font-sans text-sm text-white/85 leading-relaxed text-center drop-shadow-md">
+              {data.title}
+            </p>
+          </div>
         )}
       </div>
     )

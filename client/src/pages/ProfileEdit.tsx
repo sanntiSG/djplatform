@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMyProfile, useUpdateProfile } from '../hooks/useProfile.js'
 import { ProfileForm } from '../components/profile/ProfileForm.js'
 import { AvatarUploader } from '../components/profile/AvatarUploader.js'
@@ -29,9 +29,22 @@ const TYPE_LABEL: Record<string, string> = {
 
 export default function ProfileEdit() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: profile, isLoading } = useMyProfile()
   const { mutateAsync: update, isPending } = useUpdateProfile()
-  const [tab, setTab] = useState('info')
+  
+  const [tab, setTab] = useState(() => {
+    const hashTab = location.hash.replace('#', '')
+    return TABS.some(t => t.id === hashTab) ? hashTab : 'info'
+  })
+
+  // Update tab if URL hash changes
+  useEffect(() => {
+    const hashTab = location.hash.replace('#', '')
+    if (TABS.some(t => t.id === hashTab)) {
+      setTab(hashTab)
+    }
+  }, [location.hash])
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [localTheme, setLocalTheme] = useState<ProfileTheme>('minimal')
   const [localAccent, setLocalAccent] = useState('')
@@ -40,6 +53,7 @@ export default function ProfileEdit() {
   const [visualSaved, setVisualSaved] = useState(false)
   const [photosSaved, setPhotosSaved] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<Photo | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -104,15 +118,25 @@ export default function ProfileEdit() {
     setUploadingPhoto(true)
     try {
       const url = await uploadImage(file, 'dj/profile-photos')
-      setLocalPhotos((prev) => [...prev, { url, addedAt: new Date().toISOString() }])
+      setPhotoPreview({ url, addedAt: new Date().toISOString(), caption: '' })
     } finally {
       setUploadingPhoto(false)
       e.target.value = ''
     }
   }
 
+  function handleConfirmPhoto() {
+    if (!photoPreview) return
+    setLocalPhotos((prev) => [...prev, photoPreview])
+    setPhotoPreview(null)
+  }
+
   function handleRemovePhoto(index: number) {
     setLocalPhotos((prev: Photo[]) => prev.filter((_, i) => i !== index))
+  }
+
+  function handleUpdatePhotoCaption(index: number, caption: string) {
+    setLocalPhotos((prev: Photo[]) => prev.map((p, i) => (i === index ? { ...p, caption } : p)))
   }
 
   function handleAddMedia(item: MediaItem) {
@@ -121,6 +145,10 @@ export default function ProfileEdit() {
 
   function handleRemoveMedia(index: number) {
     setMediaItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function handleUpdateMediaTitle(index: number, newTitle: string) {
+    setMediaItems((prev) => prev.map((item, i) => (i === index ? { ...item, title: newTitle } : item)))
   }
 
   return (
@@ -211,17 +239,48 @@ export default function ProfileEdit() {
               </p>
             </div>
 
+            {/* Photo Preview block */}
+            {photoPreview && (
+              <div className="flex flex-col gap-3 bg-[var(--surface-elevated)] p-4 rounded-xl border border-[var(--border)]">
+                <img
+                  src={photoPreview.url}
+                  alt="Previsualización"
+                  className="w-full rounded-lg object-contain bg-black/20"
+                  style={{ maxHeight: 300 }}
+                />
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <label className="font-sans text-xs text-[var(--text-muted)] ml-1">Título o descripción (Opcional)</label>
+                  <input
+                    type="text"
+                    value={photoPreview.caption || ''}
+                    onChange={(e) => setPhotoPreview({ ...photoPreview, caption: e.target.value })}
+                    placeholder="Ej: Noche increíble en..."
+                    className="w-full bg-transparent border-b border-[var(--border)] px-1 py-1.5 text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPhotoPreview(null)} className="flex-1">
+                    Cancelar
+                  </Button>
+                  <Button type="button" variant="primary" size="sm" onClick={handleConfirmPhoto} className="flex-1">
+                    Agregar a mis fotos
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Photo grid preview */}
-            {localPhotos.length > 0 && (
+            {localPhotos.length > 0 && !photoPreview && (
               <ProfilePhotoGrid
                 photos={localPhotos}
                 editable
                 onRemove={handleRemovePhoto}
+                onUpdateCaption={handleUpdatePhotoCaption}
               />
             )}
 
             {/* Add photo button */}
-            {localPhotos.length < 30 && (
+            {localPhotos.length < 30 && !photoPreview && (
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
@@ -244,7 +303,7 @@ export default function ProfileEdit() {
               className="hidden"
             />
 
-            {localPhotos.length > 0 && (
+            {localPhotos.length > 0 && !photoPreview && (
               <Button
                 type="button"
                 variant="primary"
@@ -328,7 +387,7 @@ export default function ProfileEdit() {
               </p>
             </div>
             <MediaInput onAdd={handleAddMedia} />
-            <MediaList items={mediaItems} editable onRemove={handleRemoveMedia} />
+            <MediaList items={mediaItems} editable onRemove={handleRemoveMedia} onUpdate={handleUpdateMediaTitle} />
             {mediaItems.length > 0 && (
               <Button
                 type="button"

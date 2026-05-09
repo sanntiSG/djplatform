@@ -119,11 +119,11 @@ export function serializeProfile(p: IProfile) {
       if (typeof photo === 'string') {
         return { url: photo, addedAt: p.updatedAt?.toISOString() ?? p.createdAt.toISOString() }
       }
-      const ph = photo as { _id?: { toString(): string }; url: string; addedAt?: Date | string }
+      const ph = photo as { _id?: { toString(): string }; url: string; addedAt?: Date | string; caption?: string }
       const addedAt = ph.addedAt instanceof Date
         ? ph.addedAt.toISOString()
         : (ph.addedAt ?? p.createdAt.toISOString())
-      return { id: ph._id?.toString(), url: ph.url, addedAt }
+      return { id: ph._id?.toString(), url: ph.url, addedAt, caption: ph.caption }
     }),
     priceRange: p.priceRange,
     isVisible: p.isVisible,

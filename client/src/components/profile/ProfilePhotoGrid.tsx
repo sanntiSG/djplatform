@@ -5,9 +5,10 @@ interface ProfilePhotoGridProps {
   photos: Photo[]
   editable?: boolean
   onRemove?: (index: number) => void
+  onUpdateCaption?: (index: number, caption: string) => void
 }
 
-export function ProfilePhotoGrid({ photos, editable, onRemove }: ProfilePhotoGridProps) {
+export function ProfilePhotoGrid({ photos, editable, onRemove, onUpdateCaption }: ProfilePhotoGridProps) {
   const [lightbox, setLightbox] = useState<string | null>(null)
 
   if (photos.length === 0) return null
@@ -36,6 +37,24 @@ export function ProfilePhotoGrid({ photos, editable, onRemove }: ProfilePhotoGri
               >
                 <span className="text-white text-xs leading-none">x</span>
               </button>
+            )}
+            {editable ? (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-1.5 transition-opacity duration-150">
+                <input
+                  type="text"
+                  value={photo.caption || ''}
+                  onChange={(e) => onUpdateCaption?.(i, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Agregar descripción..."
+                  className="w-full bg-transparent border-none text-xs text-white placeholder:text-white/50 focus:outline-none"
+                />
+              </div>
+            ) : (
+              photo.caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6 pointer-events-none">
+                  <p className="text-xs text-white line-clamp-2">{photo.caption}</p>
+                </div>
+              )
             )}
           </div>
         ))}

@@ -8,10 +8,11 @@ interface MediaListProps {
   items: MediaItem[]
   editable?: boolean
   onRemove?: (index: number) => void
+  onUpdate?: (index: number, newTitle: string) => void
   onItemClick?: (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => void
 }
 
-export function MediaList({ items, editable = false, onRemove, onItemClick }: MediaListProps) {
+export function MediaList({ items, editable = false, onRemove, onUpdate, onItemClick }: MediaListProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,8 +45,19 @@ export function MediaList({ items, editable = false, onRemove, onItemClick }: Me
           }}
         >
           <MediaEmbed item={item} />
-          {item.title && (
-            <p className="mt-1.5 text-xs text-[var(--text-muted)] font-sans">{item.title}</p>
+          {editable ? (
+            <input
+              type="text"
+              value={item.title || ''}
+              onChange={(e) => onUpdate?.(i, e.target.value)}
+              placeholder="Añadir título o descripción..."
+              className="mt-2 w-full bg-transparent border-b border-[var(--border)] px-1 py-1 text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            item.title && (
+              <p className="mt-1.5 text-xs text-[var(--text-muted)] font-sans">{item.title}</p>
+            )
           )}
           {editable && onRemove && (
             <Button
