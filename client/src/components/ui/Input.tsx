@@ -21,7 +21,7 @@ export function Input({ label, error, className, id, ...props }: InputProps) {
         {...props}
         className={cn(
           'w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-md',
-          'px-4 py-3 text-[var(--text)] text-sm font-sans placeholder:text-[var(--text-muted)]',
+          'px-4 py-3 text-[var(--text)] text-base font-sans placeholder:text-[var(--text-muted)]',
           'transition-all duration-150',
           'focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]',
           error && 'border-red-500/60 focus:border-red-500 focus:ring-red-500',

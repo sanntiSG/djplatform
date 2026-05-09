@@ -70,7 +70,7 @@ export function EventForm({ initial = {}, onSubmit, submitLabel = 'Publicar even
           placeholder="Contale a la gente de que se trata..."
           maxLength={2000}
           rows={4}
-          className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text)] text-sm font-sans placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] resize-none"
+          className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text)] text-base font-sans placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] resize-none"
         />
       </div>
 

@@ -31,7 +31,7 @@ export function MediaList({ items, editable = false, onRemove, onItemClick }: Me
   if (items.length === 0) return null
 
   return (
-    <div ref={listRef} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div ref={listRef} className="grid grid-cols-1 lg:grid-cols-2 gap-5 justify-center">
       {items.map((item, i) => (
         <div
           key={i}

@@ -98,7 +98,7 @@ export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }:
           placeholder="Contate un poco..."
           maxLength={1000}
           rows={4}
-          className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text)] text-sm font-sans placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] resize-none transition-all duration-150"
+          className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text)] text-base font-sans placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] resize-none transition-all duration-150"
         />
         <p className="text-xs text-[var(--text-muted)] font-sans text-right">{(form.bio ?? '').length}/1000</p>
       </div>
