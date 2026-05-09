@@ -51,7 +51,7 @@ export function MediaList({ items, editable = false, onRemove, onUpdate, onItemC
               value={item.title || ''}
               onChange={(e) => onUpdate?.(i, e.target.value)}
               placeholder="Añadir título o descripción..."
-              className="mt-2 w-full bg-transparent border-b border-[var(--border)] px-1 py-1 text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              className="mt-2 w-full bg-transparent border-b border-[var(--border)] px-1 py-1 text-base sm:text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (

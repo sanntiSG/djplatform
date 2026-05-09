@@ -255,7 +255,7 @@ export default function ProfileEdit() {
                     value={photoPreview.caption || ''}
                     onChange={(e) => setPhotoPreview({ ...photoPreview, caption: e.target.value })}
                     placeholder="Ej: Noche increíble en..."
-                    className="w-full bg-transparent border-b border-[var(--border)] px-1 py-1.5 text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full bg-transparent border-b border-[var(--border)] px-1 py-1.5 text-base sm:text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div className="flex gap-2 mt-1">

@@ -164,7 +164,7 @@ function CommentItem({
               rows={2}
               maxLength={500}
               autoFocus
-              className="w-full bg-[var(--surface)] border border-[var(--accent)]/40 rounded-lg px-3 py-2 font-sans text-sm text-[var(--text)] resize-none focus:outline-none focus:border-[var(--accent)]/70 transition-colors"
+              className="w-full bg-[var(--surface)] border border-[var(--accent)]/40 rounded-lg px-3 py-2 font-sans text-base sm:text-sm text-[var(--text)] resize-none focus:outline-none focus:border-[var(--accent)]/70 transition-colors"
             />
             <div className="flex gap-2">
               <button
@@ -209,7 +209,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={() => onReply(comment.id, comment.userEmail)}
-                className="font-sans text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors duration-150 opacity-0 group-hover/item:opacity-100"
+                className="font-sans text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors duration-150"
               >
                 Responder
               </button>
@@ -219,7 +219,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={() => { setEditing(true); setEditText(comment.text) }}
-                className="font-sans text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors duration-150 opacity-0 group-hover/item:opacity-100"
+                className="font-sans text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors duration-150"
               >
                 Editar
               </button>
@@ -229,7 +229,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="font-sans text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors duration-150 opacity-0 group-hover/item:opacity-100 ml-auto"
+                className="font-sans text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors duration-150 ml-auto"
               >
                 Eliminar
               </button>
@@ -278,10 +278,10 @@ function ReplyInput({
         ref={ref}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        rows={2}
-        maxLength={500}
-        placeholder="Escribe una respuesta..."
-        className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 font-sans text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none focus:border-[var(--accent)]/50 transition-colors"
+        placeholder={replyTo ? `Respondiendo a ${replyTo.email.split('@')[0]}...` : 'Escribe una respuesta...'}
+        rows={1}
+        className="flex-1 bg-transparent border-none p-0 font-sans text-base sm:text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none overflow-hidden py-1"
+        style={{ minHeight: 24, maxHeight: 120 }}
       />
       <div className="flex gap-2">
         <button

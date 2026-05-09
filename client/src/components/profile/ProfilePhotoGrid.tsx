@@ -46,7 +46,7 @@ export function ProfilePhotoGrid({ photos, editable, onRemove, onUpdateCaption }
                   onChange={(e) => onUpdateCaption?.(i, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   placeholder="Agregar descripción..."
-                  className="w-full bg-transparent border-none text-xs text-white placeholder:text-white/50 focus:outline-none"
+                  className="w-full bg-transparent border-none text-base sm:text-xs text-white placeholder:text-white/50 focus:outline-none"
                 />
               </div>
             ) : (

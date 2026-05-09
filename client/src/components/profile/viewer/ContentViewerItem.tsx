@@ -157,10 +157,10 @@ export function ContentViewerItem({
         {/* Render media title at the bottom */}
         {data.title && (
           <div
-            className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-24 pt-10 pointer-events-none"
+            className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-24 pt-16 pointer-events-none lg:pb-8 lg:pr-24"
             style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }}
           >
-            <p className="font-sans text-sm text-white/85 leading-relaxed text-center drop-shadow-md">
+            <p className="font-sans text-sm text-white/85 leading-relaxed text-center lg:text-left drop-shadow-md">
               {data.title}
             </p>
           </div>

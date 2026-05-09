@@ -53,7 +53,7 @@ export function CaptionEditor({ photoId, caption, isOwner, profileQueryKey }: Ca
 
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-6 pt-10"
+      className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-24 pt-16 lg:pb-8 lg:pr-24"
       style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)' }}
     >
       {editing ? (
@@ -66,7 +66,7 @@ export function CaptionEditor({ photoId, caption, isOwner, profileQueryKey }: Ca
             placeholder="Agrega una descripcion..."
             rows={2}
             maxLength={500}
-            className="w-full bg-black/40 rounded-xl px-4 py-3 font-sans text-sm text-white placeholder:text-white/40 resize-none focus:outline-none backdrop-blur-sm"
+            className="w-full bg-black/40 rounded-xl px-4 py-3 font-sans text-base sm:text-sm text-white placeholder:text-white/40 resize-none focus:outline-none backdrop-blur-sm"
             style={{ border: '1px solid rgba(255,255,255,0.18)' }}
           />
           <div className="flex items-center justify-between">
