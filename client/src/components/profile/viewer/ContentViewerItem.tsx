@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { eventPath } from '../../../utils/slug.js'
 import { CaptionEditor } from './CaptionEditor.js'
+import { EventTitleEditor } from './EventTitleEditor.js'
 import type { FeedItem } from '../../../utils/profileFeed.js'
 import type { ProfileResponse } from '../../../types/index.js'
 import { THEMES } from '../ThemeSelector.js'
@@ -183,12 +184,20 @@ export function ContentViewerItem({
       />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-8 pb-28 lg:pb-16 flex flex-col gap-3">
-        <h2
-          className="font-display font-semibold text-white"
-          style={{ fontSize: 'clamp(1.6rem, 4vw, 2.8rem)', textShadow: '0 2px 16px rgba(0,0,0,0.5)' }}
-        >
-          {event.title}
-        </h2>
+        <div className="flex items-start gap-2">
+          <h2
+            className="font-display font-semibold text-white flex-1"
+            style={{ fontSize: 'clamp(1.6rem, 4vw, 2.8rem)', textShadow: '0 2px 16px rgba(0,0,0,0.5)' }}
+          >
+            {event.title}
+          </h2>
+          <EventTitleEditor
+            eventId={event.id}
+            title={event.title}
+            description={event.description}
+            isOwner={!!isOwner}
+          />
+        </div>
         <div className="flex flex-wrap gap-3 items-center">
           <span className="font-sans text-sm text-white/70">{formatDate(date)}</span>
           {event.location && (

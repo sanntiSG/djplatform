@@ -35,6 +35,7 @@ export function useToggleLike(eventId: string) {
       qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
         old ? { ...old, likeCount: data.count, userLiked: data.liked } : old,
       )
+      qc.invalidateQueries({ queryKey: ['events', 'feed'] })
     },
   })
 }
@@ -60,6 +61,7 @@ export function useToggleAttend(eventId: string) {
       qc.setQueryData<Stats>(['social', 'stats', eventId], (old) =>
         old ? { ...old, attendCount: data.count, userAttending: data.attending } : old,
       )
+      qc.invalidateQueries({ queryKey: ['events', 'feed'] })
     },
   })
 }
@@ -93,6 +95,7 @@ export function usePostComment(eventId: string) {
           ),
         )
       }
+      if (!variables.parentId) qc.invalidateQueries({ queryKey: ['events', 'feed'] })
     },
     onError: () => errToast(),
   })
@@ -110,6 +113,7 @@ export function useDeleteComment(eventId: string) {
       qc.setQueryData(['social', 'stats', eventId], (old: { commentCount: number } | undefined) =>
         old ? { ...old, commentCount: Math.max(0, old.commentCount - 1) } : old,
       )
+      qc.invalidateQueries({ queryKey: ['events', 'feed'] })
     },
     onError: () => errToast(),
   })
