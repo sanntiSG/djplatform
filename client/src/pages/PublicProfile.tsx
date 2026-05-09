@@ -796,7 +796,7 @@ export default function PublicProfile() {
 
             {commentsOpen && (
               <div className="mt-6">
-                <ProfileComments profileId={profileMongoId} />
+                <ProfileComments profileId={profileMongoId} ownerUserId={profile.userId} />
               </div>
             )}
           </div>
