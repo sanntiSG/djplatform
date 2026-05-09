@@ -26,7 +26,7 @@ export function EventComments({ eventId, ownerUserId, anchorRef }: EventComments
   const comments = rawComments as unknown as ThreadComment[]
 
   async function handlePost(text: string, parentId?: string) {
-    await postComment.mutateAsync(text)
+    await postComment.mutateAsync({ text, parentId })
   }
 
   async function handleEdit(commentId: string, text: string) {

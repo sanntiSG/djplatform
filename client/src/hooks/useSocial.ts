@@ -69,16 +69,25 @@ export function useComments(eventId: string) {
 
 export function usePostComment(eventId: string) {
   const qc = useQueryClient()
+  type C = { id: string; parentId?: string | null; replies?: C[] }
   return useMutation({
-    mutationFn: (text: string) => socialService.postComment(eventId, text),
-    onSuccess: (comment) => {
-      qc.setQueryData(
-        ['social', 'comments', eventId],
-        (old: { id: string }[] | undefined) => [comment, ...(old ?? [])],
-      )
-      qc.setQueryData(['social', 'stats', eventId], (old: { commentCount: number } | undefined) =>
-        old ? { ...old, commentCount: old.commentCount + 1 } : old,
-      )
+    mutationFn: ({ text, parentId }: { text: string; parentId?: string }) =>
+      socialService.postComment(eventId, text, parentId),
+    onSuccess: (comment, variables) => {
+      if (!variables.parentId) {
+        qc.setQueryData<C[]>(['social', 'comments', eventId], (old) => [comment as C, ...(old ?? [])])
+        qc.setQueryData(['social', 'stats', eventId], (old: { commentCount: number } | undefined) =>
+          old ? { ...old, commentCount: old.commentCount + 1 } : old,
+        )
+      } else {
+        qc.setQueryData<C[]>(['social', 'comments', eventId], (old) =>
+          (old ?? []).map((c) =>
+            c.id === variables.parentId
+              ? { ...c, replies: [...(c.replies ?? []), comment as C] }
+              : c,
+          ),
+        )
+      }
     },
   })
 }

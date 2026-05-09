@@ -14,8 +14,8 @@ export const socialService = {
   getComments: (eventId: string) =>
     apiClient.get<CommentResponse[]>(`/events/${eventId}/comments`),
 
-  postComment: (eventId: string, text: string) =>
-    apiClient.post<CommentResponse>(`/events/${eventId}/comments`, { text }),
+  postComment: (eventId: string, text: string, parentId?: string) =>
+    apiClient.post<CommentResponse>(`/events/${eventId}/comments`, { text, ...(parentId ? { parentId } : {}) }),
 
   editComment: (eventId: string, commentId: string, text: string) =>
     apiClient.patch<CommentResponse>(`/events/${eventId}/comments/${commentId}`, { text }),

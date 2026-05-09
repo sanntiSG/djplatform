@@ -71,17 +71,25 @@ export function useProfileComments(profileId: string) {
 
 export function usePostProfileComment(profileId: string) {
   const qc = useQueryClient()
+  type C = ProfileComment & { replies?: C[] }
   return useMutation({
-    mutationFn: (text: string) => profileSocialService.postComment(profileId, text),
-    onSuccess: (comment) => {
-      qc.setQueryData<ProfileComment[]>(
-        ['profiles', profileId, 'comments'],
-        (old) => (old ? [comment, ...old] : [comment]),
-      )
-      qc.setQueryData<ProfileSocial>(
-        ['profiles', profileId, 'social'],
-        (old) => (old ? { ...old, commentCount: old.commentCount + 1 } : old),
-      )
+    mutationFn: ({ text, parentId }: { text: string; parentId?: string }) =>
+      profileSocialService.postComment(profileId, text, parentId),
+    onSuccess: (comment, variables) => {
+      if (!variables.parentId) {
+        qc.setQueryData<C[]>(['profiles', profileId, 'comments'], (old) => [comment as C, ...(old ?? [])])
+        qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
+          old ? { ...old, commentCount: old.commentCount + 1 } : old,
+        )
+      } else {
+        qc.setQueryData<C[]>(['profiles', profileId, 'comments'], (old) =>
+          (old ?? []).map((c) =>
+            c.id === variables.parentId
+              ? { ...c, replies: [...(c.replies ?? []), comment as C] }
+              : c,
+          ),
+        )
+      }
     },
   })
 }

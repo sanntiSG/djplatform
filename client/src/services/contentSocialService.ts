@@ -24,10 +24,10 @@ export const contentSocialService = {
       `/profiles/${profileId}/content/${kind}/${targetId}/comments`,
     ),
 
-  postComment: (profileId: string, kind: 'photo' | 'media', targetId: string, text: string) =>
+  postComment: (profileId: string, kind: 'photo' | 'media', targetId: string, text: string, parentId?: string) =>
     apiClient.post<ProfileComment>(
       `/profiles/${profileId}/content/${kind}/${targetId}/comments`,
-      { text },
+      { text, ...(parentId ? { parentId } : {}) },
     ),
 
   editComment: (profileId: string, kind: 'photo' | 'media', targetId: string, commentId: string, text: string) =>

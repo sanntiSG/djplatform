@@ -78,18 +78,31 @@ export function usePostContentComment(
   const key = `${kind}:${targetId}`
 
   return useMutation({
-    mutationFn: (text: string) =>
-      contentSocialService.postComment(profileId, kind, targetId, text),
-    onSuccess: (comment) => {
-      qc.setQueryData<ProfileComment[]>(
-        ['profiles', profileId, 'content-comments', kind, targetId],
-        (old) => (old ? [comment, ...old] : [comment]),
-      )
-      qc.setQueryData<ContentSocialMap>(['profiles', profileId, 'content-social'], (old) => {
-        if (!old) return old
-        const cur = old[key] ?? { likeCount: 0, commentCount: 0, isLiked: false }
-        return { ...old, [key]: { ...cur, commentCount: cur.commentCount + 1 } }
-      })
+    mutationFn: ({ text, parentId }: { text: string; parentId?: string }) =>
+      contentSocialService.postComment(profileId, kind, targetId, text, parentId),
+    onSuccess: (comment, variables) => {
+      type C = ProfileComment & { replies?: C[] }
+      if (!variables.parentId) {
+        qc.setQueryData<C[]>(
+          ['profiles', profileId, 'content-comments', kind, targetId],
+          (old) => [comment as C, ...(old ?? [])],
+        )
+        qc.setQueryData<ContentSocialMap>(['profiles', profileId, 'content-social'], (old) => {
+          if (!old) return old
+          const cur = old[key] ?? { likeCount: 0, commentCount: 0, isLiked: false }
+          return { ...old, [key]: { ...cur, commentCount: cur.commentCount + 1 } }
+        })
+      } else {
+        qc.setQueryData<C[]>(
+          ['profiles', profileId, 'content-comments', kind, targetId],
+          (old) =>
+            (old ?? []).map((c) =>
+              c.id === variables.parentId
+                ? { ...c, replies: [...(c.replies ?? []), comment as C] }
+                : c,
+            ),
+        )
+      }
     },
   })
 }

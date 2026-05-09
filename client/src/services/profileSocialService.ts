@@ -20,8 +20,8 @@ export const profileSocialService = {
   getComments: (profileId: string) =>
     apiClient.get<ProfileComment[]>(`/profiles/${profileId}/comments`),
 
-  postComment: (profileId: string, text: string) =>
-    apiClient.post<ProfileComment>(`/profiles/${profileId}/comments`, { text }),
+  postComment: (profileId: string, text: string, parentId?: string) =>
+    apiClient.post<ProfileComment>(`/profiles/${profileId}/comments`, { text, ...(parentId ? { parentId } : {}) }),
 
   editComment: (profileId: string, commentId: string, text: string) =>
     apiClient.patch<ProfileComment>(`/profiles/${profileId}/comments/${commentId}`, { text }),
