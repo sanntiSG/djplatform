@@ -17,7 +17,7 @@ const FEATURES = [
     id: 'a',
     title: 'Perfiles que comunican',
     body: 'Cada DJ y productor tiene su espacio para mostrar su sonido, su historia y su disponibilidad. Medios embebidos, sets, eventos — todo en un solo lugar.',
-    img: 'https://picsum.photos/seed/dj-console/800/600',
+    img: 'https://images.unsplash.com/photo-1571266028243-d220c6b94bf7?q=80&w=1200&auto=format&fit=crop',
     span: 'col-span-12 md:col-span-7 row-span-2',
     tall: true,
   },
@@ -25,7 +25,7 @@ const FEATURES = [
     id: 'b',
     title: 'Busca por genero, zona y disponibilidad',
     body: 'Filtros reales para encontrar el artista que necesitas para tu evento, en tu ciudad.',
-    img: 'https://picsum.photos/seed/music-search/600/400',
+    img: 'https://images.unsplash.com/photo-1598387993441-a364f854cde3?q=80&w=900&auto=format&fit=crop',
     span: 'col-span-12 md:col-span-5 row-span-1',
     tall: false,
   },
@@ -33,7 +33,7 @@ const FEATURES = [
     id: 'c',
     title: 'Contacto directo por WhatsApp',
     body: 'Sin intermediarios. Tocas el boton y hablas directamente con el artista.',
-    img: 'https://picsum.photos/seed/festival-lights/600/400',
+    img: 'https://images.unsplash.com/photo-1540039155733-5bb30b4f8a72?q=80&w=900&auto=format&fit=crop',
     span: 'col-span-12 md:col-span-5 row-span-1',
     tall: false,
   },
@@ -374,7 +374,7 @@ export default function Landing() {
             style={{ minHeight: '420px' }}
           >
             <img
-              src="https://picsum.photos/seed/concert-crowd/1280/560"
+              src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1280&auto=format&fit=crop"
               alt="Evento"
               className="w-full h-full object-cover absolute inset-0"
               style={{ filter: 'brightness(0.3) contrast(1.15)' }}
@@ -441,12 +441,6 @@ export default function Landing() {
         </div>
       </footer>
 
-      <style>{`
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
-      `}</style>
     </main>
   )
 }

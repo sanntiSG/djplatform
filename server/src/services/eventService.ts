@@ -52,7 +52,7 @@ export async function deleteEvent(eventId: string, userId: string): Promise<void
 }
 
 export async function getEventById(id: string): Promise<IEvent | null> {
-  return Event.findOne({ _id: id, isVisible: true }).populate('profileId', 'artistName avatar type whatsapp')
+  return Event.findOne({ _id: id, isVisible: true }).populate('profileId', 'artistName avatar type whatsapp userId')
 }
 
 export async function listEvents(cursor?: string, limit = 20): Promise<IEvent[]> {
@@ -77,6 +77,7 @@ export function serializeEvent(e: IEvent) {
     avatar?: string
     type?: string
     whatsapp?: string
+    userId?: Types.ObjectId
   }
 
   return {
@@ -100,6 +101,7 @@ export function serializeEvent(e: IEvent) {
       profileData.artistName
         ? {
             id: profileData._id.toString(),
+            userId: profileData.userId?.toString(),
             artistName: profileData.artistName,
             avatar: profileData.avatar,
             type: profileData.type ?? 'dj',

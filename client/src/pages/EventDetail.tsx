@@ -154,7 +154,7 @@ export default function EventDetail() {
 
         {/* Comments */}
         <div className="border-t border-[var(--border)] pt-10">
-          <EventComments eventId={event.id} anchorRef={commentsRef} />
+          <EventComments eventId={event.id} ownerUserId={event.profile?.userId} anchorRef={commentsRef} />
         </div>
       </div>
     </div>

@@ -31,6 +31,7 @@ export const EventResponseSchema = z.object({
   profile: z
     .object({
       id: z.string(),
+      userId: z.string().optional(),
       artistName: z.string(),
       avatar: z.string().optional(),
       type: z.string(),
