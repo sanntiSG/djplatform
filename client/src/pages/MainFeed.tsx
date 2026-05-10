@@ -47,11 +47,10 @@ function DJSlot({ profile }: { profile: ProfileResponse }) {
         <div
           className="w-full h-full rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-[1.04]"
           style={{
-            border: `2px solid ${
-              profile.availability === 'available'
+            border: `2px solid ${profile.availability === 'available'
                 ? 'rgba(212,255,0,0.55)'
                 : 'rgba(255,255,255,0.08)'
-            }`,
+              }`,
           }}
         >
           {profile.avatar ? (
