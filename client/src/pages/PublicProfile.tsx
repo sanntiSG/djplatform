@@ -329,38 +329,44 @@ export default function PublicProfile() {
 
       {/* HERO — full-bleed, goes under notch on mobile */}
       <div
-        className="relative w-full overflow-hidden"
+        className="relative w-full"
         style={{ height: 'clamp(280px, 60svh, 680px)' }}
       >
-        <ThemeBackground theme={theme} />
+        {/* Background layer — clipped to hero bounds so canvas/image don't overflow */}
+        <div className="absolute inset-0 overflow-hidden">
+          <ThemeBackground theme={theme} />
 
-        {profile.coverImage && (
-          <div className="absolute inset-0">
-            <img
-              src={profile.coverImage}
-              alt="Portada"
-              className="w-full h-full object-cover"
-              style={{ opacity: 0.45, filter: 'brightness(0.55)' }}
-            />
-          </div>
-        )}
+          {profile.coverImage && (
+            <div className="absolute inset-0">
+              <img
+                src={profile.coverImage}
+                alt="Portada"
+                className="w-full h-full object-cover"
+                style={{ opacity: 0.45, filter: 'brightness(0.55)' }}
+              />
+            </div>
+          )}
 
-        <div
-          className="absolute bottom-0 left-0 right-0 pointer-events-none"
-          style={{ height: '62%', background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)' }}
-        />
+          <div
+            className="absolute bottom-0 left-0 right-0 pointer-events-none"
+            style={{ height: '62%', background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)' }}
+          />
 
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 110% 70% at 50% 0%, transparent 38%, rgba(0,0,0,0.5) 100%)' }}
-        />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 110% 70% at 50% 0%, transparent 38%, rgba(0,0,0,0.5) 100%)' }}
+          />
+        </div>
 
         {isOwner && (
           <>
-            {/* Mobile: edit pill at top-left (hamburger is top-right) */}
+            {/* Mobile: edit pill — offset right so it clears the floating REsonar logo */}
             <div
               className="absolute z-10 md:hidden"
-              style={{ top: 'max(env(safe-area-inset-top), 12px)', left: 'max(env(safe-area-inset-left), 16px)' }}
+              style={{
+                top: 'max(env(safe-area-inset-top), 12px)',
+                left: 'calc(max(env(safe-area-inset-left), 16px) + 110px)',
+              }}
             >
               <Link to="/profile/edit">
                 <button type="button" className="glass-pill rounded-full font-sans text-xs font-medium text-[var(--text)] px-3 py-2 transition-transform active:scale-95">
@@ -635,28 +641,32 @@ export default function PublicProfile() {
             </div>
           )}
 
-          {/* Action row */}
-          <div className="pi flex flex-wrap items-center justify-center md:justify-start gap-2 mt-6">
-            {isOwner && <PublishMenu />}
+          {/* Action row — horizontal scroll on mobile so all actions stay visible on small screens */}
+          <div className="pi no-scrollbar flex flex-nowrap items-center gap-2 mt-6 overflow-x-auto md:flex-wrap md:justify-start md:overflow-x-visible">
+            {isOwner && <div className="flex-shrink-0"><PublishMenu /></div>}
             {token && !isOwner && (
-              <FollowButton
-                isFollowing={!!social?.isFollowing}
-                onToggle={() => toggleFollow()}
-                isPending={followPending}
-              />
+              <div className="flex-shrink-0">
+                <FollowButton
+                  isFollowing={!!social?.isFollowing}
+                  onToggle={() => toggleFollow()}
+                  isPending={followPending}
+                />
+              </div>
             )}
 
             {profile.whatsapp && (
-              <WhatsAppButton
-                number={profile.whatsapp}
-                message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
-                size="md"
-              />
+              <div className="flex-shrink-0">
+                <WhatsAppButton
+                  number={profile.whatsapp}
+                  message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
+                  size="md"
+                />
+              </div>
             )}
 
             {token && !isOwner && (
               <div
-                className="flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
+                className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
                 style={{
                   borderColor: social?.isLiked ? `${profileAccent}40` : 'var(--border)',
                   background: social?.isLiked ? `${profileAccent}0d` : undefined,
@@ -677,7 +687,7 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
               style={{ transition: 'color 0.15s ease' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -690,7 +700,7 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={scrollToComments}
-              className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
+              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
               style={{ transition: 'color 0.15s ease' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -714,11 +724,11 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* STICKY TABS */}
+        {/* STICKY TABS — top:0 + safe-area padding covers the notch on mobile; md:top-16 sits below the desktop navbar */}
         <div
-          className="sticky z-30 mt-8 -mx-0"
+          className="sticky z-30 mt-8 -mx-0 top-0 md:top-16"
           style={{
-            top: 'var(--sticky-top)',
+            paddingTop: 'env(safe-area-inset-top)',
             background: 'rgba(8,8,10,0.78)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',

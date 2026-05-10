@@ -76,6 +76,24 @@ export function Header() {
         </div>
       </header>
 
+      {/* Mobile floating wordmark pill — top-left, hidden on md+ */}
+      <Link
+        to="/"
+        className={cn(
+          'fixed z-[51] glass-pill rounded-full md:hidden h-11 px-4',
+          'flex items-center justify-center font-display font-semibold tracking-tight',
+          'text-[var(--text)] active:scale-95 transition-transform duration-100 select-none',
+        )}
+        style={{
+          top: 'max(env(safe-area-inset-top), 12px)',
+          left: 'max(env(safe-area-inset-left), 16px)',
+          fontSize: 15,
+        }}
+        aria-label="Inicio"
+      >
+        RE<span className="text-[var(--accent)]">sonar</span>
+      </Link>
+
       {/* Mobile floating hamburger pill — hidden on md+ */}
       <button
         type="button"
