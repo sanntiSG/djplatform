@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Button } from '../components/ui/Button.js'
 import { useSpringPress } from '../hooks/useSpringPress.js'
+import { prefersReducedMotion } from '../utils/motion.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -187,6 +188,74 @@ export default function Landing() {
     })
 
     return () => ctx.revert()
+  }, [])
+
+  // Hover interactions — magnetic CTAs, bento tilt, marquee pause
+  useEffect(() => {
+    const cleanups: (() => void)[] = []
+    const isMouse = window.matchMedia('(hover: hover)').matches
+
+    if (isMouse && !prefersReducedMotion()) {
+      // Magnetic hover on CTA wrapper divs
+      const magneticEls = [ctaRef.current, cta2Ref.current].filter(Boolean) as HTMLElement[]
+      magneticEls.forEach((el) => {
+        const xTo = gsap.quickTo(el, 'x', { duration: 0.55, ease: 'power3.out' })
+        const yTo = gsap.quickTo(el, 'y', { duration: 0.55, ease: 'power3.out' })
+        const onMove = (e: MouseEvent) => {
+          const r = el.getBoundingClientRect()
+          xTo((e.clientX - (r.left + r.width / 2)) * 0.38)
+          yTo((e.clientY - (r.top + r.height / 2)) * 0.38)
+        }
+        const onLeave = () => { xTo(0); yTo(0) }
+        el.addEventListener('mousemove', onMove)
+        el.addEventListener('mouseleave', onLeave)
+        cleanups.push(() => {
+          el.removeEventListener('mousemove', onMove)
+          el.removeEventListener('mouseleave', onLeave)
+          gsap.set(el, { x: 0, y: 0 })
+        })
+      })
+
+      // 3D tilt on bento cards
+      const bentoCards = bentoRef.current?.querySelectorAll('.bento-card') ?? []
+      bentoCards.forEach((card) => {
+        const el = card as HTMLElement
+        const rxTo = gsap.quickTo(el, 'rotateX', { duration: 0.55, ease: 'power3.out' })
+        const ryTo = gsap.quickTo(el, 'rotateY', { duration: 0.55, ease: 'power3.out' })
+        const onEnter = () => gsap.set(el, { transformPerspective: 900 })
+        const onMove = (e: MouseEvent) => {
+          const r = el.getBoundingClientRect()
+          ryTo(((e.clientX - r.left) / r.width - 0.5) * 11)
+          rxTo(-((e.clientY - r.top) / r.height - 0.5) * 11)
+        }
+        const onLeave = () => { rxTo(0); ryTo(0) }
+        el.addEventListener('mouseenter', onEnter)
+        el.addEventListener('mousemove', onMove)
+        el.addEventListener('mouseleave', onLeave)
+        cleanups.push(() => {
+          el.removeEventListener('mouseenter', onEnter)
+          el.removeEventListener('mousemove', onMove)
+          el.removeEventListener('mouseleave', onLeave)
+          gsap.set(el, { rotateX: 0, rotateY: 0 })
+        })
+      })
+    }
+
+    // Marquee pause on hover (CSS animation, no motion preference override needed)
+    const marqueeSection = marqueeRef.current?.parentElement
+    if (marqueeSection && marqueeRef.current) {
+      const marqueeEl = marqueeRef.current
+      const pause = () => { marqueeEl.style.animationPlayState = 'paused' }
+      const resume = () => { marqueeEl.style.animationPlayState = 'running' }
+      marqueeSection.addEventListener('mouseenter', pause)
+      marqueeSection.addEventListener('mouseleave', resume)
+      cleanups.push(() => {
+        marqueeSection.removeEventListener('mouseenter', pause)
+        marqueeSection.removeEventListener('mouseleave', resume)
+      })
+    }
+
+    return () => cleanups.forEach((fn) => fn())
   }, [])
 
   return (

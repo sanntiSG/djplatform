@@ -24,6 +24,7 @@ import { ProfileMediaTab } from '../components/profile/ProfileMediaTab.js'
 import { PublishMenu } from '../components/profile/PublishMenu.js'
 import { ContentViewer } from '../components/profile/viewer/ContentViewer.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
+import { prefersReducedMotion } from '../utils/motion.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -207,6 +208,8 @@ export default function PublicProfile() {
   const [viewerOrigin, setViewerOrigin] = useState<DOMRect | null>(null)
   const scopeRef = useRef<HTMLDivElement>(null)
   const commentsRef = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
+  const coverImgRef = useRef<HTMLImageElement>(null)
 
   const profileMongoId = id ? id.match(/[0-9a-fA-F]{24}$/)?.[0] ?? '' : ''
   const { data: social } = useProfileSocial(profileMongoId)
@@ -264,6 +267,25 @@ export default function PublicProfile() {
     }, scopeRef)
     return () => ctx.revert()
   }, [profile])
+
+  // Cover image parallax — scrubs yPercent as hero scrolls off-screen
+  useEffect(() => {
+    const img = coverImgRef.current
+    const hero = heroRef.current
+    if (!img || !hero || !profile?.coverImage) return
+    if (prefersReducedMotion()) return
+
+    const st = ScrollTrigger.create({
+      trigger: hero,
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true,
+      onUpdate: (self) => {
+        gsap.set(img, { yPercent: self.progress * 22 })
+      },
+    })
+    return () => st.kill()
+  }, [profile?.coverImage])
 
   const handleShare = useCallback(async () => {
     const url = window.location.href
@@ -329,6 +351,7 @@ export default function PublicProfile() {
 
       {/* HERO — full-bleed, goes under notch on mobile */}
       <div
+        ref={heroRef}
         className="relative w-full"
         style={{ height: 'clamp(280px, 60svh, 680px)' }}
       >
@@ -339,6 +362,7 @@ export default function PublicProfile() {
           {profile.coverImage && (
             <div className="absolute inset-0">
               <img
+                ref={coverImgRef}
                 src={profile.coverImage}
                 alt="Portada"
                 className="w-full h-full object-cover"

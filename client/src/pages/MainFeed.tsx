@@ -6,6 +6,7 @@ import { useProfiles } from '../hooks/useProfile.js'
 import { useEventsFeed } from '../hooks/useEvents.js'
 import { profilePath, eventPath } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
+import { prefersReducedMotion } from '../utils/motion.js'
 import type { ReactNode } from 'react'
 import type { ProfileResponse, EventResponse } from '../types/index.js'
 
@@ -282,6 +283,38 @@ function HScroll({ children, className = '' }: { children: ReactNode; className?
 
 function MosaicGrid({ profiles }: { profiles: ProfileResponse[] }) {
   const items = profiles.slice(0, 4)
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    if (!window.matchMedia('(hover: hover)').matches) return
+    if (prefersReducedMotion()) return
+
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.mosaic-card'))
+    const cleanups = cards.map((card) => {
+      const rxTo = gsap.quickTo(card, 'rotateX', { duration: 0.5, ease: 'power3.out' })
+      const ryTo = gsap.quickTo(card, 'rotateY', { duration: 0.5, ease: 'power3.out' })
+      const onEnter = () => gsap.set(card, { transformPerspective: 800 })
+      const onMove = (e: MouseEvent) => {
+        const r = card.getBoundingClientRect()
+        ryTo(((e.clientX - r.left) / r.width - 0.5) * 12)
+        rxTo(-((e.clientY - r.top) / r.height - 0.5) * 12)
+      }
+      const onLeave = () => { rxTo(0); ryTo(0) }
+      card.addEventListener('mouseenter', onEnter)
+      card.addEventListener('mousemove', onMove)
+      card.addEventListener('mouseleave', onLeave)
+      return () => {
+        card.removeEventListener('mouseenter', onEnter)
+        card.removeEventListener('mousemove', onMove)
+        card.removeEventListener('mouseleave', onLeave)
+        gsap.set(card, { rotateX: 0, rotateY: 0 })
+      }
+    })
+    return () => cleanups.forEach((fn) => fn())
+  }, [items.length])
+
   if (items.length < 2) return null
 
   const cardBase = 'group relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface)] mosaic-card'
@@ -318,7 +351,7 @@ function MosaicGrid({ profiles }: { profiles: ProfileResponse[] }) {
 
   return (
     <div className="px-4 md:px-6">
-      <div className="grid grid-cols-2 gap-3" style={{ gridAutoRows: '140px' }}>
+      <div ref={gridRef} className="grid grid-cols-2 gap-3" style={{ gridAutoRows: '140px' }}>
         {/* Card 0: tall (spans 2 rows) */}
         <div className={cardBase} style={{ gridRow: 'span 2' }}>
           <CardInner profile={items[0]} />
