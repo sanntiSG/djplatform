@@ -33,7 +33,7 @@ export default function EventsFeed() {
   }, [allEvents.length])
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-6 pt-24 pb-20">
+    <div className="min-h-screen bg-[var(--bg)] px-6 pb-20 pt-safe md:pt-24">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12 flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div>

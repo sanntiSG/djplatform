@@ -196,7 +196,7 @@ export default function Profiles() {
     (activeFilters.eventTypes?.length ?? 0) > 0
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-6 py-24">
+    <div className="min-h-screen bg-[var(--bg)] px-6 pb-24 pt-safe md:pt-24">
       <div className="max-w-7xl mx-auto flex flex-col gap-8">
 
         {/* Header */}

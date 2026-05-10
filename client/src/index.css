@@ -15,6 +15,14 @@
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-xl: 36px;
+  /* Sticky offset: 0 on mobile (no fixed header), 64px on desktop */
+  --sticky-top: max(env(safe-area-inset-top), 0px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --sticky-top: 64px;
+  }
 }
 
 * {
@@ -71,6 +79,24 @@ body {
 
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Safe-area utilities for edge-to-edge native feel */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), 16px);
+  }
+
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+
+  /* Floating pill variant — for hamburger button and floating actions */
+  .glass-pill {
+    background: rgba(18, 18, 22, 0.78);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
   }
 }
 

@@ -350,8 +350,8 @@ export default function MainFeed() {
   }, [isReady])
 
   return (
-    <div ref={pageRef} className="min-h-screen bg-[var(--bg)] pt-16">
-      <div className="px-4 md:px-6 pt-10 pb-8">
+    <div ref={pageRef} className="min-h-screen bg-[var(--bg)] md:pt-16">
+      <div className="px-4 md:px-6 pb-8 pt-safe md:pt-10">
         <p className="font-sans font-bold text-[10px] uppercase tracking-[0.22em] text-[var(--accent)] mb-3">
           Escena electronica argentina
         </p>

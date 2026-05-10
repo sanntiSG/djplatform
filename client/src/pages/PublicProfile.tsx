@@ -324,7 +324,7 @@ export default function PublicProfile() {
   ]
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] pt-16" style={accentStyle}>
+    <div className="min-h-screen bg-[var(--bg)] md:pt-16" style={accentStyle}>
 
       {/* HERO */}
       <div
@@ -695,7 +695,7 @@ export default function PublicProfile() {
         <div
           className="sticky z-30 mt-8 -mx-0"
           style={{
-            top: 64,
+            top: 'var(--sticky-top)',
             background: 'rgba(8,8,10,0.78)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
