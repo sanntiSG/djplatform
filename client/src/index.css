@@ -194,3 +194,8 @@ body {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.2; transform: scale(1.08); }
+}
