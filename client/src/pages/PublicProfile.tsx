@@ -253,11 +253,12 @@ export default function PublicProfile() {
     if (!profile || !scopeRef.current) return
     const ctx = gsap.context(() => {
       gsap.from('.pi', {
-        y: 22,
+        y: 20,
+        scale: 0.95,
         opacity: 0,
-        duration: 0.75,
-        stagger: 0.07,
-        ease: 'expo.out',
+        duration: 0.72,
+        stagger: 0.065,
+        ease: 'back.out(1.4)',
         delay: 0.1,
       })
     }, scopeRef)
@@ -326,9 +327,10 @@ export default function PublicProfile() {
   return (
     <div className="min-h-screen bg-[var(--bg)] md:pt-16" style={accentStyle}>
 
-      {/* HERO */}
+      {/* HERO — full-bleed, goes under notch on mobile */}
       <div
-        className="relative w-full overflow-hidden h-[240px] md:h-[320px] lg:h-[500px]"
+        className="relative w-full overflow-hidden"
+        style={{ height: 'clamp(280px, 60svh, 680px)' }}
       >
         <ThemeBackground theme={theme} />
 
@@ -354,50 +356,65 @@ export default function PublicProfile() {
         />
 
         {isOwner && (
-          <div className="absolute z-10" style={{ top: 76, right: 20 }}>
-            <Link to="/profile/edit">
-              <button
-                className="font-sans text-xs text-[var(--text-muted)] hover:text-[var(--text)] px-3 py-1.5 rounded-lg transition-colors duration-150"
-                style={{
-                  background: 'rgba(0,0,0,0.38)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                }}
-              >
-                Editar perfil
-              </button>
-            </Link>
-          </div>
+          <>
+            {/* Mobile: edit pill at top-left (hamburger is top-right) */}
+            <div
+              className="absolute z-10 md:hidden"
+              style={{ top: 'max(env(safe-area-inset-top), 12px)', left: 'max(env(safe-area-inset-left), 16px)' }}
+            >
+              <Link to="/profile/edit">
+                <button type="button" className="glass-pill rounded-full font-sans text-xs font-medium text-[var(--text)] px-3 py-2 transition-transform active:scale-95">
+                  Editar
+                </button>
+              </Link>
+            </div>
+            {/* Desktop: edit pill at top-right (no hamburger on desktop) */}
+            <div className="absolute z-10 hidden md:block" style={{ top: 76, right: 20 }}>
+              <Link to="/profile/edit">
+                <button
+                  type="button"
+                  className="glass-pill rounded-full font-sans text-xs font-medium text-[var(--text)] px-3 py-2 hover:text-[var(--text)] transition-all duration-150"
+                >
+                  Editar perfil
+                </button>
+              </Link>
+            </div>
+          </>
         )}
 
         {/* Desktop: identidad flotando en el hero */}
         <div className="hidden lg:flex absolute inset-x-0 bottom-0 items-end justify-center z-20" style={{ paddingBottom: 48 }}>
           <div className="max-w-4xl w-full px-8 flex flex-col items-center text-center gap-4">
-            <div className="pi" style={{ filter: `drop-shadow(0 0 48px ${profileAccent}3a)` }}>
+            <div className="pi relative inline-block" style={{ filter: `drop-shadow(0 0 52px ${profileAccent}3a)` }}>
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={profile.artistName}
                   className="rounded-full object-cover shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-                  style={{ width: 160, height: 160, border: '6px solid var(--bg)', position: 'relative', zIndex: 30 }}
+                  style={{ width: 180, height: 180, border: '5px solid var(--bg)', position: 'relative', zIndex: 30 }}
                 />
               ) : (
                 <div
                   className="rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-                  style={{ width: 160, height: 160, background: `${profileAccent}1c`, border: '6px solid var(--bg)', position: 'relative', zIndex: 30 }}
+                  style={{ width: 180, height: 180, background: `${profileAccent}1c`, border: '5px solid var(--bg)', position: 'relative', zIndex: 30 }}
                 >
-                  <span className="font-display font-bold" style={{ fontSize: 56, color: profileAccent }}>
+                  <span className="font-display font-bold" style={{ fontSize: 62, color: profileAccent }}>
                     {profile.artistName.charAt(0).toUpperCase()}
                   </span>
                 </div>
+              )}
+              {profile.availability === 'available' && (
+                <span
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{ boxShadow: `0 0 0 3px ${profileAccent}99`, animation: 'pulse-ring 2.6s ease-in-out infinite' }}
+                />
               )}
             </div>
 
             <div className="flex flex-col items-center gap-1.5">
               <h1
-                className="pi font-display font-semibold text-[var(--text)] leading-none"
-                style={{ fontSize: 'clamp(2.5rem, 4.5vw, 3.5rem)', textShadow: '0 4px 32px rgba(0,0,0,0.6)' }}
+                className="pi font-display font-semibold text-[var(--text)] leading-none tracking-tighter"
+                style={{ fontSize: 'clamp(2.5rem, 4.5vw, 3.8rem)', textShadow: '0 4px 32px rgba(0,0,0,0.6)' }}
               >
                 {profile.artistName}
               </h1>
@@ -521,24 +538,30 @@ export default function PublicProfile() {
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
 
           {/* Avatar */}
-          <div className="pi flex justify-center md:justify-start" style={{ marginTop: '-54px', marginBottom: 16 }}>
-            <div style={{ filter: `drop-shadow(0 0 32px ${profileAccent}2e)` }}>
+          <div className="pi flex justify-center md:justify-start" style={{ marginTop: '-60px', marginBottom: 16 }}>
+            <div className="relative inline-block" style={{ filter: `drop-shadow(0 0 36px ${profileAccent}2e)` }}>
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={profile.artistName}
                   className="rounded-full object-cover"
-                  style={{ width: 108, height: 108, border: '4px solid var(--bg)' }}
+                  style={{ width: 120, height: 120, border: '4px solid var(--bg)' }}
                 />
               ) : (
                 <div
                   className="rounded-full flex items-center justify-center"
-                  style={{ width: 108, height: 108, background: `${profileAccent}1c`, border: '4px solid var(--bg)' }}
+                  style={{ width: 120, height: 120, background: `${profileAccent}1c`, border: '4px solid var(--bg)' }}
                 >
-                  <span className="font-display font-bold" style={{ fontSize: 40, color: profileAccent }}>
+                  <span className="font-display font-bold" style={{ fontSize: 44, color: profileAccent }}>
                     {profile.artistName.charAt(0).toUpperCase()}
                   </span>
                 </div>
+              )}
+              {profile.availability === 'available' && (
+                <span
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{ boxShadow: `0 0 0 3px ${profileAccent}80`, animation: 'pulse-ring 2.6s ease-in-out infinite' }}
+                />
               )}
             </div>
           </div>
@@ -546,8 +569,8 @@ export default function PublicProfile() {
           {/* Identity */}
           <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
             <h1
-              className="pi font-display font-semibold text-[var(--text)] leading-none"
-              style={{ fontSize: 'clamp(1.85rem, 5vw, 2.75rem)' }}
+              className="pi font-display font-semibold text-[var(--text)] leading-none tracking-tighter"
+              style={{ fontSize: 'clamp(1.85rem, 5.5vw, 2.9rem)' }}
             >
               {profile.artistName}
             </h1>
@@ -703,7 +726,7 @@ export default function PublicProfile() {
         >
           <div className="max-w-6xl mx-auto px-5 sm:px-8">
             <Tabs
-              variant="instagram"
+              variant="pill-ios"
               tabs={PROFILE_TABS}
               active={tab}
               onChange={setTab}

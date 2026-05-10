@@ -12,7 +12,7 @@ interface TabsProps {
   active: string
   onChange: (id: string) => void
   className?: string
-  variant?: 'pill' | 'instagram'
+  variant?: 'pill' | 'instagram' | 'pill-ios'
 }
 
 export function Tabs({ tabs, active, onChange, className, variant = 'pill' }: TabsProps) {
@@ -39,6 +39,28 @@ export function Tabs({ tabs, active, onChange, className, variant = 'pill' }: Ta
     indicator.style.left = `${left}px`
     indicator.style.width = `${width}px`
   }, [active, tabs, variant])
+
+  if (variant === 'pill-ios') {
+    return (
+      <div className={cn('no-scrollbar flex gap-2 overflow-x-auto py-2', className)}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              'flex-shrink-0 rounded-full px-4 py-1.5 font-sans text-sm font-medium transition-all duration-200 select-none',
+              active === tab.id
+                ? 'bg-[var(--text)] text-[var(--bg)]'
+                : 'bg-transparent text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)] hover:border-white/25 active:scale-[0.97]',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   if (variant === 'instagram') {
     return (
