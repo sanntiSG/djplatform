@@ -6,6 +6,6 @@ import { getSignature, deleteAsset } from '../controllers/uploadController.js'
 const router = Router()
 
 router.post('/signature', requireAuth, authUploadLimiter, getSignature)
-router.delete('/asset', requireAuth, authUploadLimiter, deleteAsset)
+router.post('/delete-asset', requireAuth, authUploadLimiter, deleteAsset)
 
 export default router

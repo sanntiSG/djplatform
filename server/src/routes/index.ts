@@ -6,6 +6,7 @@ import mediaRouter from './media.js'
 import uploadRouter from './upload.js'
 import catalogRouter from './catalog.js'
 import adminRouter from './admin.js'
+import moderationRouter from './moderation.js'
 import sitemapRouter from './sitemap.js'
 
 const router = Router()
@@ -21,6 +22,7 @@ router.use('/media', mediaRouter)
 router.use('/uploads', uploadRouter)
 router.use('/catalogs', catalogRouter)
 router.use('/admin', adminRouter)
+router.use('/moderation', moderationRouter)
 router.use('/', sitemapRouter)
 
 export default router

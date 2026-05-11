@@ -1,38 +1,65 @@
 import { useState } from 'react'
 import { mediaService } from '../../services/mediaService.js'
+import { moderationService } from '../../services/moderationService.js'
 import { useCatalogs } from '../../hooks/useCatalogs.js'
 import { Input } from '../ui/Input.js'
 import { Button } from '../ui/Button.js'
 import { MultiSelect } from '../ui/Select.js'
 import { MediaEmbed } from './MediaEmbed.js'
+import { AnalyzingIndicator } from '../ui/AnalyzingIndicator.js'
+import { Toast } from '../ui/Toast.js'
 import type { MediaItem } from '../../types/index.js'
 
 interface MediaInputProps {
   onAdd: (item: MediaItem) => void
 }
 
+type Phase = 'idle' | 'resolving' | 'analyzing' | 'ready'
+
 export function MediaInput({ onAdd }: MediaInputProps) {
   const [url, setUrl] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
   const [error, setError] = useState('')
+  const [moderationError, setModerationError] = useState('')
   const [preview, setPreview] = useState<MediaItem | null>(null)
   const { genres } = useCatalogs()
 
   const genreOptions = (genres.data ?? []).map((g) => ({ value: g.name, label: g.name }))
+  const loading = phase === 'resolving' || phase === 'analyzing'
 
   async function handleResolve() {
     if (!url.trim()) return
     setError('')
-    setLoading(true)
+    setModerationError('')
+    setPhase('resolving')
     setPreview(null)
+
+    let resolved: MediaItem | null = null
+
     try {
       const result = await mediaService.resolve(url.trim())
-      setPreview({ ...result, description: '', genres: [] })
+      resolved = { ...result, description: '', genres: [] }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al resolver el link')
-    } finally {
-      setLoading(false)
+      setPhase('idle')
+      return
     }
+
+    // Moderate before showing preview
+    setPhase('analyzing')
+    try {
+      const modResult = await moderationService.analyzeMedia({ ...resolved, url: url.trim() })
+      if (!modResult.approved) {
+        setModerationError('Contenido inapropiado. Intenta otra URL.')
+        setPhase('idle')
+        return
+      }
+    } catch {
+      // If moderation fails (network, config), allow through
+    }
+
+    setPreview(resolved)
+    setPhase('ready')
   }
 
   function handleAdd() {
@@ -40,6 +67,7 @@ export function MediaInput({ onAdd }: MediaInputProps) {
     onAdd({ ...preview, addedAt: new Date().toISOString() })
     setUrl('')
     setPreview(null)
+    setPhase('idle')
   }
 
   return (
@@ -51,6 +79,8 @@ export function MediaInput({ onAdd }: MediaInputProps) {
             setUrl(e.target.value)
             setPreview(null)
             setError('')
+            setModerationError('')
+            if (phase !== 'idle') setPhase('idle')
           }}
           placeholder="Pega un link de YouTube, SoundCloud o Spotify"
           className="flex-1"
@@ -62,17 +92,30 @@ export function MediaInput({ onAdd }: MediaInputProps) {
           size="md"
           onClick={handleResolve}
           loading={loading}
-          disabled={!url.trim()}
+          disabled={!url.trim() || loading}
         >
           Resolver
         </Button>
       </div>
 
+      {phase === 'analyzing' && (
+        <AnalyzingIndicator visible />
+      )}
+
       {error && (
         <p className="text-xs text-red-400 font-sans">{error}</p>
       )}
 
-      {preview && (
+      {moderationError && (
+        <Toast
+          message={moderationError}
+          onDismiss={() => setModerationError('')}
+          variant="error"
+          duration={4000}
+        />
+      )}
+
+      {preview && phase === 'ready' && (
         <div className="flex flex-col gap-3 bg-[var(--surface-elevated)] p-4 rounded-xl border border-[var(--border)]">
           <MediaEmbed item={preview} />
 

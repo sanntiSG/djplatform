@@ -14,6 +14,8 @@ import { Tabs } from '../components/ui/Tabs.js'
 import { Toast } from '../components/ui/Toast.js'
 import { profilePath } from '../utils/slug.js'
 import { uploadImage } from '../services/uploadService.js'
+import { moderationService } from '../services/moderationService.js'
+import { AnalyzingIndicator } from '../components/ui/AnalyzingIndicator.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion } from '../utils/motion.js'
 import type { CreateProfileInput, MediaItem, Photo, ProfileTheme, ProfileType } from '../types/index.js'
@@ -57,6 +59,8 @@ export default function ProfileEdit() {
   const [visualSaved, setVisualSaved] = useState(false)
   const [photosSaved, setPhotosSaved] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [analyzingPhoto, setAnalyzingPhoto] = useState(false)
+  const [photoModerationError, setPhotoModerationError] = useState('')
   const [photoPreview, setPhotoPreview] = useState<Photo | null>(null)
   const [typeToast, setTypeToast] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -131,14 +135,33 @@ export default function ProfileEdit() {
   async function handleAddPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setPhotoModerationError('')
     setUploadingPhoto(true)
+    let uploadedUrl: string | null = null
     try {
-      const url = await uploadImage(file, 'dj/profile-photos')
-      setPhotoPreview({ url, addedAt: new Date().toISOString(), caption: '' })
+      uploadedUrl = await uploadImage(file, 'dj/profile-photos')
     } finally {
       setUploadingPhoto(false)
       e.target.value = ''
     }
+    if (!uploadedUrl) return
+
+    // Moderate before preview
+    setAnalyzingPhoto(true)
+    try {
+      const modResult = await moderationService.analyzeImage(uploadedUrl)
+      if (!modResult.approved) {
+        await moderationService.deleteUploadedAsset(uploadedUrl).catch(() => undefined)
+        setPhotoModerationError('Contenido inapropiado. La foto fue rechazada.')
+        return
+      }
+    } catch {
+      // If moderation unavailable, allow through
+    } finally {
+      setAnalyzingPhoto(false)
+    }
+
+    setPhotoPreview({ url: uploadedUrl, addedAt: new Date().toISOString(), caption: '' })
   }
 
   function handleConfirmPhoto() {
@@ -328,7 +351,7 @@ export default function ProfileEdit() {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                disabled={uploadingPhoto}
+                disabled={uploadingPhoto || analyzingPhoto}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)]/50 transition-colors duration-150 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-50"
               >
                 {uploadingPhoto ? (
@@ -337,6 +360,17 @@ export default function ProfileEdit() {
                   <span>+ Agregar foto</span>
                 )}
               </button>
+            )}
+
+            {analyzingPhoto && <AnalyzingIndicator visible />}
+
+            {photoModerationError && (
+              <Toast
+                message={photoModerationError}
+                onDismiss={() => setPhotoModerationError('')}
+                variant="error"
+                duration={5000}
+              />
             )}
 
             <input
