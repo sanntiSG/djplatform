@@ -21,6 +21,7 @@ import AdminProfiles from './pages/admin/AdminProfiles.js'
 import AdminEvents from './pages/admin/AdminEvents.js'
 import AdminUsers from './pages/admin/AdminUsers.js'
 import AdminGenres from './pages/admin/AdminGenres.js'
+import GenreDetail from './pages/GenreDetail.js'
 import ChangePassword from './pages/ChangePassword.js'
 import MainFeed from './pages/MainFeed.js'
 
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/auth/change-password" element={<ChangePassword />} />
         <Route path="/profiles" element={<Profiles />} />
         <Route path="/p/:id" element={<PublicProfile />} />
+        <Route path="/g/:slug" element={<GenreDetail />} />
         <Route path="/feed" element={<MainFeed />} />
         <Route path="/events" element={<EventsFeed />} />
         <Route path="/events/:id" element={<EventDetail />} />

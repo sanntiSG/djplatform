@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useProfiles } from '../hooks/useProfile.js'
@@ -54,22 +54,21 @@ function AvailRing() {
   )
 }
 
-function DJSlot({ profile }: { profile: ProfileResponse }) {
+function ArtistSlot({ profile }: { profile: ProfileResponse }) {
   return (
     <Link
       to={profilePath(profile.slug, profile.id)}
-      className="dj-slot flex-shrink-0 flex flex-col items-center gap-2.5 group"
+      className="artist-slot flex-shrink-0 flex flex-col items-center gap-2.5 group"
       style={{ scrollSnapAlign: 'start' }}
     >
       <div className="relative" style={{ width: 78, height: 78 }}>
         <div
           className="w-full h-full rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-[1.06]"
           style={{
-            border: `2px solid ${
-              profile.availability === 'available'
+            border: `2px solid ${profile.availability === 'available'
                 ? 'rgba(212,255,0,0.55)'
                 : 'rgba(255,255,255,0.08)'
-            }`,
+              }`,
           }}
         >
           {profile.avatar ? (
@@ -296,10 +295,10 @@ function NewsFeedRow({ event }: { event: EventResponse }) {
       className="news-row group flex items-center gap-4 py-3.5 border-b transition-colors duration-200"
       style={{ borderColor: 'var(--border)' }}
       onMouseEnter={e => {
-        ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)'
+        ; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)'
       }}
       onMouseLeave={e => {
-        ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border)'
+        ; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border)'
       }}
     >
       <div className="w-12 h-12 rounded-[var(--radius-sm)] overflow-hidden flex-shrink-0">
@@ -347,12 +346,17 @@ function NewsFeedRow({ event }: { event: EventResponse }) {
 
 /* ── Main Page ──────────────────────────────────────────── */
 
+function genreSlug(name: string) {
+  return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
 export default function MainFeed() {
+  const navigate = useNavigate()
   const pageRef = useRef<HTMLDivElement>(null)
   const musicLibRef = useRef<HTMLElement>(null)
   const djsRef = useRef<HTMLElement>(null)
   const trendingRef = useRef<HTMLElement>(null)
-  const topDJsRef = useRef<HTMLElement>(null)
+  const topArtistsRef = useRef<HTMLElement>(null)
   const editorialRef = useRef<HTMLElement>(null)
   const genreCardsRef = useRef<HTMLElement>(null)
   const spotlightRef = useRef<HTMLElement>(null)
@@ -363,37 +367,40 @@ export default function MainFeed() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFloatingCTA, setShowFloatingCTA] = useState(false)
 
-  const djsQuery = useProfiles({ availability: 'available' })
-  const profilesQuery = useProfiles({})
+  const availableQuery = useProfiles({ availability: 'available' })
+  const allProfilesQuery = useProfiles({})
   const eventsQuery = useEventsFeed()
 
-  const allDJs = djsQuery.data?.pages[0] ?? []
-  const featuredProfiles = profilesQuery.data?.pages[0]?.slice(0, 10) ?? []
+  const availableArtists = availableQuery.data?.pages[0] ?? []
+  const allProfiles = allProfilesQuery.data?.pages[0] ?? []
+  const featuredProfiles = allProfiles.slice(0, 10)
   const featuredEvents = eventsQuery.data?.pages[0]?.slice(0, 8) ?? []
 
-  const filteredDJs = allDJs
+  const isFiltering = activeGenre !== 'Todos' || searchQuery.trim() !== ''
+
+  const filteredProfiles = (isFiltering ? allProfiles : availableArtists)
     .filter((p) => {
       const matchGenre =
         activeGenre === 'Todos' ||
         p.genres.some((g) => g.toLowerCase().includes(activeGenre.toLowerCase()))
       const matchSearch =
         !searchQuery ||
-        p.artistName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()))
+        p.artistName.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        p.genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase().trim()))
       return matchGenre && matchSearch
     })
     .slice(0, 14)
 
-  const topDJs = featuredProfiles.slice(0, 8)
+  const topArtists = featuredProfiles.slice(0, 8)
   const trendingEvents = featuredEvents.slice(0, 4)
   const newsEvents = featuredEvents.slice(1, 5)
   const spotlightProfile = featuredProfiles.find(
     (p) => p.bio && p.bio.length > 40,
   )
 
-  const isReady = !djsQuery.isLoading && !profilesQuery.isLoading && !eventsQuery.isLoading
+  const isReady = !availableQuery.isLoading && !allProfilesQuery.isLoading && !eventsQuery.isLoading
   const hasContent =
-    allDJs.length > 0 || featuredEvents.length > 0 || featuredProfiles.length > 0
+    allProfiles.length > 0 || featuredEvents.length > 0
 
   /* Floating CTA scroll trigger */
   useEffect(() => {
@@ -461,10 +468,10 @@ export default function MainFeed() {
         )
       }
 
-      /* DJs strip */
+      /* Artists strip */
       if (djsRef.current && !reduced) {
         gsap.fromTo(
-          '.dj-slot',
+          '.artist-slot',
           { opacity: 0, x: -18 },
           {
             opacity: 1,
@@ -495,8 +502,8 @@ export default function MainFeed() {
         )
       }
 
-      /* Top DJs ranked list — slide from right */
-      if (topDJsRef.current && !reduced) {
+      /* Top Artists ranked list — slide from right */
+      if (topArtistsRef.current && !reduced) {
         gsap.fromTo(
           '.nl-item',
           { opacity: 0, x: 44 },
@@ -506,7 +513,7 @@ export default function MainFeed() {
             duration: 0.52,
             ease: 'back.out(1.25)',
             stagger: 0.06,
-            scrollTrigger: { trigger: topDJsRef.current, start: 'top 81%', once: true },
+            scrollTrigger: { trigger: topArtistsRef.current, start: 'top 81%', once: true },
           },
         )
       }
@@ -675,12 +682,13 @@ export default function MainFeed() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar DJs, generos, ciudades..."
-              className="w-full font-sans text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] rounded-[var(--radius-md)] px-4 py-2.5 pr-10 focus:outline-none"
+              placeholder="Buscar artistas, generos, ciudades..."
+              className="w-full font-sans text-base text-[var(--text)] placeholder:text-[var(--text-muted)] rounded-[var(--radius-md)] px-4 py-2.5 pr-10 focus:outline-none"
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.07)',
                 transition: 'border-color 0.2s, background 0.2s',
+                fontSize: '16px',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(212,255,0,0.3)'
@@ -726,23 +734,23 @@ export default function MainFeed() {
       {isReady && hasContent && (
         <div className="flex flex-col gap-14 pb-32">
 
-          {/* DJs en escena */}
-          {allDJs.length > 0 && (
+          {/* Artistas en escena / Resultados */}
+          {(isFiltering ? filteredProfiles.length > 0 : availableArtists.length > 0) && (
             <section ref={djsRef}>
               <SectionHead
-                kicker="Disponibles ahora"
-                title="DJs en escena"
-                href="/profiles?availability=available"
+                kicker={isFiltering ? "Resultados" : "Disponibles ahora"}
+                title={isFiltering ? "Biblioteca musical" : "Artistas en escena"}
+                href={isFiltering ? undefined : "/profiles?availability=available"}
               />
-              {filteredDJs.length > 0 ? (
+              {filteredProfiles.length > 0 ? (
                 <HScroll className="mt-5">
-                  {filteredDJs.map((profile) => (
-                    <DJSlot key={profile.id} profile={profile} />
+                  {filteredProfiles.map((profile) => (
+                    <ArtistSlot key={profile.id} profile={profile} />
                   ))}
                 </HScroll>
               ) : (
                 <p className="px-4 md:px-6 mt-4 font-sans text-sm text-[var(--text-muted)]">
-                  No hay DJs con ese genero disponibles ahora.
+                  No se encontraron artistas que coincidan con tu búsqueda.
                 </p>
               )}
             </section>
@@ -760,12 +768,12 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Top DJs ranked */}
-          {topDJs.length > 0 && (
-            <section ref={topDJsRef}>
-              <SectionHead kicker="Escena" title="Top DJs" href="/profiles" />
+          {/* Top Artists ranked */}
+          {topArtists.length > 0 && (
+            <section ref={topArtistsRef}>
+              <SectionHead kicker="Escena" title="Top Artistas" href="/profiles" />
               <div className="mt-5 px-4 md:px-6 flex flex-col gap-2">
-                {topDJs.map((profile, i) => (
+                {topArtists.map((profile, i) => (
                   <NumberedListItem
                     key={profile.id}
                     rank={i + 1}
@@ -817,7 +825,7 @@ export default function MainFeed() {
                         title={genre}
                         meta={count > 0 ? `${count} artista${count !== 1 ? 's' : ''}` : 'Explorar'}
                         className="h-full"
-                        onClick={() => handleGenreClick(genre)}
+                        onClick={() => navigate(`/g/${genreSlug(genre)}`)}
                       />
                     </div>
                   )
@@ -838,7 +846,7 @@ export default function MainFeed() {
                   text={
                     spotlightProfile.bio
                       ? spotlightProfile.bio.slice(0, 200) +
-                        (spotlightProfile.bio.length > 200 ? '...' : '')
+                      (spotlightProfile.bio.length > 200 ? '...' : '')
                       : ''
                   }
                   likes={(hashInt(spotlightProfile.id) % 80) + 12}

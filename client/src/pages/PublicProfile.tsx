@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -198,7 +198,12 @@ function ThemeBackground({ theme }: { theme: ProfileTheme }) {
   )
 }
 
+function genreSlug(name: string) {
+  return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
 export default function PublicProfile() {
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const { data: profile, isLoading } = useProfile(id!)
   const { data: events, isLoading: eventsLoading } = useProfileEvents(id!)
@@ -516,7 +521,7 @@ export default function PublicProfile() {
             {profile.genres.length > 0 && (
               <div className="pi flex flex-wrap gap-1.5 justify-center">
                 {profile.genres.slice(0, 6).map((g) => (
-                  <RainbowPill key={g} label={g} color={genreToColor(g)} />
+                  <RainbowPill key={g} label={g} color={genreToColor(g)} onClick={() => navigate(`/g/${genreSlug(g)}`)} />
                 ))}
               </div>
             )}
