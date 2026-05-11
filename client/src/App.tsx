@@ -20,6 +20,7 @@ import AdminDashboard from './pages/admin/AdminDashboard.js'
 import AdminProfiles from './pages/admin/AdminProfiles.js'
 import AdminEvents from './pages/admin/AdminEvents.js'
 import AdminUsers from './pages/admin/AdminUsers.js'
+import AdminGenres from './pages/admin/AdminGenres.js'
 import ChangePassword from './pages/ChangePassword.js'
 import MainFeed from './pages/MainFeed.js'
 
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="profiles" element={<AdminProfiles />} />
           <Route path="events" element={<AdminEvents />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="genres" element={<AdminGenres />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

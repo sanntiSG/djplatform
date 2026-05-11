@@ -6,6 +6,7 @@ const NAV = [
   { to: '/admin/profiles', label: 'Perfiles', end: false },
   { to: '/admin/events', label: 'Eventos', end: false },
   { to: '/admin/users', label: 'Usuarios', end: false },
+  { to: '/admin/genres', label: 'Generos', end: false },
 ]
 
 export default function AdminLayout() {
