@@ -25,6 +25,8 @@ import { PublishMenu } from '../components/profile/PublishMenu.js'
 import { ContentViewer } from '../components/profile/viewer/ContentViewer.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
 import { prefersReducedMotion } from '../utils/motion.js'
+import { genreToColor } from '../utils/colors.js'
+import { RainbowPill } from '../components/ui/RainbowPill.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -210,6 +212,8 @@ export default function PublicProfile() {
   const commentsRef = useRef<HTMLDivElement>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const coverImgRef = useRef<HTMLImageElement>(null)
+  const tabContentRef = useRef<HTMLDivElement>(null)
+  const prevTabRef = useRef(tab)
 
   const profileMongoId = id ? id.match(/[0-9a-fA-F]{24}$/)?.[0] ?? '' : ''
   const { data: social } = useProfileSocial(profileMongoId)
@@ -254,19 +258,27 @@ export default function PublicProfile() {
 
   useEffect(() => {
     if (!profile || !scopeRef.current) return
+    if (prefersReducedMotion()) return
     const ctx = gsap.context(() => {
       gsap.from('.pi', {
-        y: 20,
-        scale: 0.95,
+        y: 28,
+        scale: 0.94,
         opacity: 0,
-        duration: 0.72,
+        duration: 0.78,
         stagger: 0.065,
-        ease: 'back.out(1.4)',
-        delay: 0.1,
+        ease: 'back.out(1.5)',
+        delay: 0.15,
       })
     }, scopeRef)
     return () => ctx.revert()
   }, [profile])
+
+  /* Cover image hero scale-in */
+  useEffect(() => {
+    const img = coverImgRef.current
+    if (!img || !profile?.coverImage || prefersReducedMotion()) return
+    gsap.fromTo(img, { scale: 1.08 }, { scale: 1, duration: 1.2, ease: 'expo.out' })
+  }, [profile?.coverImage])
 
   // Cover image parallax — scrubs yPercent as hero scrolls off-screen
   useEffect(() => {
@@ -286,6 +298,18 @@ export default function PublicProfile() {
     })
     return () => st.kill()
   }, [profile?.coverImage])
+
+  /* Tab switch cross-fade + slide */
+  useEffect(() => {
+    const el = tabContentRef.current
+    if (!el || prefersReducedMotion()) { prevTabRef.current = tab; return }
+    if (prevTabRef.current === tab) return
+    prevTabRef.current = tab
+    gsap.fromTo(el,
+      { opacity: 0, x: 16 },
+      { opacity: 1, x: 0, duration: 0.32, ease: 'expo.out' },
+    )
+  }, [tab])
 
   const handleShare = useCallback(async () => {
     const url = window.location.href
@@ -492,7 +516,7 @@ export default function PublicProfile() {
             {profile.genres.length > 0 && (
               <div className="pi flex flex-wrap gap-1.5 justify-center">
                 {profile.genres.slice(0, 6).map((g) => (
-                  <Pill key={g} label={g} variant="default" />
+                  <RainbowPill key={g} label={g} color={genreToColor(g)} />
                 ))}
               </div>
             )}
@@ -535,8 +559,20 @@ export default function PublicProfile() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
-                style={{ transition: 'color 0.15s ease, transform 0.14s cubic-bezier(0.32,0.72,0,1)' }}
+                className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-muted)',
+                  transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--c-blue)'; el.style.borderColor = 'var(--c-blue)'; el.style.background = 'var(--c-blue-muted)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)'; el.style.background = 'transparent'
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -547,8 +583,20 @@ export default function PublicProfile() {
               <button
                 type="button"
                 onClick={scrollToComments}
-                className="flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
-                style={{ transition: 'color 0.15s ease, transform 0.14s cubic-bezier(0.32,0.72,0,1)' }}
+                className="flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-muted)',
+                  transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--c-purple)'; el.style.borderColor = 'var(--c-purple)'; el.style.background = 'var(--c-purple-muted)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)'; el.style.background = 'transparent'
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -660,7 +708,7 @@ export default function PublicProfile() {
           {profile.genres.length > 0 && (
             <div className="pi flex flex-wrap gap-1.5 mt-3 justify-center md:justify-start">
               {profile.genres.map((g) => (
-                <Pill key={g} label={g} variant="default" />
+                <RainbowPill key={g} label={g} color={genreToColor(g)} />
               ))}
             </div>
           )}
@@ -711,8 +759,24 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={handleShare}
-              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
-              style={{ transition: 'color 0.15s ease' }}
+              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none group"
+              style={{
+                borderColor: 'var(--border)',
+                color: 'var(--text-muted)',
+                transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--c-blue)'
+                el.style.borderColor = 'var(--c-blue)'
+                el.style.background = 'var(--c-blue-muted)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--text-muted)'
+                el.style.borderColor = 'var(--border)'
+                el.style.background = 'transparent'
+              }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -724,8 +788,24 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={scrollToComments}
-              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5 rounded-full border border-[var(--border)] select-none"
-              style={{ transition: 'color 0.15s ease' }}
+              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none"
+              style={{
+                borderColor: 'var(--border)',
+                color: 'var(--text-muted)',
+                transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--c-purple)'
+                el.style.borderColor = 'var(--c-purple)'
+                el.style.background = 'var(--c-purple-muted)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--text-muted)'
+                el.style.borderColor = 'var(--border)'
+                el.style.background = 'transparent'
+              }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -769,7 +849,7 @@ export default function PublicProfile() {
         </div>
 
         {/* TAB CONTENT */}
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-8">
+        <div ref={tabContentRef} className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-8">
           {tab === 'feed' && (
             <ProfileFeed
               profile={profile}
