@@ -371,7 +371,7 @@ export default function PublicProfile() {
   ]
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] md:pt-16" style={accentStyle}>
+    <div className="min-h-screen bg-[var(--bg)] md:pt-16 overflow-x-hidden" style={accentStyle}>
 
       {/* HERO — full-bleed, goes under notch on mobile */}
       <div
