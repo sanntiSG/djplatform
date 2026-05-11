@@ -19,16 +19,18 @@ const FEATURES = [
     id: 'a',
     title: 'Perfiles que comunican',
     body: 'Sets, eventos y disponibilidad — todo en un solo lugar para que tu sonido llegue mas lejos.',
-    img: 'https://images.unsplash.com/photo-1571266028243-d220c6b94bf7?q=80&w=1200&auto=format&fit=crop',
+    img: 'https://i.pinimg.com/736x/a5/d5/0e/a5d50e6619ae639f9e5e6e8c32508ade.jpg',
     span: 'col-span-12 md:col-span-7 row-span-2',
     tall: true,
     accent: false,
+    video: null,
   },
   {
     id: 'b',
     title: 'Busca por genero, zona y disponibilidad',
     body: 'Filtros reales. Encontra el artista exacto para tu evento, en tu ciudad.',
-    img: 'https://images.unsplash.com/photo-1598387993441-a364f854cde3?q=80&w=900&auto=format&fit=crop',
+    img: null,
+    video: '/2.mp4',
     span: 'col-span-12 md:col-span-5 row-span-1',
     tall: false,
     accent: false,
@@ -38,6 +40,7 @@ const FEATURES = [
     title: 'Contacto directo por WhatsApp. Sin intermediarios.',
     body: null,
     img: null,
+    video: null,
     span: 'col-span-12 md:col-span-5 row-span-1',
     tall: false,
     accent: true,
@@ -352,9 +355,12 @@ export default function Landing() {
             className="w-full rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border)]"
             style={{ aspectRatio: '16/7' }}
           >
-            <img
-              src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=1170&auto=format&fit=crop"
-              alt="DJ en escena"
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              src="/hero.mp4"
               className="w-full h-full object-cover"
               style={{ filter: 'brightness(0.65) contrast(1.12) saturate(0.9)' }}
             />
@@ -411,13 +417,26 @@ export default function Landing() {
                   borderColor: f.accent ? 'var(--accent)' : 'var(--border)',
                 }}
               >
-                {f.img && (
+                {f.img && !f.video && (
                   <div className="absolute inset-0 overflow-hidden">
                     <img
                       src={f.img}
                       alt={f.title}
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       style={{ filter: 'brightness(0.32) grayscale(0.35) contrast(1.12)' }}
+                    />
+                  </div>
+                )}
+                {f.video && (
+                  <div className="absolute inset-0 overflow-hidden">
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      src={f.video}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      style={{ filter: 'brightness(0.4) grayscale(0.2) contrast(1.1)' }}
                     />
                   </div>
                 )}

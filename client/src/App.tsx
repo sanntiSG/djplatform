@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Header } from './components/ui/Header.js'
 import { Toast } from './components/ui/Toast.js'
@@ -36,6 +37,11 @@ function ToastRenderer() {
 export default function App() {
   const { pathname } = useLocation()
   const showHeader = !HIDE_HEADER_PATHS.includes(pathname)
+
+  // Global Scroll-to-Top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   return (
     <>

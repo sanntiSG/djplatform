@@ -17,3 +17,7 @@ export function profilePath(slug: string, id: string) {
 export function eventPath(slug: string, id: string) {
   return `/events/${slug}-${id}`
 }
+
+export function genrePath(name: string) {
+  return `/g/${toSlug(name)}`
+}
