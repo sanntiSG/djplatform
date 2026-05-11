@@ -17,6 +17,26 @@ app.use(
   helmet({
     crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     crossOriginEmbedderPolicy: false,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://i.scdn.co', 'https://i1.sndcdn.com', 'https://i2.sndcdn.com', 'https://i3.sndcdn.com'],
+        mediaSrc: ["'self'"],
+        frameSrc: [
+          'https://open.spotify.com',
+          'https://w.soundcloud.com',
+          'https://www.youtube.com',
+          'https://youtube.com',
+        ],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+      },
+    },
   }),
 )
 app.use(compression())

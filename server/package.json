@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@dj/shared": "*",
+    "@types/dompurify": "^3.0.5",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
@@ -26,6 +27,7 @@
     "express-rate-limit": "^8.4.1",
     "google-auth-library": "^9.13.0",
     "helmet": "^8.1.0",
+    "isomorphic-dompurify": "^3.12.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.3",
     "zod": "^3.23.8"
