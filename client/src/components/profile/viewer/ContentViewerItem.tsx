@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { eventPath } from '../../../utils/slug.js'
 import { CaptionEditor } from './CaptionEditor.js'
 import { EventTitleEditor } from './EventTitleEditor.js'
+import { MediaMetadataEditor } from './MediaMetadataEditor.js'
 import type { FeedItem } from '../../../utils/profileFeed.js'
 import type { ProfileResponse } from '../../../types/index.js'
 import { THEMES } from '../ThemeSelector.js'
@@ -154,16 +155,12 @@ export function ContentViewerItem({
           <MediaPlaceholder item={data} />
         )}
         
-        {/* Render media title at the bottom */}
-        {data.title && (
-          <div
-            className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-24 pt-16 pointer-events-none lg:pb-8 lg:pr-24"
-            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }}
-          >
-            <p className="font-sans text-sm text-white/85 leading-relaxed text-center lg:text-left drop-shadow-md">
-              {data.title}
-            </p>
-          </div>
+        {profileQueryKey && (isOwner || data.title || data.description || (data.genres?.length ?? 0) > 0) && (
+          <MediaMetadataEditor
+            media={data}
+            isOwner={!!isOwner}
+            profileQueryKey={profileQueryKey}
+          />
         )}
       </div>
     )
