@@ -17,6 +17,22 @@
   --radius-xl: 36px;
   /* Sticky offset: 0 on mobile (no fixed header), 64px on desktop */
   --sticky-top: max(env(safe-area-inset-top), 0px);
+
+  /* ── Rainbow palette (secondary — genre/mood/category accents) ── */
+  --c-pink:          oklch(68% 0.22 350);
+  --c-pink-muted:    oklch(68% 0.22 350 / 0.13);
+  --c-purple:        oklch(60% 0.24 292);
+  --c-purple-muted:  oklch(60% 0.24 292 / 0.13);
+  --c-orange:        oklch(72% 0.19 50);
+  --c-orange-muted:  oklch(72% 0.19 50 / 0.13);
+  --c-teal:          oklch(73% 0.15 185);
+  --c-teal-muted:    oklch(73% 0.15 185 / 0.13);
+  --c-yellow:        oklch(84% 0.20 90);
+  --c-yellow-muted:  oklch(84% 0.20 90 / 0.13);
+  --c-red:           oklch(59% 0.22 25);
+  --c-red-muted:     oklch(59% 0.22 25 / 0.13);
+  --c-blue:          oklch(62% 0.20 248);
+  --c-blue-muted:    oklch(62% 0.20 248 / 0.13);
 }
 
 @media (min-width: 768px) {
@@ -97,6 +113,17 @@ body {
     -webkit-backdrop-filter: blur(28px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
+  }
+
+  /* Color-block cards — used in ColorBlockCard + RainbowPill components */
+  .cbcard { will-change: transform; }
+
+  /* GPU hint for numbered list items */
+  .nl-item { will-change: transform, opacity; }
+
+  /* Rainbow pill active glow — applied via JS/component */
+  .rpill-active {
+    box-shadow: 0 0 0 1px currentColor, 0 4px 16px -4px currentColor;
   }
 }
 
