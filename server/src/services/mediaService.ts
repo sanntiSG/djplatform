@@ -24,10 +24,32 @@ interface TrackWithProfile {
 }
 
 export async function tracksByGenre(slug: string, limit = 50): Promise<TrackWithProfile[]> {
+  // Create a regex that is accent-insensitive and flexible with separators
+  // e.g., 'reggaeton' matches 'Reggaetón', 'deep-house' matches 'Deep House'
+  const accentMap: Record<string, string> = {
+    a: '[aáàäâ]',
+    e: '[eéèëê]',
+    i: '[iíìïî]',
+    o: '[oóòöô]',
+    u: '[uúùüû]',
+  }
+
+  const searchPattern = slug
+    .split('-')
+    .map((part) =>
+      part
+        .split('')
+        .map((char) => accentMap[char] || char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join(''),
+    )
+    .join('[^a-z0-9]+')
+
+  const regex = new RegExp(`^[^a-z0-9]*${searchPattern}[^a-z0-9]*$`, 'i')
+
   const results = await Profile.aggregate([
-    { $match: { isVisible: true, 'media.genres': slug } },
+    { $match: { isVisible: true, 'media.genres': regex } },
     { $unwind: '$media' },
-    { $match: { 'media.genres': slug } },
+    { $match: { 'media.genres': regex } },
     { $sort: { 'media.addedAt': -1 } },
     { $limit: limit },
     {
