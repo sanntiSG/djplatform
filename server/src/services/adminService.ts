@@ -2,6 +2,7 @@ import { User } from '../models/User.js'
 import { Profile } from '../models/Profile.js'
 import { Event } from '../models/Event.js'
 import { Genre, type IGenre } from '../models/Genre.js'
+import { ProfileType, type IProfileType } from '../models/ProfileType.js'
 import { serializeProfile } from './profileService.js'
 import { serializeEvent } from './eventService.js'
 import { destroyAsset } from './cloudinaryService.js'
@@ -187,4 +188,63 @@ export async function adminDeleteGenre(id: string) {
   }
 
   await Genre.findByIdAndDelete(id)
+}
+
+// ── Profile Types ─────────────────────────────────────────────────────────
+
+function serializeProfileType(t: IProfileType) {
+  return {
+    id: (t._id as unknown as { toString(): string }).toString(),
+    name: t.name,
+    slug: t.slug,
+    isActive: t.isActive,
+    isProtected: t.isProtected,
+    order: t.order,
+  }
+}
+
+export async function publicListProfileTypes() {
+  const types = await ProfileType.find({ isActive: true }).sort({ order: 1, name: 1 }).lean() as unknown as IProfileType[]
+  return types.map((t) => ({ id: (t._id as unknown as { toString(): string }).toString(), name: t.name, slug: t.slug }))
+}
+
+export async function adminListProfileTypes() {
+  const types = await ProfileType.find().sort({ order: 1, name: 1 }).lean() as unknown as IProfileType[]
+  return types.map(serializeProfileType)
+}
+
+export async function adminCreateProfileType(name: string) {
+  const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  const existing = await ProfileType.findOne({ slug })
+  if (existing) throw Object.assign(new Error('Ya existe un tipo con ese nombre'), { status: 409 })
+
+  const maxOrder = await ProfileType.findOne().sort({ order: -1 }).lean() as unknown as IProfileType | null
+  const pt = await ProfileType.create({ name: name.trim(), slug, isActive: true, isProtected: false, order: (maxOrder?.order ?? 0) + 1 })
+  return serializeProfileType(pt as unknown as IProfileType)
+}
+
+export async function adminUpdateProfileType(id: string, patch: { isActive?: boolean; name?: string }) {
+  const existing = await ProfileType.findById(id) as IProfileType | null
+  if (!existing) throw Object.assign(new Error('Tipo no encontrado'), { status: 404 })
+
+  const update: Partial<{ isActive: boolean; name: string; slug: string }> = {}
+  if (patch.isActive !== undefined) update.isActive = patch.isActive
+  if (patch.name !== undefined) {
+    update.name = patch.name.trim()
+    update.slug = patch.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  }
+
+  const updated = await ProfileType.findByIdAndUpdate(id, { $set: update }, { new: true })
+  return serializeProfileType(updated as unknown as IProfileType)
+}
+
+export async function adminDeleteProfileType(id: string) {
+  const pt = await ProfileType.findById(id) as IProfileType | null
+  if (!pt) throw Object.assign(new Error('Tipo no encontrado'), { status: 404 })
+  if (pt.isProtected) throw Object.assign(new Error('Los tipos base no pueden eliminarse'), { status: 403 })
+
+  const inUse = await Profile.countDocuments({ type: pt.slug })
+  if (inUse > 0) throw Object.assign(new Error('Este tipo esta en uso por perfiles activos'), { status: 409 })
+
+  await ProfileType.findByIdAndDelete(id)
 }

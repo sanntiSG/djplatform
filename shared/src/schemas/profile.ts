@@ -9,8 +9,9 @@ export const PhotoSchema = z.object({
 })
 export type Photo = z.infer<typeof PhotoSchema>
 
-export const ProfileTypeSchema = z.enum(['dj', 'producer', 'other'])
-export type ProfileType = z.infer<typeof ProfileTypeSchema>
+// Open string — validated at runtime against the ProfileType catalog
+export const ProfileTypeSchema = z.string().min(2).max(40)
+export type ProfileType = string
 
 export const AvailabilitySchema = z.enum(['available', 'contact', 'unavailable'])
 export type Availability = z.infer<typeof AvailabilitySchema>

@@ -12,6 +12,10 @@ import {
   adminCreateGenre,
   adminUpdateGenre,
   adminDeleteGenre,
+  adminListProfileTypes,
+  adminCreateProfileType,
+  adminUpdateProfileType,
+  adminDeleteProfileType,
 } from '../services/adminService.js'
 
 export async function stats(req: Request, res: Response, next: NextFunction) {
@@ -131,6 +135,43 @@ export async function updateGenre(req: Request, res: Response, next: NextFunctio
 export async function deleteGenre(req: Request, res: Response, next: NextFunction) {
   try {
     await adminDeleteGenre(req.params.id)
+    res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function listProfileTypes(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await adminListProfileTypes())
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function createProfileType(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { name } = req.body as { name: string }
+    if (!name?.trim()) { res.status(400).json({ error: 'El nombre es requerido' }); return }
+    const pt = await adminCreateProfileType(name)
+    res.status(201).json(pt)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateProfileType(req: Request, res: Response, next: NextFunction) {
+  try {
+    const pt = await adminUpdateProfileType(req.params.id, req.body as { isActive?: boolean; name?: string })
+    res.json(pt)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function deleteProfileType(req: Request, res: Response, next: NextFunction) {
+  try {
+    await adminDeleteProfileType(req.params.id)
     res.status(204).end()
   } catch (err) {
     next(err)

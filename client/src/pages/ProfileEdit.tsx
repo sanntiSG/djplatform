@@ -16,9 +16,10 @@ import { profilePath } from '../utils/slug.js'
 import { uploadImage } from '../services/uploadService.js'
 import { moderationService } from '../services/moderationService.js'
 import { AnalyzingIndicator } from '../components/ui/AnalyzingIndicator.js'
+import { useProfileTypes } from '../hooks/useProfileTypes.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion } from '../utils/motion.js'
-import type { CreateProfileInput, MediaItem, Photo, ProfileTheme, ProfileType } from '../types/index.js'
+import type { CreateProfileInput, MediaItem, Photo, ProfileTheme } from '../types/index.js'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
@@ -27,7 +28,7 @@ const TABS = [
   { id: 'musica', label: 'Musica' },
 ]
 
-const TYPE_LABEL: Record<string, string> = {
+const BASE_TYPE_LABEL: Record<string, string> = {
   dj: 'DJ',
   producer: 'Productor',
   other: 'Artista',
@@ -38,6 +39,7 @@ export default function ProfileEdit() {
   const location = useLocation()
   const { data: profile, isLoading } = useMyProfile()
   const { mutateAsync: update, isPending } = useUpdateProfile()
+  const { data: profileTypes } = useProfileTypes()
   
   const [tab, setTab] = useState(() => {
     const hashTab = location.hash.replace('#', '')
@@ -98,7 +100,7 @@ export default function ProfileEdit() {
     await update({ avatar: url })
   }
 
-  async function handleTypeChange(type: ProfileType, idx: number) {
+  async function handleTypeChange(type: string, idx: number) {
     if (!profile || type === profile.type) return
     if (!prefersReducedMotion()) {
       const el = typePillRefs.current[idx]
@@ -218,7 +220,7 @@ export default function ProfileEdit() {
               {profile.artistName}
             </p>
             <p className="font-sans text-xs text-[var(--text-muted)] mt-0.5 truncate">
-              {TYPE_LABEL[profile.type] ?? profile.type}
+              {BASE_TYPE_LABEL[profile.type] ?? profile.type}
               {profile.location ? ` · ${profile.location}` : ''}
             </p>
           </div>
@@ -251,20 +253,20 @@ export default function ProfileEdit() {
                 Tipo de artista
               </p>
               <div className="flex gap-2 flex-wrap">
-                {(['dj', 'producer', 'other'] as const).map((t, idx) => (
+                {(profileTypes ?? Object.keys(BASE_TYPE_LABEL).map((slug) => ({ slug, name: BASE_TYPE_LABEL[slug] }))).map((t, idx) => (
                   <button
-                    key={t}
+                    key={t.slug}
                     ref={(el) => { typePillRefs.current[idx] = el }}
                     type="button"
-                    onClick={() => handleTypeChange(t, idx)}
+                    onClick={() => handleTypeChange(t.slug, idx)}
                     className={cn(
                       'rounded-full px-5 py-2 font-sans text-sm font-medium transition-all duration-200 select-none',
-                      profile.type === t
+                      profile.type === t.slug
                         ? 'bg-[var(--accent)] text-[var(--bg)]'
                         : 'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
                     )}
                   >
-                    {TYPE_LABEL[t]}
+                    {t.name}
                   </button>
                 ))}
               </div>

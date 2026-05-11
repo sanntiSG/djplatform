@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreateProfile } from '../hooks/useProfile.js'
+import { useProfileTypes } from '../hooks/useProfileTypes.js'
 import { ProfileForm } from '../components/profile/ProfileForm.js'
 import { profilePath } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
-import type { CreateProfileInput, ProfileType } from '../types/index.js'
+import type { CreateProfileInput } from '../types/index.js'
 
-const TYPE_OPTS: { value: ProfileType; label: string; desc: string }[] = [
-  { value: 'dj', label: 'DJ', desc: 'Mezclas, sets en vivo, eventos' },
-  { value: 'producer', label: 'Productor', desc: 'Produccion, beatmaking, studio' },
-  { value: 'other', label: 'Artista', desc: 'Cantante, musico, locutora...' },
+const FALLBACK_TYPES = [
+  { slug: 'dj', name: 'DJ', desc: 'Mezclas, sets en vivo, eventos' },
+  { slug: 'producer', name: 'Productor', desc: 'Produccion, beatmaking, studio' },
+  { slug: 'other', name: 'Artista', desc: 'Cantante, musico, locutora...' },
 ]
 
 export default function ProfileSetup() {
   const navigate = useNavigate()
   const { mutateAsync } = useCreateProfile()
-  const [selectedType, setSelectedType] = useState<ProfileType>('dj')
+  const { data: profileTypes } = useProfileTypes()
+  const [selectedType, setSelectedType] = useState<string>('dj')
 
   async function handleSubmit(data: CreateProfileInput) {
     const profile = await mutateAsync({ ...data, type: selectedType })
@@ -43,20 +45,20 @@ export default function ProfileSetup() {
             Tipo de artista
           </p>
           <div className="flex flex-col gap-2">
-            {TYPE_OPTS.map((t) => (
+            {(profileTypes?.map((t) => ({ slug: t.slug, name: t.name, desc: '' })) ?? FALLBACK_TYPES).map((t) => (
               <button
-                key={t.value}
+                key={t.slug}
                 type="button"
-                onClick={() => setSelectedType(t.value)}
+                onClick={() => setSelectedType(t.slug)}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-150 border',
-                  selectedType === t.value
+                  selectedType === t.slug
                     ? 'bg-[var(--accent)] text-[var(--bg)] border-[var(--accent)]'
                     : 'bg-transparent border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
                 )}
               >
-                <span className="font-sans font-medium text-sm min-w-[80px]">{t.label}</span>
-                <span className={cn('font-sans text-xs', selectedType === t.value ? 'text-[var(--bg)]/70' : 'text-[var(--text-muted)]')}>
+                <span className="font-sans font-medium text-sm min-w-[80px]">{t.name}</span>
+                <span className={cn('font-sans text-xs', selectedType === t.slug ? 'text-[var(--bg)]/70' : 'text-[var(--text-muted)]')}>
                   {t.desc}
                 </span>
               </button>

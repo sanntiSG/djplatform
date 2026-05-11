@@ -14,6 +14,10 @@ import {
   createGenre,
   updateGenre,
   deleteGenre,
+  listProfileTypes,
+  createProfileType,
+  updateProfileType,
+  deleteProfileType,
 } from '../controllers/adminController.js'
 
 const router = Router()
@@ -33,5 +37,10 @@ router.get('/genres', listGenres)
 router.post('/genres', createGenre)
 router.patch('/genres/:id', updateGenre)
 router.delete('/genres/:id', deleteGenre)
+
+router.get('/profile-types', listProfileTypes)
+router.post('/profile-types', createProfileType)
+router.patch('/profile-types/:id', updateProfileType)
+router.delete('/profile-types/:id', deleteProfileType)
 
 export default router

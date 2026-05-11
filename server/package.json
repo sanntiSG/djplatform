@@ -12,6 +12,7 @@
     "lint": "eslint src --ext .ts",
     "seed:admin": "tsx src/scripts/seedAdmin.ts",
     "seed:catalogs": "tsx src/scripts/seedCatalogs.ts",
+    "seed:profile-types": "tsx src/scripts/seedProfileTypes.ts",
     "migrate:photo-ts": "tsx src/scripts/migratePhotoAndMediaTimestamps.ts",
     "migrate:content-ids": "tsx src/scripts/migrateContentIds.ts"
   },
