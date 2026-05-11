@@ -9,6 +9,12 @@ export const profileService = {
   updatePhotoCaption: (photoId: string, caption: string) =>
     apiClient.patch<{ id: string; caption: string }>(`/profiles/me/photos/${photoId}`, { caption }),
 
+  updateMediaItem: (mediaId: string, patch: { title?: string; description?: string; genres?: string[] }) =>
+    apiClient.patch<{ id: string; title?: string; description: string; genres: string[] }>(
+      `/profiles/me/media/${mediaId}`,
+      patch,
+    ),
+
   list: (params?: {
     type?: string
     location?: string

@@ -3,19 +3,13 @@ import { Input } from '../ui/Input.js'
 import { Button } from '../ui/Button.js'
 import { MultiSelect } from '../ui/Select.js'
 import { useCatalogs } from '../../hooks/useCatalogs.js'
-import type { CreateProfileInput, ProfileType, Availability } from '../../types/index.js'
+import type { CreateProfileInput, Availability } from '../../types/index.js'
 
 interface ProfileFormProps {
-  initial?: Partial<CreateProfileInput>
+  initial?: Partial<Omit<CreateProfileInput, 'type'>>
   onSubmit: (data: CreateProfileInput) => Promise<void>
   submitLabel?: string
 }
-
-const profileTypes: { value: ProfileType; label: string }[] = [
-  { value: 'dj', label: 'DJ' },
-  { value: 'producer', label: 'Productor' },
-  { value: 'other', label: 'Otro' },
-]
 
 const availabilities: { value: Availability; label: string }[] = [
   { value: 'available', label: 'Disponible' },
@@ -26,7 +20,7 @@ const availabilities: { value: Availability; label: string }[] = [
 export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }: ProfileFormProps) {
   const { genres, eventTypes } = useCatalogs()
   const [form, setForm] = useState<CreateProfileInput>({
-    type: initial.type ?? 'dj',
+    type: 'dj',
     artistName: initial.artistName ?? '',
     bio: initial.bio ?? '',
     location: initial.location ?? '',
@@ -61,27 +55,6 @@ export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }:
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* Tipo de perfil */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm text-[var(--text-muted)] font-sans">Tipo de perfil</label>
-        <div className="flex gap-2 flex-wrap">
-          {profileTypes.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => set('type', t.value)}
-              className={`px-4 py-2 rounded-md text-sm font-sans border transition-colors duration-150 ${
-                form.type === t.value
-                  ? 'bg-[var(--accent)] text-[var(--bg)] border-[var(--accent)]'
-                  : 'bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-white/20'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <Input
         label="Nombre artistico"
         value={form.artistName}

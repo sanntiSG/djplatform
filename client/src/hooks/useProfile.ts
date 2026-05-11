@@ -69,6 +69,42 @@ export function useUpdateProfile() {
   })
 }
 
+export function useUpdateMediaItem(profileQueryKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mediaId, patch }: { mediaId: string; patch: { title?: string; description?: string; genres?: string[] } }) =>
+      profileService.updateMediaItem(mediaId, patch),
+    onMutate: async ({ mediaId, patch }) => {
+      await qc.cancelQueries({ queryKey: ['profiles', profileQueryKey] })
+      const prev = qc.getQueryData<ProfileResponse>(['profiles', profileQueryKey])
+      qc.setQueryData<ProfileResponse>(['profiles', profileQueryKey], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          media: (old.media ?? []).map((m) =>
+            m.id === mediaId ? { ...m, ...patch } : m,
+          ),
+        }
+      })
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['profiles', profileQueryKey], ctx.prev)
+    },
+    onSuccess: (result, { mediaId }) => {
+      qc.setQueryData<ProfileResponse>(['profiles', profileQueryKey], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          media: (old.media ?? []).map((m) =>
+            m.id === mediaId ? { ...m, title: result.title, description: result.description, genres: result.genres } : m,
+          ),
+        }
+      })
+    },
+  })
+}
+
 export function useUpdatePhotoCaption(profileQueryKey: string) {
   const qc = useQueryClient()
   return useMutation({

@@ -1,4 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useRef, useState, useEffect } from 'react'
+import gsap from 'gsap'
 import { useMyProfile, useUpdateProfile } from '../hooks/useProfile.js'
 import { ProfileForm } from '../components/profile/ProfileForm.js'
 import { AvatarUploader } from '../components/profile/AvatarUploader.js'
@@ -9,10 +11,12 @@ import { MediaInput } from '../components/media/MediaInput.js'
 import { MediaList } from '../components/media/MediaList.js'
 import { Button } from '../components/ui/Button.js'
 import { Tabs } from '../components/ui/Tabs.js'
+import { Toast } from '../components/ui/Toast.js'
 import { profilePath } from '../utils/slug.js'
-import { useState, useEffect, useRef } from 'react'
 import { uploadImage } from '../services/uploadService.js'
-import type { CreateProfileInput, MediaItem, Photo, ProfileTheme } from '../types/index.js'
+import { cn } from '../utils/cn.js'
+import { prefersReducedMotion } from '../utils/motion.js'
+import type { CreateProfileInput, MediaItem, Photo, ProfileTheme, ProfileType } from '../types/index.js'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
@@ -54,7 +58,9 @@ export default function ProfileEdit() {
   const [photosSaved, setPhotosSaved] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<Photo | null>(null)
+  const [typeToast, setTypeToast] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const typePillRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   useEffect(() => {
     if (profile) {
@@ -86,6 +92,16 @@ export default function ProfileEdit() {
 
   async function handleAvatarUploaded(url: string) {
     await update({ avatar: url })
+  }
+
+  async function handleTypeChange(type: ProfileType, idx: number) {
+    if (!profile || type === profile.type) return
+    if (!prefersReducedMotion()) {
+      const el = typePillRefs.current[idx]
+      if (el) gsap.fromTo(el, { scale: 0.88 }, { scale: 1, duration: 0.44, ease: 'back.out(2.5)' })
+    }
+    await update({ type })
+    setTypeToast(true)
   }
 
   async function handleCoverUploaded(url: string) {
@@ -152,6 +168,7 @@ export default function ProfileEdit() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[var(--bg)] px-6 py-24">
       <div className="max-w-xl mx-auto">
 
@@ -205,13 +222,40 @@ export default function ProfileEdit() {
         {/* ─── INFO ─── */}
         {tab === 'info' && (
           <div className="flex flex-col gap-8">
+            {/* Type switcher — saves instantly */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                Tipo de artista
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {(['dj', 'producer', 'other'] as const).map((t, idx) => (
+                  <button
+                    key={t}
+                    ref={(el) => { typePillRefs.current[idx] = el }}
+                    type="button"
+                    onClick={() => handleTypeChange(t, idx)}
+                    className={cn(
+                      'rounded-full px-5 py-2 font-sans text-sm font-medium transition-all duration-200 select-none',
+                      profile.type === t
+                        ? 'bg-[var(--accent)] text-[var(--bg)]'
+                        : 'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
+                    )}
+                  >
+                    {TYPE_LABEL[t]}
+                  </button>
+                ))}
+              </div>
+              <p className="font-sans text-xs text-[var(--text-muted)] mt-3">
+                Podes cambiar tu tipo de artista cuando quieras. Se guarda al instante.
+              </p>
+            </div>
+
             <div>
               <p className="text-sm text-[var(--text-muted)] font-sans mb-3">Foto de perfil</p>
               <AvatarUploader current={profile.avatar} onUploaded={handleAvatarUploaded} />
             </div>
             <ProfileForm
               initial={{
-                type: profile.type,
                 artistName: profile.artistName,
                 bio: profile.bio,
                 location: profile.location,
@@ -403,5 +447,15 @@ export default function ProfileEdit() {
         )}
       </div>
     </div>
+
+    {typeToast && (
+      <Toast
+        message="Tipo de artista actualizado"
+        variant="success"
+        onDismiss={() => setTypeToast(false)}
+        duration={2500}
+      />
+    )}
+    </>
   )
 }
