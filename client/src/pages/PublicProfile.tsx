@@ -618,207 +618,207 @@ export default function PublicProfile() {
 
         {/* Mobile / tablet: info vertical debajo del hero */}
         <div className="lg:hidden">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8">
+          <div className="max-w-3xl mx-auto px-5 sm:px-8">
 
-          {/* Avatar */}
-          <div className="pi flex justify-center md:justify-start" style={{ marginTop: '-60px', marginBottom: 16 }}>
-            <div className="relative inline-block" style={{ filter: `drop-shadow(0 0 36px ${profileAccent}2e)` }}>
-              {profile.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt={profile.artistName}
-                  className="rounded-full object-cover"
-                  style={{ width: 120, height: 120, border: '4px solid var(--bg)' }}
-                />
-              ) : (
-                <div
-                  className="rounded-full flex items-center justify-center"
-                  style={{ width: 120, height: 120, background: `${profileAccent}1c`, border: '4px solid var(--bg)' }}
-                >
-                  <span className="font-display font-bold" style={{ fontSize: 44, color: profileAccent }}>
-                    {profile.artistName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              {profile.availability === 'available' && (
-                <span
-                  className="absolute inset-0 rounded-full pointer-events-none"
-                  style={{ boxShadow: `0 0 0 3px ${profileAccent}80`, animation: 'pulse-ring 2.6s ease-in-out infinite' }}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Identity */}
-          <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
-            <h1
-              className="pi font-display font-semibold text-[var(--text)] leading-none tracking-tighter"
-              style={{ fontSize: 'clamp(1.85rem, 5.5vw, 2.9rem)' }}
-            >
-              {profile.artistName}
-            </h1>
-            <div className="pi flex items-center gap-2 flex-wrap justify-center md:justify-start">
-              <span className="font-sans text-sm text-[var(--text-muted)]">
-                {TYPE_LABEL[profile.type] ?? profile.type}
-              </span>
-              {profile.location && (
-                <>
-                  <span className="text-[var(--text-muted)] opacity-40">·</span>
-                  <span className="font-sans text-sm text-[var(--text-muted)]">{profile.location}</span>
-                </>
-              )}
-              <Pill
-                label={AVAILABILITY_LABEL[profile.availability]}
-                variant={AVAILABILITY_VARIANT[profile.availability]}
-              />
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="pi flex items-center justify-center md:justify-start gap-0 mt-5">
-            {stats.map((stat, i) => (
-              <div key={stat.label} className="flex items-center">
-                <div className="flex flex-col items-center md:items-start gap-0.5 px-5 first:pl-0">
-                  <span
-                    className="font-display font-semibold text-[var(--text)] leading-none"
-                    style={{ fontSize: 22 }}
+            {/* Avatar */}
+            <div className="pi flex justify-center md:justify-start" style={{ marginTop: '-60px', marginBottom: 16 }}>
+              <div className="relative inline-block" style={{ filter: `drop-shadow(0 0 36px ${profileAccent}2e)` }}>
+                {profile.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt={profile.artistName}
+                    className="rounded-full object-cover"
+                    style={{ width: 120, height: 120, border: '4px solid var(--bg)' }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-full flex items-center justify-center"
+                    style={{ width: 120, height: 120, background: `${profileAccent}1c`, border: '4px solid var(--bg)' }}
                   >
-                    {stat.value}
-                  </span>
+                    <span className="font-display font-bold" style={{ fontSize: 44, color: profileAccent }}>
+                      {profile.artistName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                {profile.availability === 'available' && (
                   <span
-                    className="font-sans uppercase tracking-widest text-[var(--text-muted)]"
-                    style={{ fontSize: 9 }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                {i < stats.length - 1 && (
-                  <div className="h-8 bg-[var(--border)]" style={{ width: 1 }} />
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ boxShadow: `0 0 0 3px ${profileAccent}80`, animation: 'pulse-ring 2.6s ease-in-out infinite' }}
+                  />
                 )}
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Bio */}
-          {profile.bio && (
-            <p
-              className="pi font-sans text-sm leading-relaxed mt-4 text-center md:text-left"
-              style={{ color: 'rgba(242,242,247,0.70)', maxWidth: '54ch' }}
-            >
-              {profile.bio}
-            </p>
-          )}
+            {/* Identity */}
+            <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
+              <h1
+                className="pi font-display font-semibold text-[var(--text)] leading-none tracking-tighter"
+                style={{ fontSize: 'clamp(1.85rem, 5.5vw, 2.9rem)' }}
+              >
+                {profile.artistName}
+              </h1>
+              <div className="pi flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                <span className="font-sans text-sm text-[var(--text-muted)]">
+                  {TYPE_LABEL[profile.type] ?? profile.type}
+                </span>
+                {profile.location && (
+                  <>
+                    <span className="text-[var(--text-muted)] opacity-40">·</span>
+                    <span className="font-sans text-sm text-[var(--text-muted)]">{profile.location}</span>
+                  </>
+                )}
+                <Pill
+                  label={AVAILABILITY_LABEL[profile.availability]}
+                  variant={AVAILABILITY_VARIANT[profile.availability]}
+                />
+              </div>
+            </div>
 
-          {/* Genre pills */}
-          {profile.genres.length > 0 && (
-            <div className="pi flex flex-wrap gap-1.5 mt-3 justify-center md:justify-start">
-              {profile.genres.map((g) => (
-                <RainbowPill key={g} label={g} color={genreToColor(g)} />
+            {/* Stats */}
+            <div className="pi flex items-center justify-center md:justify-start gap-0 mt-5">
+              {stats.map((stat, i) => (
+                <div key={stat.label} className="flex items-center">
+                  <div className="flex flex-col items-center md:items-start gap-0.5 px-5 first:pl-0">
+                    <span
+                      className="font-display font-semibold text-[var(--text)] leading-none"
+                      style={{ fontSize: 22 }}
+                    >
+                      {stat.value}
+                    </span>
+                    <span
+                      className="font-sans uppercase tracking-widest text-[var(--text-muted)]"
+                      style={{ fontSize: 9 }}
+                    >
+                      {stat.label}
+                    </span>
+                  </div>
+                  {i < stats.length - 1 && (
+                    <div className="h-8 bg-[var(--border)]" style={{ width: 1 }} />
+                  )}
+                </div>
               ))}
             </div>
-          )}
 
-          {/* Action row — horizontal scroll on mobile so all actions stay visible on small screens */}
-          <div className="pi no-scrollbar flex flex-nowrap items-center gap-2 mt-6 overflow-x-auto md:flex-wrap md:justify-start md:overflow-x-visible">
-            {isOwner && <div className="flex-shrink-0"><PublishMenu /></div>}
-            {token && !isOwner && (
-              <div className="flex-shrink-0">
-                <FollowButton
-                  isFollowing={!!social?.isFollowing}
-                  onToggle={() => toggleFollow()}
-                  isPending={followPending}
-                />
+            {/* Bio */}
+            {profile.bio && (
+              <p
+                className="pi font-sans text-sm leading-relaxed mt-4 text-center md:text-left"
+                style={{ color: 'rgba(242,242,247,0.70)', maxWidth: '54ch' }}
+              >
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Genre pills */}
+            {profile.genres.length > 0 && (
+              <div className="pi flex flex-wrap gap-1.5 mt-3 justify-center md:justify-start">
+                {profile.genres.map((g) => (
+                  <RainbowPill key={g} label={g} color={genreToColor(g)} />
+                ))}
               </div>
             )}
 
-            {profile.whatsapp && (
-              <div className="flex-shrink-0">
-                <WhatsAppButton
-                  number={profile.whatsapp}
-                  message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
-                  size="md"
-                />
-              </div>
-            )}
+            {/* Action row — horizontal scroll on mobile so all actions stay visible on small screens */}
+            <div className="pi no-scrollbar flex flex-nowrap items-center gap-2 mt-6 overflow-x-auto md:flex-wrap md:justify-start md:overflow-x-visible">
+              {isOwner && <div className="flex-shrink-0"><PublishMenu /></div>}
+              {token && !isOwner && (
+                <div className="flex-shrink-0">
+                  <FollowButton
+                    isFollowing={!!social?.isFollowing}
+                    onToggle={() => toggleFollow()}
+                    isPending={followPending}
+                  />
+                </div>
+              )}
 
-            {token && !isOwner && (
-              <div
-                className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
+              {profile.whatsapp && (
+                <div className="flex-shrink-0">
+                  <WhatsAppButton
+                    number={profile.whatsapp}
+                    message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
+                    size="md"
+                  />
+                </div>
+              )}
+
+              {token && !isOwner && (
+                <div
+                  className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-full border transition-colors duration-180"
+                  style={{
+                    borderColor: social?.isLiked ? `${profileAccent}40` : 'var(--border)',
+                    background: social?.isLiked ? `${profileAccent}0d` : undefined,
+                  }}
+                >
+                  <LikeButton
+                    isLiked={!!social?.isLiked}
+                    likeCount={likeCount > 0 ? likeCount : undefined}
+                    onToggle={() => toggleLike()}
+                    disabled={likePending}
+                    accentColor={profileAccent}
+                    size="sm"
+                    layout="row"
+                  />
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none group"
                 style={{
-                  borderColor: social?.isLiked ? `${profileAccent}40` : 'var(--border)',
-                  background: social?.isLiked ? `${profileAccent}0d` : undefined,
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-muted)',
+                  transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--c-blue)'
+                  el.style.borderColor = 'var(--c-blue)'
+                  el.style.background = 'var(--c-blue-muted)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--text-muted)'
+                  el.style.borderColor = 'var(--border)'
+                  el.style.background = 'transparent'
                 }}
               >
-                <LikeButton
-                  isLiked={!!social?.isLiked}
-                  likeCount={likeCount > 0 ? likeCount : undefined}
-                  onToggle={() => toggleLike()}
-                  disabled={likePending}
-                  accentColor={profileAccent}
-                  size="sm"
-                  layout="row"
-                />
-              </div>
-            )}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+                <span className="hidden sm:inline">{shareNotice ? 'Copiado' : 'Compartir'}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleShare}
-              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none group"
-              style={{
-                borderColor: 'var(--border)',
-                color: 'var(--text-muted)',
-                transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget
-                el.style.color = 'var(--c-blue)'
-                el.style.borderColor = 'var(--c-blue)'
-                el.style.background = 'var(--c-blue-muted)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget
-                el.style.color = 'var(--text-muted)'
-                el.style.borderColor = 'var(--border)'
-                el.style.background = 'transparent'
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-              <span className="hidden sm:inline">{shareNotice ? 'Copiado' : 'Compartir'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={scrollToComments}
-              className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none"
-              style={{
-                borderColor: 'var(--border)',
-                color: 'var(--text-muted)',
-                transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget
-                el.style.color = 'var(--c-purple)'
-                el.style.borderColor = 'var(--c-purple)'
-                el.style.background = 'var(--c-purple-muted)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget
-                el.style.color = 'var(--text-muted)'
-                el.style.borderColor = 'var(--border)'
-                el.style.background = 'transparent'
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              {commentCount > 0 && <span className="hidden sm:inline">{commentCount}</span>}
-            </button>
+              <button
+                type="button"
+                onClick={scrollToComments}
+                className="flex-shrink-0 flex items-center gap-1.5 font-sans text-sm px-4 py-2.5 rounded-full border select-none"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-muted)',
+                  transition: 'color 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--c-purple)'
+                  el.style.borderColor = 'var(--c-purple)'
+                  el.style.background = 'var(--c-purple-muted)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget
+                  el.style.color = 'var(--text-muted)'
+                  el.style.borderColor = 'var(--border)'
+                  el.style.background = 'transparent'
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {commentCount > 0 && <span className="hidden sm:inline">{commentCount}</span>}
+              </button>
+            </div>
           </div>
-        </div>
         </div>{/* /lg:hidden */}
 
         {/* Desktop: bio debajo del hero */}

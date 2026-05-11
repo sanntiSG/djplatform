@@ -95,7 +95,7 @@ export function pinnedScene(
 
 /** Magnetic hover: element follows cursor with spring-like feel. Returns cleanup fn. */
 export function magneticHover(el: HTMLElement, strength = 0.38): () => void {
-  if (prefersReducedMotion()) return () => {}
+  if (prefersReducedMotion()) return () => { }
   const xTo = gsap.quickTo(el, 'x', { duration: 0.55, ease: EASE.out })
   const yTo = gsap.quickTo(el, 'y', { duration: 0.55, ease: EASE.out })
   const onMove = (e: MouseEvent) => {
@@ -115,9 +115,9 @@ export function magneticHover(el: HTMLElement, strength = 0.38): () => void {
 
 /** 3D tilt on hover. Returns cleanup fn. */
 export function tiltCard(el: HTMLElement, maxDeg = 9): () => void {
-  if (prefersReducedMotion()) return () => {}
-  const rxTo = gsap.quickTo(el, 'rotateX', { duration: 0.55, ease: EASE.out })
-  const ryTo = gsap.quickTo(el, 'rotateY', { duration: 0.55, ease: EASE.out })
+  if (prefersReducedMotion()) return () => { }
+  const rxTo = gsap.quickTo(el, 'rotationX', { duration: 0.55, ease: EASE.out })
+  const ryTo = gsap.quickTo(el, 'rotationY', { duration: 0.55, ease: EASE.out })
   const onEnter = () => gsap.set(el, { transformPerspective: 900 })
   const onMove = (e: MouseEvent) => {
     const r = el.getBoundingClientRect()
@@ -132,6 +132,6 @@ export function tiltCard(el: HTMLElement, maxDeg = 9): () => void {
     el.removeEventListener('mouseenter', onEnter)
     el.removeEventListener('mousemove', onMove)
     el.removeEventListener('mouseleave', onLeave)
-    gsap.set(el, { rotateX: 0, rotateY: 0 })
+    gsap.set(el, { rotationX: 0, rotationY: 0 })
   }
 }

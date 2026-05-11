@@ -42,6 +42,19 @@ function PlatformIcon({ platform }: { platform: string }) {
   )
 }
 
+function getTrackThumbnail(item: { platform: string; embedId?: string }) {
+  if (item.platform === 'youtube' && item.embedId) {
+    return `https://img.youtube.com/vi/${item.embedId}/mqdefault.jpg`
+  }
+  if (item.platform === 'spotify' && item.embedId) {
+    const [type, id] = item.embedId.split('/')
+    if (type === 'track') {
+      return `https://i.scdn.co/image/${id}` 
+    }
+  }
+  return null
+}
+
 export default function GenreDetail() {
   const { slug } = useParams<{ slug: string }>()
   const { data: tracks, isLoading } = useTracksByGenre(slug ?? '')
@@ -60,10 +73,8 @@ export default function GenreDetail() {
   useEffect(() => {
     if (!containerRef.current || prefersReducedMotion()) {
       if (titleRef.current) {
-        titleRef.current.style.opacity = '1'
-        titleRef.current.style.left = '50%'
+        gsap.set(titleRef.current, { opacity: 1, xPercent: -50, left: '50%', visibility: 'visible' })
       }
-      if (subtitleRef.current) subtitleRef.current.style.opacity = '1'
       return
     }
 
@@ -77,23 +88,32 @@ export default function GenreDetail() {
       const gradStart = `linear-gradient(105deg, ${colorVar} 0%, rgba(0,0,0,0.9) 70%, black 100%)`
       const gradFull = `linear-gradient(90deg, ${colorVar} 0%, rgba(0,0,0,0.8) 60%, black 100%)`
 
+      // Ensure title is visible for animation and properly centered
+      gsap.set(titleRef.current, { 
+        visibility: 'visible', 
+        autoAlpha: 1, 
+        xPercent: -50, 
+        yPercent: -50,
+        left: '50%',
+        top: '50%'
+      })
+
       tl.fromTo(
         titleRef.current,
-        { left: '150%' },
-        { left: '50%', ease: 'expo.out', duration: 1, delay: 1.2 },
+        { xPercent: 150, opacity: 0 },
+        { xPercent: -50, opacity: 1, ease: 'expo.out', duration: 1.2, delay: 1.2 },
         0,
       )
-      tl.to(titleRef.current, { y: '-50px', delay: 3, duration: 0.5, ease: 'sine.out' }, 0)
+      tl.to(titleRef.current, { yPercent: -150, delay: 3, duration: 0.6, ease: 'power2.inOut' }, 0)
       tl.fromTo(
         subtitleRef.current,
-        { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, ease: 'sine.out', duration: 0.5, delay: 3 },
+        { opacity: 0, y: 30, xPercent: -50, left: '50%' },
+        { opacity: 1, y: 0, ease: 'sine.out', duration: 0.5, delay: 3.2 },
         0,
       )
-      tl.to([titleRef.current, subtitleRef.current], { left: '-150%', ease: 'sine.in', duration: 1, delay: 1.2 }, 4)
+      tl.to([titleRef.current, subtitleRef.current], { xPercent: -250, opacity: 0, ease: 'sine.in', duration: 1, delay: 1.2 }, 4)
 
       panels.forEach((panel, i) => {
-        const stopPosition = 100 - i * 1
         const wi = window.innerWidth - elWidth * (N_PANELS - i) + elWidth
         const he = window.innerHeight - elHeight * (N_PANELS - i) + elHeight
 
@@ -274,19 +294,20 @@ export default function GenreDetail() {
         {/* Genre name */}
         <h1
           ref={titleRef}
-          className="font-display font-black text-white"
+          className="font-display font-black text-white text-center leading-[0.8] select-none pointer-events-none px-4"
           style={{
             position: 'absolute',
-            top: '46%',
-            left: '150%',
+            top: '50%',
+            left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 999,
-            fontSize: 'clamp(3.5rem, 10vw, 8rem)',
+            fontSize: 'clamp(3rem, 12vw, 10rem)',
             textAlign: 'center',
-            whiteSpace: 'nowrap',
             margin: 0,
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.05em',
             opacity: 1,
+            visibility: 'visible',
+            width: '100%',
           }}
         >
           {displayName}
@@ -294,136 +315,147 @@ export default function GenreDetail() {
 
         <p
           ref={subtitleRef}
-          className="font-sans text-white/60"
+          className="font-sans font-bold text-white/40 uppercase tracking-[0.4em] select-none pointer-events-none"
           style={{
             position: 'absolute',
-            top: '46%',
+            top: '50%',
             left: '50%',
-            marginTop: '5rem',
+            marginTop: '6rem',
             transform: 'translate(-50%, -50%)',
             zIndex: 999,
-            fontSize: '0.875rem',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
+            fontSize: 'clamp(0.6rem, 1.5vw, 0.8rem)',
             opacity: 0,
             whiteSpace: 'nowrap',
           }}
         >
-          {isLoading ? 'Cargando...' : `${tracks?.length ?? 0} track${tracks?.length !== 1 ? 's' : ''}`}
+          {isLoading ? 'Explorando...' : `${tracks?.length ?? 0} piezas seleccionadas`}
         </p>
 
         {/* Scroll hint */}
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-1.5"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2"
           style={{ opacity: 0.5 }}
         >
-          <span className="font-sans text-xs text-white uppercase tracking-widest">Scroll</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
+          <div className="w-[1px] h-10 bg-gradient-to-b from-transparent to-white/50"></div>
+          <span className="font-sans text-[9px] text-white/50 uppercase tracking-[0.2em]">Scroll</span>
         </div>
       </div>
 
       {/* Track list */}
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-7xl mx-auto px-6 py-16">
         {isLoading ? (
-          <div className="flex flex-col gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 9 }).map((_, i) => (
               <div
                 key={i}
-                className="h-20 rounded-2xl animate-pulse"
-                style={{ background: 'var(--surface-elevated)' }}
+                className="h-20 rounded-2xl animate-pulse bg-white/5"
               />
             ))}
           </div>
         ) : !tracks?.length ? (
-          <div className="text-center py-20">
-            <p className="font-display font-semibold text-[var(--text)] text-2xl mb-3">
-              Sin tracks todavia
+          <div className="text-center py-24 glass rounded-[3rem] p-12 border-white/5">
+            <h2 className="font-display font-semibold text-white text-3xl mb-4">
+              Escena en silencio
+            </h2>
+            <p className="font-sans text-[var(--text-muted)] max-w-sm mx-auto">
+              Ningún artista ha catalogado tracks como {displayName} aún.
             </p>
-            <p className="font-sans text-sm text-[var(--text-muted)]">
-              Ningun artista ha catalogado tracks como {displayName} aun.
-            </p>
-            <Link
-              to="/profiles"
-              className="inline-flex mt-8 items-center gap-2 px-6 py-3 rounded-full font-sans text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
-              style={{ background: 'var(--accent)' }}
-            >
-              Ver artistas
-            </Link>
           </div>
         ) : (
           <>
-            <div className="mb-10">
-              <h2 className="font-display font-semibold text-[var(--text)] text-2xl">
-                Tracks de {displayName}
-              </h2>
-              <p className="font-sans text-sm text-[var(--text-muted)] mt-1">
-                {tracks.length} track{tracks.length !== 1 ? 's' : ''} catalogados
-              </p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+              <div>
+                <span className="font-sans text-[10px] font-bold text-[var(--accent)] uppercase tracking-[0.2em] mb-3 block">
+                  Catálogo musical
+                </span>
+                <h2 className="font-display font-bold text-white text-5xl md:text-6xl tracking-tight">
+                  {displayName}
+                </h2>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/5">
+                <p className="font-sans text-[10px] text-white/40 uppercase tracking-widest mb-0.5">Escena actual</p>
+                <p className="font-sans text-sm font-bold text-white">{tracks.length} Artistas participando</p>
+              </div>
             </div>
 
-            <div ref={tracksRef} className="flex flex-col gap-3">
-              {tracks.map((item, i) => (
-                <Link
-                  key={i}
-                  to={profilePath(item.profile.slug, item.profile.id)}
-                  className="track-card flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] hover:border-white/20 transition-colors duration-150"
-                >
-                  {/* Avatar */}
-                  <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 bg-[var(--surface)]">
-                    {item.profile.avatar ? (
-                      <img
-                        src={item.profile.avatar}
-                        alt={item.profile.artistName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center font-display font-bold text-sm"
-                        style={{ background: colorVar + '33', color: colorVar }}
-                      >
-                        {item.profile.artistName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
+            <div ref={tracksRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+              {tracks.map((item, i) => {
+                const rawTitle = item.track.title ?? item.track.url;
+                const displayTitle = rawTitle.length > 50 && !item.track.title 
+                  ? `Track ${i + 1}` 
+                  : rawTitle;
+                const trackThumbnail = getTrackThumbnail(item.track);
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-sans text-sm font-medium text-[var(--text)] truncate">
-                      {item.track.title ?? item.track.url}
-                    </p>
-                    <p className="font-sans text-xs text-[var(--text-muted)] truncate">
-                      {item.profile.artistName}
-                    </p>
-                    {(item.track.genres?.length ?? 0) > 1 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {item.track.genres!.filter((g) => nameToSlug(g) !== slug).map((g) => (
-                          <span
-                            key={g}
-                            className="inline-flex items-center px-2 py-0.5 rounded-full font-sans text-[10px] font-medium"
-                            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}
-                          >
-                            {g}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                return (
+                  <Link
+                    key={i}
+                    id={item.track.id}
+                    to={`${profilePath(item.profile.slug, item.profile.id)}#${item.track.id}`}
+                    className="track-card group flex flex-col"
+                  >
+                    {/* Cover Container */}
+                    <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-white/5 mb-4 shadow-2xl transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      {trackThumbnail ? (
+                        <img 
+                          src={trackThumbnail} 
+                          alt={displayTitle} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                      ) : item.profile.avatar ? (
+                        <img 
+                          src={item.profile.avatar} 
+                          alt={item.profile.artistName} 
+                          className="w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center font-display font-bold text-4xl" style={{ background: colorVar + '22', color: colorVar }}>
+                          {item.profile.artistName.charAt(0)}
+                        </div>
+                      )}
 
-                  {/* Platform icon */}
-                  <PlatformIcon platform={item.track.platform} />
-                </Link>
-              ))}
+                      {/* Hover Overlay with Platform Icon */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300">
+                            <PlatformIcon platform={item.track.platform} />
+                         </div>
+                      </div>
+
+                      {/* Badge (Small) */}
+                      <div className="absolute top-3 left-3 px-2 py-1 rounded-lg glass border-white/5 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: colorVar }}></div>
+                        <span className="font-sans text-[8px] font-bold text-white uppercase tracking-wider">{item.track.platform}</span>
+                      </div>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="px-2">
+                      <h3 className="font-sans font-bold text-white text-sm leading-tight line-clamp-1 group-hover:text-[var(--accent)] transition-colors">
+                        {displayTitle}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0 bg-white/10">
+                          {item.profile.avatar && <img src={item.profile.avatar} className="w-full h-full object-cover" />}
+                        </div>
+                        <p className="font-sans text-[10px] font-medium text-white/40 truncate uppercase tracking-widest">
+                          {item.profile.artistName}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
 
-            <div className="mt-16 text-center">
+            <div className="mt-20 text-center">
               <Link
                 to={`/profiles?genre=${encodeURIComponent(displayName)}`}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-sans text-sm font-medium transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-sans text-sm font-bold transition-all hover:scale-105 active:scale-95 shadow-xl"
                 style={{ background: colorVar, color: '#000' }}
               >
                 Ver todos los artistas de {displayName}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
               </Link>
             </div>
           </>
