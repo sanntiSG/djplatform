@@ -11,6 +11,8 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
       url,
       embedId: ytMatch[1],
       type: 'video',
+      description: '',
+      genres: [],
     }
   }
 
@@ -21,6 +23,8 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
       url,
       embedId: `${spMatch[1]}/${spMatch[2]}`,
       type: 'audio',
+      description: '',
+      genres: [],
     }
   }
 
@@ -37,6 +41,8 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
       embedHtml: data.html,
       type: 'audio',
       title: data.title,
+      description: '',
+      genres: [],
     }
   }
 
