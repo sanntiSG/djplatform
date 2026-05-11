@@ -1,6 +1,7 @@
 import { User } from '../models/User.js'
 import { Profile } from '../models/Profile.js'
 import { Event } from '../models/Event.js'
+import { Genre, type IGenre } from '../models/Genre.js'
 import { serializeProfile } from './profileService.js'
 import { serializeEvent } from './eventService.js'
 import { destroyAsset } from './cloudinaryService.js'
@@ -134,4 +135,56 @@ export async function adminListUsers(filters: { cursor?: string; limit?: number 
     .sort({ _id: -1 })
     .limit(filters.limit ?? 30)
     .lean()
+}
+
+function serializeGenre(g: IGenre) {
+  return {
+    id: (g._id as unknown as { toString(): string }).toString(),
+    name: g.name,
+    slug: g.slug,
+    isActive: g.isActive,
+    order: g.order,
+  }
+}
+
+export async function adminListGenres() {
+  const genres = await Genre.find().sort({ order: 1, name: 1 }).lean() as unknown as IGenre[]
+  return genres.map(serializeGenre)
+}
+
+export async function adminCreateGenre(name: string) {
+  const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  const existing = await Genre.findOne({ slug })
+  if (existing) throw Object.assign(new Error('Ya existe un genero con ese nombre'), { status: 409 })
+
+  const maxOrder = await Genre.findOne().sort({ order: -1 }).lean() as unknown as IGenre | null
+  const genre = await Genre.create({ name: name.trim(), slug, isActive: true, order: (maxOrder?.order ?? 0) + 1 })
+  return serializeGenre(genre as unknown as IGenre)
+}
+
+export async function adminUpdateGenre(id: string, patch: { isActive?: boolean; name?: string }) {
+  const update: Partial<{ isActive: boolean; name: string; slug: string }> = {}
+  if (patch.isActive !== undefined) update.isActive = patch.isActive
+  if (patch.name !== undefined) {
+    update.name = patch.name.trim()
+    update.slug = patch.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  }
+
+  const genre = await Genre.findByIdAndUpdate(id, { $set: update }, { new: true })
+  if (!genre) throw Object.assign(new Error('Genero no encontrado'), { status: 404 })
+  return serializeGenre(genre as unknown as IGenre)
+}
+
+export async function adminDeleteGenre(id: string) {
+  const genre = await Genre.findById(id).lean() as unknown as IGenre | null
+  if (!genre) throw Object.assign(new Error('Genero no encontrado'), { status: 404 })
+
+  const inUseCount = await Profile.countDocuments({
+    $or: [{ genres: genre.slug }, { 'media.genres': genre.slug }, { genres: genre.name }, { 'media.genres': genre.name }],
+  })
+  if (inUseCount > 0) {
+    throw Object.assign(new Error('Este genero esta en uso por perfiles o tracks y no puede borrarse'), { status: 409 })
+  }
+
+  await Genre.findByIdAndDelete(id)
 }

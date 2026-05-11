@@ -7,6 +7,8 @@ interface IMediaItem {
   embedHtml?: string
   type: 'audio' | 'video'
   title?: string
+  description?: string
+  genres?: string[]
   addedAt?: Date
 }
 
@@ -48,6 +50,12 @@ const mediaItemSchema = new mongoose.Schema<IMediaItem>(
     embedHtml: { type: String },
     type: { type: String, enum: ['audio', 'video'], required: true },
     title: { type: String },
+    description: { type: String, default: '', maxlength: 1000 },
+    genres: {
+      type: [String],
+      default: [],
+      validate: { validator: (v: string[]) => v.length <= 3, message: 'Max 3 generos por track' },
+    },
     addedAt: { type: Date, default: Date.now },
   },
   { _id: true },
@@ -92,6 +100,7 @@ const profileSchema = new mongoose.Schema<IProfile>(
 profileSchema.index({ type: 1, isVisible: 1 })
 profileSchema.index({ location: 1 })
 profileSchema.index({ genres: 1 })
+profileSchema.index({ 'media.genres': 1 })
 profileSchema.index({ eventTypes: 1 })
 profileSchema.index({ availability: 1, isVisible: 1 })
 profileSchema.index({ artistName: 'text', bio: 'text' }, { weights: { artistName: 10, bio: 1 } })

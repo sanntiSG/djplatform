@@ -88,6 +88,34 @@ export async function listProfiles(filters: {
     .lean() as unknown as IProfile[]
 }
 
+export async function updateMediaItem(
+  userId: string,
+  mediaId: string,
+  patch: { title?: string; description?: string; genres?: string[] },
+): Promise<{ id: string; title?: string; description: string; genres: string[] }> {
+  const profile = await Profile.findOne({ userId })
+  if (!profile) throw Object.assign(new Error('Perfil no encontrado'), { status: 404 })
+
+  const media = profile.media.find((m) => (m as unknown as { _id: Types.ObjectId })._id?.toString() === mediaId)
+  if (!media) throw Object.assign(new Error('Track no encontrado'), { status: 404 })
+
+  if (patch.title !== undefined) media.title = patch.title
+  if (patch.description !== undefined) media.description = patch.description
+  if (patch.genres !== undefined) {
+    if (patch.genres.length > 3) throw Object.assign(new Error('Max 3 generos por track'), { status: 422 })
+    media.genres = patch.genres
+  }
+
+  await profile.save()
+
+  return {
+    id: mediaId,
+    title: media.title,
+    description: media.description ?? '',
+    genres: media.genres ?? [],
+  }
+}
+
 export function serializeProfile(p: IProfile) {
   return {
     id: (p._id as Types.ObjectId).toString(),
@@ -113,6 +141,8 @@ export function serializeProfile(p: IProfile) {
       embedHtml: m.embedHtml,
       type: m.type,
       title: m.title,
+      description: m.description ?? '',
+      genres: m.genres ?? [],
       addedAt: m.addedAt instanceof Date ? m.addedAt.toISOString() : (m.addedAt ?? p.createdAt.toISOString()),
     })),
     photos: (p.photos ?? []).map((photo: unknown) => {

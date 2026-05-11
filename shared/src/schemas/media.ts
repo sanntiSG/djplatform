@@ -13,6 +13,8 @@ export const MediaItemSchema = z.object({
   embedHtml: z.string().optional(),
   type: MediaTypeSchema,
   title: z.string().optional(),
+  description: z.string().max(1000).optional().default(''),
+  genres: z.array(z.string()).max(3).optional().default([]),
   addedAt: z.string().datetime().optional(),
 })
 export type MediaItem = z.infer<typeof MediaItemSchema>

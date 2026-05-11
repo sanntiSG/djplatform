@@ -4,6 +4,7 @@ import { CreateProfileSchema, UpdateProfileSchema } from '@dj/shared'
 import {
   createProfile,
   updateProfile,
+  updateMediaItem,
   getProfileByUserId,
   getProfileById,
   listProfiles,
@@ -77,6 +78,22 @@ export async function updatePhotoCaption(req: Request, res: Response, next: Next
     await profile.save()
 
     res.json({ id: photo._id?.toString(), caption: photo.caption })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateMediaItemHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { mediaId } = req.params
+    const patch = z.object({
+      title: z.string().optional(),
+      description: z.string().max(1000).optional(),
+      genres: z.array(z.string()).max(3).optional(),
+    }).parse(req.body)
+
+    const result = await updateMediaItem(req.user!.id, mediaId, patch)
+    res.json(result)
   } catch (err) {
     next(err)
   }

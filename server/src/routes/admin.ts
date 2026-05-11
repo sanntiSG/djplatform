@@ -10,6 +10,10 @@ import {
   setEventVisibility,
   deleteEvent,
   listUsers,
+  listGenres,
+  createGenre,
+  updateGenre,
+  deleteGenre,
 } from '../controllers/adminController.js'
 
 const router = Router()
@@ -24,5 +28,10 @@ router.get('/events', listEvents)
 router.patch('/events/:id/visibility', setEventVisibility)
 router.delete('/events/:id', deleteEvent)
 router.get('/users', listUsers)
+
+router.get('/genres', listGenres)
+router.post('/genres', createGenre)
+router.patch('/genres/:id', updateGenre)
+router.delete('/genres/:id', deleteGenre)
 
 export default router

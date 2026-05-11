@@ -8,6 +8,10 @@ import {
   adminSetEventVisibility,
   adminDeleteEvent,
   adminListUsers,
+  adminListGenres,
+  adminCreateGenre,
+  adminUpdateGenre,
+  adminDeleteGenre,
 } from '../services/adminService.js'
 
 export async function stats(req: Request, res: Response, next: NextFunction) {
@@ -91,6 +95,43 @@ export async function listUsers(req: Request, res: Response, next: NextFunction)
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     })
     res.json(users)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function listGenres(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await adminListGenres())
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function createGenre(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { name } = req.body as { name: string }
+    if (!name?.trim()) { res.status(400).json({ error: 'El nombre es requerido' }); return }
+    const genre = await adminCreateGenre(name)
+    res.status(201).json(genre)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateGenre(req: Request, res: Response, next: NextFunction) {
+  try {
+    const genre = await adminUpdateGenre(req.params.id, req.body as { isActive?: boolean; name?: string })
+    res.json(genre)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function deleteGenre(req: Request, res: Response, next: NextFunction) {
+  try {
+    await adminDeleteGenre(req.params.id)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }
