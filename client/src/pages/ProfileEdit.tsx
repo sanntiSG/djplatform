@@ -163,8 +163,8 @@ export default function ProfileEdit() {
     setMediaItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  function handleUpdateMediaTitle(index: number, newTitle: string) {
-    setMediaItems((prev) => prev.map((item, i) => (i === index ? { ...item, title: newTitle } : item)))
+  function handleUpdateMedia(index: number, patch: Partial<Pick<MediaItem, 'title' | 'description' | 'genres'>>) {
+    setMediaItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)))
   }
 
   return (
@@ -431,7 +431,7 @@ export default function ProfileEdit() {
               </p>
             </div>
             <MediaInput onAdd={handleAddMedia} />
-            <MediaList items={mediaItems} editable onRemove={handleRemoveMedia} onUpdate={handleUpdateMediaTitle} />
+            <MediaList items={mediaItems} editable onRemove={handleRemoveMedia} onUpdate={handleUpdateMedia} />
             {mediaItems.length > 0 && (
               <Button
                 type="button"
