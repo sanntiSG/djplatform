@@ -1,21 +1,30 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
+import gsap from 'gsap'
 import { Button } from '../components/ui/Button.js'
 import { Input } from '../components/ui/Input.js'
 import { authService } from '../services/authService.js'
 import { useAuthStore } from '../store/useAuthStore.js'
+import { prefersReducedMotion } from '../utils/motion.js'
 
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { setAuth } = useAuthStore()
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/me'
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (prefersReducedMotion() || !containerRef.current) return
+    const children = Array.from(containerRef.current.children) as HTMLElement[]
+    gsap.from(children, { y: 28, opacity: 0, duration: 0.55, ease: 'expo.out', stagger: 0.075, delay: 0.05 })
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -50,7 +59,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-6 py-24">
-      <div className="w-full max-w-sm">
+      <div ref={containerRef} className="w-full max-w-sm">
         <div className="mb-10">
           <Link to="/" className="font-display font-semibold text-lg text-[var(--text)]">
             DJ<span style={{ color: 'var(--accent)' }}>Platform</span>

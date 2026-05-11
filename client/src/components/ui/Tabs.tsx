@@ -1,5 +1,7 @@
 import { useRef, useEffect, type ReactNode } from 'react'
+import gsap from 'gsap'
 import { cn } from '../../utils/cn.js'
+import { prefersReducedMotion } from '../../utils/motion.js'
 
 interface Tab {
   id: string
@@ -19,6 +21,7 @@ export function Tabs({ tabs, active, onChange, className, variant = 'pill' }: Ta
   const indicatorRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const pillRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   useEffect(() => {
     if (variant !== 'instagram') return
@@ -41,18 +44,27 @@ export function Tabs({ tabs, active, onChange, className, variant = 'pill' }: Ta
   }, [active, tabs, variant])
 
   if (variant === 'pill-ios') {
+    function handlePillClick(id: string, idx: number) {
+      if (!prefersReducedMotion()) {
+        const el = pillRefs.current[idx]
+        if (el) gsap.fromTo(el, { scale: 0.88 }, { scale: 1, duration: 0.44, ease: 'back.out(2.5)' })
+      }
+      onChange(id)
+    }
+
     return (
       <div className={cn('no-scrollbar flex gap-2 overflow-x-auto py-2', className)}>
-        {tabs.map((tab) => (
+        {tabs.map((tab, idx) => (
           <button
             key={tab.id}
+            ref={(el) => { pillRefs.current[idx] = el }}
             type="button"
-            onClick={() => onChange(tab.id)}
+            onClick={() => handlePillClick(tab.id, idx)}
             className={cn(
               'flex-shrink-0 rounded-full px-4 py-1.5 font-sans text-sm font-medium transition-all duration-200 select-none',
               active === tab.id
                 ? 'bg-[var(--text)] text-[var(--bg)]'
-                : 'bg-transparent text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)] hover:border-white/25 active:scale-[0.97]',
+                : 'bg-transparent text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)] hover:border-white/25',
             )}
           >
             {tab.label}
