@@ -75,4 +75,24 @@ export const adminService = {
     const q = qs.toString()
     return apiClient.get<AdminUser[]>(`/admin/users${q ? `?${q}` : ''}`)
   },
+
+  getNotificationTypes: () =>
+    apiClient.get<{ types: AdminNotificationType[]; stats: { total: number; active: number; inactive: number } }>('/admin/notification-types'),
+
+  updateNotificationType: (key: string, enabledByAdmin: boolean) =>
+    apiClient.patch<AdminNotificationType>(`/admin/notification-types/${key}`, { enabledByAdmin }),
+
+  bulkUpdateNotificationTypes: (enabledByAdmin: boolean) =>
+    apiClient.post<{ ok: boolean }>('/admin/notification-types/bulk', { enabledByAdmin }),
+}
+
+export interface AdminNotificationType {
+  _id: string
+  key: string
+  label: string
+  description: string
+  category: 'profile' | 'all'
+  enabledByAdmin: boolean
+  createdAt: string
+  updatedAt: string
 }

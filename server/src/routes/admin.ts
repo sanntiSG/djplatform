@@ -21,6 +21,11 @@ import {
   dbStats,
   cleanupInactive,
 } from '../controllers/adminController.js'
+import {
+  listNotificationTypes,
+  updateNotificationType,
+  bulkUpdateNotificationTypes,
+} from '../controllers/adminNotificationController.js'
 
 const router = Router()
 
@@ -47,5 +52,9 @@ router.delete('/profile-types/:id', deleteProfileType)
 
 router.get('/db-stats', dbStats)
 router.post('/cleanup/inactive-profiles', cleanupInactive)
+
+router.get('/notification-types', listNotificationTypes)
+router.patch('/notification-types/:key', updateNotificationType)
+router.post('/notification-types/bulk', bulkUpdateNotificationTypes)
 
 export default router
