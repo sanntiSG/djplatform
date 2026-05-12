@@ -106,6 +106,8 @@ export async function me(req: Request, res: Response, next: NextFunction) {
       mustChangePassword: user.mustChangePassword,
       profileId: user.profileId?.toString() ?? null,
       createdAt: user.createdAt.toISOString(),
+      notificationsAsked: user.notificationsAsked ?? false,
+      pushOptIn: user.pushOptIn ?? false,
     })
   } catch (err) {
     next(err)

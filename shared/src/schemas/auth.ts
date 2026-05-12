@@ -35,6 +35,8 @@ export const AuthResponseSchema = z.object({
     mustChangePassword: z.boolean(),
     profileId: z.string().nullable(),
     createdAt: z.string(),
+    notificationsAsked: z.boolean().default(false),
+    pushOptIn: z.boolean().default(false),
   }),
 })
 export type AuthResponse = z.infer<typeof AuthResponseSchema>

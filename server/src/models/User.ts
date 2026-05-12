@@ -8,6 +8,8 @@ export interface IUser extends Document {
   role: 'user' | 'admin'
   mustChangePassword: boolean
   profileId?: Types.ObjectId
+  notificationsAsked: boolean
+  pushOptIn: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -26,6 +28,8 @@ const userSchema = new mongoose.Schema<IUser>(
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     mustChangePassword: { type: Boolean, default: false },
     profileId: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile' },
+    notificationsAsked: { type: Boolean, default: false },
+    pushOptIn: { type: Boolean, default: false },
   },
   { timestamps: true },
 )

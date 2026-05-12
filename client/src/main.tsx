@@ -6,6 +6,14 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App.js'
 import './index.css'
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .catch(() => { /* SW registration is best-effort */ })
+  })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -4,6 +4,8 @@ import { Header } from './components/ui/Header.js'
 import { Toast } from './components/ui/Toast.js'
 import { useToastStore } from './store/useToastStore.js'
 import { RequireAuth } from './components/auth/RequireAuth.js'
+import { NotificationPermissionModal } from './components/notifications/NotificationPermissionModal.js'
+import { useNotificationsPermission } from './hooks/useNotificationsPermission.js'
 import Landing from './pages/Landing.js'
 import Login from './pages/Login.js'
 import Register from './pages/Register.js'
@@ -35,6 +37,17 @@ function ToastRenderer() {
   return <Toast message={message} variant={variant} onDismiss={dismiss} />
 }
 
+function NotificationsGate() {
+  const { open, handleActivate, handleDismiss } = useNotificationsPermission()
+  return (
+    <NotificationPermissionModal
+      open={open}
+      onActivate={handleActivate}
+      onDismiss={handleDismiss}
+    />
+  )
+}
+
 export default function App() {
   const { pathname } = useLocation()
   const showHeader = !HIDE_HEADER_PATHS.includes(pathname)
@@ -48,6 +61,7 @@ export default function App() {
     <>
       {showHeader && <Header />}
       <ToastRenderer />
+      <NotificationsGate />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth/login" element={<Login />} />

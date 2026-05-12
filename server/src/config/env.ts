@@ -16,6 +16,9 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   SIGHTENGINE_API_USER: z.string().optional(),
   SIGHTENGINE_API_SECRET: z.string().optional(),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:ssantii200@gmail.com'),
 })
 
 const parsed = EnvSchema.safeParse(process.env)

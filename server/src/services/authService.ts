@@ -15,6 +15,8 @@ export function buildAuthResponse(user: IUser, token?: string): AuthResponse {
       mustChangePassword: user.mustChangePassword,
       profileId: user.profileId?.toString() ?? null,
       createdAt: user.createdAt.toISOString(),
+      notificationsAsked: user.notificationsAsked ?? false,
+      pushOptIn: user.pushOptIn ?? false,
     },
   }
 }
