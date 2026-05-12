@@ -633,7 +633,7 @@ export default function MainFeed() {
       <div className="px-4 md:px-6 pb-6 pt-safe md:pt-10">
         <div className="flex items-center justify-between mb-3">
           <p className="feed-hero-el font-sans font-bold text-[10px] uppercase tracking-[0.22em] text-[var(--accent)]">
-            Escena electronica argentina
+            Escena musical Argentina
           </p>
           <Link
             to="/profiles"

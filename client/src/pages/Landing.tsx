@@ -561,9 +561,11 @@ export default function Landing() {
             className="relative w-full rounded-[var(--radius-xl)] overflow-hidden border border-[var(--border)]"
             style={{ minHeight: '440px' }}
           >
-            <img
-              src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1280&auto=format&fit=crop"
-              alt="Evento en vivo"
+            <video
+              src="3.mp4"
+              autoPlay
+              loop
+              muted
               className="w-full h-full object-cover absolute inset-0"
               style={{ filter: 'brightness(0.28) contrast(1.18) saturate(0.85)' }}
             />
