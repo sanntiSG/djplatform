@@ -10,7 +10,9 @@ interface ProfileMusicTabProps {
 }
 
 export function ProfileMusicTab({ profile, isOwner, onItemClick }: ProfileMusicTabProps) {
-  const musicItems = profile.media
+  const musicItems = [...profile.media].sort(
+    (a, b) => new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime(),
+  )
 
   if (musicItems.length === 0) {
     return (

@@ -13,7 +13,9 @@ interface ProfileMediaTabProps {
 export function ProfileMediaTab({ profile, isOwner, onItemClick }: ProfileMediaTabProps) {
   const [lightbox, setLightbox] = useState<string | null>(null)
 
-  const photos = profile.photos ?? []
+  const photos = [...(profile.photos ?? [])].sort(
+    (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+  )
 
   if (photos.length === 0) {
     return (
