@@ -100,14 +100,14 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
       <div
         ref={backdropRef}
         onClick={onClose}
-        className="fixed inset-0 z-[48] bg-black/55"
+        className="fixed inset-0 z-[80] bg-black/55"
         style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }}
       />
 
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="fixed left-0 right-0 bottom-0 z-[49] glass-pill rounded-t-[30px] flex flex-col overflow-hidden"
+        className="fixed left-0 right-0 bottom-0 z-[81] glass-pill rounded-t-[30px] flex flex-col overflow-hidden"
         style={{
           boxShadow: '0 -16px 64px rgba(0,0,0,0.75)',
           paddingBottom: 'max(env(safe-area-inset-bottom), 24px)',

@@ -80,7 +80,7 @@ export function Header() {
       <Link
         to="/"
         className={cn(
-          'fixed z-[51] glass-pill rounded-full md:hidden h-11 px-4',
+          'fixed z-[90] glass-pill rounded-full md:hidden h-11 px-4',
           'flex items-center justify-center font-display font-semibold tracking-tight',
           'text-[var(--text)] active:scale-95 transition-transform duration-100 select-none',
         )}
@@ -99,7 +99,7 @@ export function Header() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'fixed z-[51] glass-pill rounded-full w-11 h-11',
+          'fixed z-[90] glass-pill rounded-full w-11 h-11',
           'flex flex-col items-center justify-center gap-[5px]',
           'md:hidden',
           'transition-transform duration-100 active:scale-90',

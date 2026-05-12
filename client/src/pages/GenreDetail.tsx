@@ -300,7 +300,7 @@ export default function GenreDetail() {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            zIndex: 999,
+            zIndex: 30,
             fontSize: 'clamp(3rem, 12vw, 10rem)',
             textAlign: 'center',
             margin: 0,
@@ -322,7 +322,7 @@ export default function GenreDetail() {
             left: '50%',
             marginTop: '6rem',
             transform: 'translate(-50%, -50%)',
-            zIndex: 999,
+            zIndex: 30,
             fontSize: 'clamp(0.6rem, 1.5vw, 0.8rem)',
             opacity: 0,
             whiteSpace: 'nowrap',
@@ -333,7 +333,7 @@ export default function GenreDetail() {
 
         {/* Scroll hint */}
         <div
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[30] flex flex-col items-center gap-2"
           style={{ opacity: 0.5 }}
         >
           <div className="w-[1px] h-10 bg-gradient-to-b from-transparent to-white/50"></div>
