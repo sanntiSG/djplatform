@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -204,6 +204,7 @@ function genreSlug(name: string) {
 
 export default function PublicProfile() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const { data: profile, isLoading } = useProfile(id!)
   const { data: events, isLoading: eventsLoading } = useProfileEvents(id!)
@@ -259,6 +260,29 @@ export default function PublicProfile() {
     setMeta('name', 'twitter:image', image)
 
     return () => { document.title = 'DJPlatform' }
+  }, [profile])
+
+  // Open ContentViewer when arriving via deep-link hash (e.g. from GenreDetail)
+  useEffect(() => {
+    if (!profile) return
+    const hash = location.hash.replace('#', '')
+    if (!hash) return
+
+    const mediaMatch = profile.media.find((m) => m.id === hash)
+    if (mediaMatch) {
+      setTab('musica')
+      setViewerItem({ kind: 'media', id: hash })
+      history.replaceState(null, '', location.pathname + location.search)
+      return
+    }
+
+    const photoMatch = profile.photos?.find((p) => p.id === hash)
+    if (photoMatch) {
+      setTab('media')
+      setViewerItem({ kind: 'photo', id: hash })
+      history.replaceState(null, '', location.pathname + location.search)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
 
   useEffect(() => {
