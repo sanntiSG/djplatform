@@ -25,6 +25,8 @@ import {
   listNotificationTypes,
   updateNotificationType,
   bulkUpdateNotificationTypes,
+  getPushStatus,
+  testPushAdmin,
 } from '../controllers/adminNotificationController.js'
 
 const router = Router()
@@ -56,5 +58,8 @@ router.post('/cleanup/inactive-profiles', cleanupInactive)
 router.get('/notification-types', listNotificationTypes)
 router.patch('/notification-types/:key', updateNotificationType)
 router.post('/notification-types/bulk', bulkUpdateNotificationTypes)
+
+router.get('/push-status', getPushStatus)
+router.post('/push-test', testPushAdmin)
 
 export default router

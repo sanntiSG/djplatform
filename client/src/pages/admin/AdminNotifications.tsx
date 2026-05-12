@@ -7,6 +7,7 @@ import { Toggle } from '../../components/ui/Toggle.js'
 import { Button } from '../../components/ui/Button.js'
 import { Pill } from '../../components/ui/Pill.js'
 import { useCounterTween } from '../../hooks/useCounterTween.js'
+import { useToastStore } from '../../store/useToastStore.js'
 import { revealStagger, DURATION, EASE, prefersReducedMotion } from '../../utils/motion.js'
 import { cn } from '../../utils/cn.js'
 
@@ -15,6 +16,12 @@ export default function AdminNotifications() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-notification-types'],
     queryFn: () => adminService.getNotificationTypes(),
+  })
+
+  const { data: pushStatus } = useQuery({
+    queryKey: ['admin-push-status'],
+    queryFn: () => adminService.getPushStatus(),
+    staleTime: 60_000,
   })
 
   const update = useMutation({
@@ -26,6 +33,10 @@ export default function AdminNotifications() {
   const bulk = useMutation({
     mutationFn: (enabled: boolean) => adminService.bulkUpdateNotificationTypes(enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-notification-types'] }),
+  })
+
+  const testPush = useMutation({
+    mutationFn: () => adminService.testPush(),
   })
 
   const [bulkConfirm, setBulkConfirm] = useState<'activate' | 'deactivate' | null>(null)
@@ -61,13 +72,62 @@ export default function AdminNotifications() {
     bulk.mutate(enabled)
   }
 
+  const { show: showToast } = useToastStore()
   const types = data?.types ?? []
   const profileTypes = types.filter(t => t.category === 'profile')
   const allTypes = types.filter(t => t.category === 'all')
   const stats = data?.stats ?? { total: 0, active: 0, inactive: 0 }
 
+  async function handleTestPush() {
+    try {
+      const result = await testPush.mutateAsync()
+      if (result.attempted === 0) {
+        showToast('El admin no tiene suscripciones push activas. Activalas desde tu perfil.', 'info')
+      } else {
+        showToast(`Push de prueba enviado (${result.attempted} dispositivo${result.attempted !== 1 ? 's' : ''}).`, 'success')
+      }
+    } catch {
+      showToast('Error al enviar push de prueba.', 'error')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
+      {/* Push infrastructure status */}
+      <div className={cn(
+        'flex items-center justify-between gap-4 rounded-[var(--radius-lg)] px-5 py-4',
+        pushStatus?.vapidConfigured ? 'bg-[var(--accent)]/8' : 'bg-white/3',
+      )}>
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            'w-2 h-2 rounded-full shrink-0',
+            pushStatus?.vapidConfigured ? 'bg-[var(--accent)]' : 'bg-red-400',
+          )} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-[var(--text)]">
+              Web Push {pushStatus?.vapidConfigured ? 'configurado' : 'no configurado'}
+            </span>
+            <span className="text-[11px] text-[var(--text-muted)]">
+              {pushStatus
+                ? pushStatus.vapidConfigured
+                  ? `Clave: ${pushStatus.vapidPublicKeyFingerprint} · ${pushStatus.subscriptionsCount} suscripcion${pushStatus.subscriptionsCount !== 1 ? 'es' : ''}`
+                  : 'Ejecuta: cd server && npx tsx scripts/generateVapidKeys.ts y pega las claves en .env'
+                : 'Cargando...'}
+            </span>
+          </div>
+        </div>
+        {pushStatus?.vapidConfigured && (
+          <button
+            type="button"
+            onClick={handleTestPush}
+            disabled={testPush.isPending}
+            className="shrink-0 text-xs font-medium text-[var(--accent)] hover:opacity-75 transition-opacity disabled:opacity-40"
+          >
+            {testPush.isPending ? 'Enviando...' : 'Enviar push de prueba'}
+          </button>
+        )}
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard label="Total" value={stats.total} />

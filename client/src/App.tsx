@@ -5,6 +5,7 @@ import { Toast } from './components/ui/Toast.js'
 import { useToastStore } from './store/useToastStore.js'
 import { RequireAuth } from './components/auth/RequireAuth.js'
 import { NotificationPermissionModal } from './components/notifications/NotificationPermissionModal.js'
+import { InstallPwaPrompt } from './components/notifications/InstallPwaPrompt.js'
 import { useNotificationsPermission } from './hooks/useNotificationsPermission.js'
 import Landing from './pages/Landing.js'
 import Login from './pages/Login.js'
@@ -42,13 +43,18 @@ function ToastRenderer() {
 }
 
 function NotificationsGate() {
-  const { open, handleActivate, handleDismiss } = useNotificationsPermission()
+  const { open, handleActivate, handleDismiss, showInstallPrompt, setShowInstallPrompt } = useNotificationsPermission()
   return (
-    <NotificationPermissionModal
-      open={open}
-      onActivate={handleActivate}
-      onDismiss={handleDismiss}
-    />
+    <>
+      <NotificationPermissionModal
+        open={open}
+        onActivate={handleActivate}
+        onDismiss={handleDismiss}
+      />
+      {showInstallPrompt && (
+        <InstallPwaPrompt onClose={() => setShowInstallPrompt(false)} />
+      )}
+    </>
   )
 }
 

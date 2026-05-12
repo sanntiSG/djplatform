@@ -1,10 +1,12 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
+import type React from 'react'
 import gsap from 'gsap'
 import { Toggle } from '../ui/Toggle.js'
 import { useNotificationTypes, useNotificationPrefs } from '../../hooks/useNotificationPrefs.js'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import * as pushService from '../../services/pushService.js'
 import { useToastStore } from '../../store/useToastStore.js'
+import { reasonToMessage } from '../../utils/pushReasons.js'
 import { revealStagger, prefersReducedMotion } from '../../utils/motion.js'
 import type { NotificationPreferences as Prefs } from '../../services/notificationsService.js'
 
@@ -16,6 +18,8 @@ export function NotificationPreferences() {
   const containerRef = useRef<HTMLDivElement>(null)
   const levelTrackRef = useRef<HTMLDivElement>(null)
   const levelThumbRef = useRef<HTMLDivElement>(null)
+  const [testingPush, setTestingPush] = useState(false)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -41,13 +45,13 @@ export function NotificationPreferences() {
 
   async function handlePushToggle(val: boolean) {
     if (val) {
-      if (!('Notification' in window) || !('PushManager' in window)) {
-        showToast('Tu navegador no soporta notificaciones push.', 'error')
-        return
-      }
-      const ok = await pushService.subscribe()
-      if (!ok) {
-        showToast('Necesitás permitir las notificaciones en tu navegador.', 'error')
+      const result = await pushService.subscribe()
+      if (!result.ok) {
+        if (result.reason === 'ios-needs-pwa') {
+          setShowInstallPrompt(true)
+          return
+        }
+        showToast(reasonToMessage(result.reason), 'error')
         return
       }
       update({ pushOptIn: true })
@@ -57,6 +61,22 @@ export function NotificationPreferences() {
       await pushService.unsubscribe()
       update({ pushOptIn: false })
       if (user && token) setAuth(token, { ...user, pushOptIn: false })
+    }
+  }
+
+  async function handleTestPush() {
+    setTestingPush(true)
+    try {
+      const result = await pushService.testPushSelf()
+      if (result.attempted === 0) {
+        showToast('Sin dispositivos registrados. Desactiva y vuelve a activar las notificaciones.', 'info')
+      } else {
+        showToast('Push de prueba enviado. Deberia aparecer en segundos.', 'success')
+      }
+    } catch {
+      showToast('Error al enviar push de prueba.', 'error')
+    } finally {
+      setTestingPush(false)
     }
   }
 
@@ -73,23 +93,62 @@ export function NotificationPreferences() {
   const profileTypes = (types ?? []).filter(t => t.category === 'profile')
   const allTypes = (types ?? []).filter(t => t.category === 'all')
 
+  const iosWithoutPwa = typeof window !== 'undefined'
+    && /iPad|iPhone|iPod/.test(navigator.userAgent || '')
+    && !window.matchMedia('(display-mode: standalone)').matches
+
   return (
     <div ref={containerRef} className="flex flex-col gap-7">
+
+      {/* iOS banner */}
+      {iosWithoutPwa && (
+        <section data-reveal className="bg-[var(--accent)]/8 rounded-[var(--radius-lg)] p-4 flex items-center justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <svg className="shrink-0 mt-0.5 text-[var(--accent)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-xs text-[var(--text)] leading-relaxed">
+              Para activar notificaciones en iPhone, primero agrega REsonar a tu pantalla de inicio.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowInstallPrompt(true)}
+            className="shrink-0 text-xs font-semibold text-[var(--accent)] hover:opacity-75 transition-opacity whitespace-nowrap"
+          >
+            Como hacerlo
+          </button>
+        </section>
+      )}
+
       {/* Push global toggle */}
-      <section data-reveal className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="font-display font-semibold text-[var(--text)]" style={{ fontSize: '1.05rem' }}>
-            Notificaciones push
-          </p>
-          <p className="text-xs text-[var(--text-muted)] leading-relaxed" style={{ maxWidth: '28ch' }}>
-            Recibir alertas del navegador aunque no estes en la plataforma.
-          </p>
+      <section data-reveal className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="font-display font-semibold text-[var(--text)]" style={{ fontSize: '1.05rem' }}>
+              Notificaciones push
+            </p>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed" style={{ maxWidth: '28ch' }}>
+              Recibir alertas del navegador aunque no estes en la plataforma.
+            </p>
+          </div>
+          <Toggle
+            checked={prefs.pushOptIn}
+            onChange={handlePushToggle}
+            disabled={isUpdating}
+          />
         </div>
-        <Toggle
-          checked={prefs.pushOptIn}
-          onChange={handlePushToggle}
-          disabled={isUpdating}
-        />
+        {prefs.pushOptIn && (
+          <button
+            type="button"
+            onClick={handleTestPush}
+            disabled={testingPush}
+            className="self-start text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)] transition-colors disabled:opacity-40"
+          >
+            {testingPush ? 'Enviando...' : 'Enviar push de prueba'}
+          </button>
+        )}
       </section>
 
       {/* Level selector */}
@@ -170,8 +229,21 @@ export function NotificationPreferences() {
           Cambia a "Todas" para ver las notificaciones de eventos y mensajes.
         </p>
       )}
+
+      {showInstallPrompt && (
+        <InstallPwaPromptInline onClose={() => setShowInstallPrompt(false)} />
+      )}
     </div>
   )
+}
+
+function InstallPwaPromptInline({ onClose }: { onClose: () => void }) {
+  const [Comp, setComp] = useState<React.ComponentType<{ onClose: () => void }> | null>(null)
+  useEffect(() => {
+    import('../../components/notifications/InstallPwaPrompt.js').then(m => setComp(() => m.InstallPwaPrompt))
+  }, [])
+  if (!Comp) return null
+  return <Comp onClose={onClose} />
 }
 
 function LevelOption({ active, label, sublabel, onClick }: {

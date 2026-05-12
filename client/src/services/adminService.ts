@@ -84,6 +84,12 @@ export const adminService = {
 
   bulkUpdateNotificationTypes: (enabledByAdmin: boolean) =>
     apiClient.post<{ ok: boolean }>('/admin/notification-types/bulk', { enabledByAdmin }),
+
+  getPushStatus: () =>
+    apiClient.get<{ vapidConfigured: boolean; vapidPublicKeyFingerprint: string; subscriptionsCount: number }>('/admin/push-status'),
+
+  testPush: (userId?: string) =>
+    apiClient.post<{ ok: boolean; attempted: number }>('/admin/push-test', userId ? { userId } : {}),
 }
 
 export interface AdminNotificationType {

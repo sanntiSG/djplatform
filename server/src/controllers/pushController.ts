@@ -48,3 +48,12 @@ export async function dismissAsk(req: Request, res: Response, next: NextFunction
     next(err)
   }
 }
+
+export async function testPushSelf(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await pushService.sendTestPush(req.user!.id)
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    next(err)
+  }
+}
