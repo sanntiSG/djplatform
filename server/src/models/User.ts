@@ -10,6 +10,8 @@ export interface IUser extends Document {
   profileId?: Types.ObjectId
   notificationsAsked: boolean
   pushOptIn: boolean
+  notificationLevel: 'profile' | 'all'
+  notificationOverrides: Map<string, boolean>
   createdAt: Date
   updatedAt: Date
 }
@@ -30,6 +32,8 @@ const userSchema = new mongoose.Schema<IUser>(
     profileId: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile' },
     notificationsAsked: { type: Boolean, default: false },
     pushOptIn: { type: Boolean, default: false },
+    notificationLevel: { type: String, enum: ['profile', 'all'], default: 'profile' },
+    notificationOverrides: { type: Map, of: Boolean, default: new Map() },
   },
   { timestamps: true },
 )
