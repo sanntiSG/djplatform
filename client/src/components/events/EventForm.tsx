@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Input } from '../ui/Input.js'
 import { Button } from '../ui/Button.js'
 import { CoverUploader } from './CoverUploader.js'
+import { LocationAutocomplete } from '../ui/LocationAutocomplete.js'
 import type { CreateEventInput } from '../../types/index.js'
 
 interface EventFormProps {
   initial?: Partial<CreateEventInput>
-  onSubmit: (data: CreateEventInput) => Promise<void>
+  onSubmit: (data: CreateEventInput, locationVerified: boolean) => Promise<void>
   submitLabel?: string
 }
 
@@ -19,11 +20,17 @@ export function EventForm({ initial = {}, onSubmit, submitLabel = 'Publicar even
     cover: initial.cover ?? '',
     media: initial.media ?? [],
   })
+  const [locationVerified, setLocationVerified] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleLocationChange(name: string, verified: boolean) {
+    set('location', name)
+    setLocationVerified(verified)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,9 +44,10 @@ export function EventForm({ initial = {}, onSubmit, submitLabel = 'Publicar even
         description: form.description || undefined,
         date: dateISO,
         location: form.location || undefined,
+        locationVerified: locationVerified || undefined,
         cover: form.cover || undefined,
         media: form.media,
-      })
+      }, locationVerified)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar el evento')
     } finally {
@@ -82,11 +90,11 @@ export function EventForm({ initial = {}, onSubmit, submitLabel = 'Publicar even
         required
       />
 
-      <Input
+      <LocationAutocomplete
         label="Lugar"
         value={form.location}
-        onChange={(e) => set('location', e.target.value)}
-        placeholder="Nombre del venue o direccion"
+        onChange={handleLocationChange}
+        placeholder="Buscar ciudad o venue..."
       />
 
       {error && (

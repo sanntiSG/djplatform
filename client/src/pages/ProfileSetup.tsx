@@ -19,8 +19,8 @@ export default function ProfileSetup() {
   const { data: profileTypes } = useProfileTypes()
   const [selectedType, setSelectedType] = useState<string>('dj')
 
-  async function handleSubmit(data: CreateProfileInput) {
-    const profile = await mutateAsync({ ...data, type: selectedType })
+  async function handleSubmit(data: CreateProfileInput, locationVerified: boolean) {
+    const profile = await mutateAsync({ ...data, type: selectedType, locationVerified })
     navigate(profilePath(profile.slug, profile.id))
   }
 

@@ -30,6 +30,7 @@ export interface IProfile extends Document {
   theme?: 'minimal' | 'neon' | 'cosmic' | 'fire' | 'void'
   accentColor?: string
   location?: string
+  locationVerified?: boolean
   genres: string[]
   eventTypes: string[]
   availability: 'available' | 'contact' | 'unavailable'
@@ -81,6 +82,7 @@ const profileSchema = new mongoose.Schema<IProfile>(
     theme: { type: String, enum: ['minimal', 'neon', 'cosmic', 'fire', 'void'], default: 'minimal' },
     accentColor: { type: String, maxlength: 20 },
     location: { type: String, maxlength: 100 },
+    locationVerified: { type: Boolean, default: false },
     genres: [{ type: String }],
     eventTypes: [{ type: String }],
     availability: {

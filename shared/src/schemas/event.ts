@@ -5,6 +5,7 @@ export const CreateEventSchema = z.object({
   description: z.string().max(2000).optional(),
   date: z.string().datetime({ offset: true }),
   location: z.string().max(200).optional(),
+  locationVerified: z.boolean().optional(),
   cover: z.string().url().optional(),
   media: z.array(z.string().url()).max(10).default([]),
 })
@@ -21,6 +22,7 @@ export const EventResponseSchema = z.object({
   description: z.string().optional(),
   date: z.string(),
   location: z.string().optional(),
+  locationVerified: z.boolean().optional(),
   cover: z.string().optional(),
   media: z.array(z.string()),
   isVisible: z.boolean(),

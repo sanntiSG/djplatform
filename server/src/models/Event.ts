@@ -7,6 +7,7 @@ export interface IEvent extends Document {
   description?: string
   date: Date
   location?: string
+  locationVerified?: boolean
   cover?: string
   media: string[]
   isVisible: boolean
@@ -24,6 +25,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
     description: { type: String, maxlength: 2000 },
     date: { type: Date, required: true },
     location: { type: String, maxlength: 200 },
+    locationVerified: { type: Boolean, default: false },
     cover: { type: String },
     media: [{ type: String }],
     isVisible: { type: Boolean, default: true },

@@ -21,6 +21,7 @@ export const CreateProfileSchema = z.object({
   artistName: z.string().min(2, 'Nombre artistico muy corto').max(60),
   bio: z.string().max(1000, 'Bio demasiado larga').optional(),
   location: z.string().max(100).optional(),
+  locationVerified: z.boolean().optional(),
   genres: z.array(z.string()).max(10).default([]),
   eventTypes: z.array(z.string()).max(10).default([]),
   availability: AvailabilitySchema.default('contact'),
@@ -37,6 +38,7 @@ export const UpdateProfileSchema = CreateProfileSchema.partial().extend({
   coverImage: z.string().url().optional(),
   theme: ProfileThemeSchema.optional(),
   accentColor: z.string().max(20).optional(),
+  locationVerified: z.boolean().optional(),
   media: z.array(MediaItemSchema).max(20).optional(),
   photos: z.array(PhotoSchema).max(30).optional(),
 })
@@ -54,6 +56,7 @@ export const ProfileResponseSchema = z.object({
   theme: ProfileThemeSchema.optional(),
   accentColor: z.string().optional(),
   location: z.string().optional(),
+  locationVerified: z.boolean().optional(),
   genres: z.array(z.string()),
   eventTypes: z.array(z.string()),
   availability: AvailabilitySchema,

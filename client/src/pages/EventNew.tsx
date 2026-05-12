@@ -36,7 +36,7 @@ export default function EventNew() {
     )
   }
 
-  async function handleSubmit(data: CreateEventInput) {
+  async function handleSubmit(data: CreateEventInput, _locationVerified: boolean) {
     const event = await mutateAsync(data)
     navigate(eventPath(event.slug, event.id))
   }

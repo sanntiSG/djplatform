@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { Input } from '../ui/Input.js'
 import { Button } from '../ui/Button.js'
 import { MultiSelect } from '../ui/Select.js'
+import { LocationAutocomplete } from '../ui/LocationAutocomplete.js'
 import { useCatalogs } from '../../hooks/useCatalogs.js'
 import type { CreateProfileInput, Availability } from '../../types/index.js'
 
 interface ProfileFormProps {
   initial?: Partial<Omit<CreateProfileInput, 'type'>>
-  onSubmit: (data: CreateProfileInput) => Promise<void>
+  onSubmit: (data: CreateProfileInput, locationVerified: boolean) => Promise<void>
   submitLabel?: string
 }
 
@@ -30,6 +31,7 @@ export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }:
     whatsapp: initial.whatsapp ?? '',
     priceRange: initial.priceRange ?? '',
   })
+  const [locationVerified, setLocationVerified] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -37,12 +39,17 @@ export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }:
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  function handleLocationChange(name: string, verified: boolean) {
+    set('location', name)
+    setLocationVerified(verified)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await onSubmit(form)
+      await onSubmit(form, locationVerified)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar')
     } finally {
@@ -76,11 +83,11 @@ export function ProfileForm({ initial = {}, onSubmit, submitLabel = 'Guardar' }:
         <p className="text-xs text-[var(--text-muted)] font-sans text-right">{(form.bio ?? '').length}/1000</p>
       </div>
 
-      <Input
+      <LocationAutocomplete
         label="Ubicacion"
         value={form.location ?? ''}
-        onChange={(e) => set('location', e.target.value)}
-        placeholder="Ej: CABA, Rosario, Cordoba..."
+        onChange={handleLocationChange}
+        placeholder="Buscar ciudad..."
       />
 
       <MultiSelect

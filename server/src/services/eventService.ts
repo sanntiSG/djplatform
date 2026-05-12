@@ -90,6 +90,7 @@ export function serializeEvent(e: IEvent) {
     description: e.description,
     date: e.date.toISOString(),
     location: e.location,
+    locationVerified: e.locationVerified ?? false,
     cover: e.cover,
     media: e.media,
     isVisible: e.isVisible,

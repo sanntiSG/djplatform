@@ -129,6 +129,7 @@ export function serializeProfile(p: IProfile) {
     theme: p.theme ?? 'minimal',
     accentColor: p.accentColor,
     location: p.location,
+    locationVerified: p.locationVerified ?? false,
     genres: p.genres,
     eventTypes: p.eventTypes,
     availability: p.availability,

@@ -91,8 +91,8 @@ export default function ProfileEdit() {
     return null
   }
 
-  async function handleInfoSubmit(data: CreateProfileInput) {
-    const updated = await update(data)
+  async function handleInfoSubmit(data: CreateProfileInput, locationVerified: boolean) {
+    const updated = await update({ ...data, locationVerified })
     navigate(profilePath(updated.slug, updated.id))
   }
 
@@ -247,6 +247,24 @@ export default function ProfileEdit() {
         {/* ─── INFO ─── */}
         {tab === 'info' && (
           <div className="flex flex-col gap-8">
+            {/* Location migration banner */}
+            {profile.location && !profile.locationVerified && (
+              <div className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-5 py-4 flex items-start gap-4">
+                <div className="flex-1">
+                  <p className="font-sans text-sm font-medium text-[var(--accent)]">Actualizamos el sistema de ubicaciones</p>
+                  <p className="font-sans text-xs text-[var(--text-muted)] mt-1">
+                    Confirma tu ubicacion para mejorar tu visibilidad en buscadores.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => update({ location: profile.location, locationVerified: true })}
+                  className="flex-shrink-0 font-sans text-xs px-3 py-1.5 rounded-lg bg-[var(--accent)] text-[var(--bg)] hover:opacity-90 transition-opacity"
+                >
+                  Confirmar
+                </button>
+              </div>
+            )}
             {/* Type switcher — saves instantly */}
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
               <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-3">
