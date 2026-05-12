@@ -11,6 +11,7 @@ import {
   deleteComment,
   getEventOwnerId,
 } from '../services/socialService.js'
+import { create as createNotification } from '../services/notificationService.js'
 
 export async function getStats(req: Request, res: Response, next: NextFunction) {
   try {
@@ -25,6 +26,17 @@ export async function like(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await toggleLike(req.params.id, req.user!.id)
     res.json(result)
+
+    if (result.liked) {
+      getEventOwnerId(req.params.id).then(ownerId => {
+        if (ownerId && ownerId !== req.user!.id) {
+          createNotification(ownerId, 'content_like', {
+            actorId: req.user!.id,
+            url: `/events/${req.params.id}`,
+          }).catch(() => {})
+        }
+      })
+    }
   } catch (err) {
     next(err)
   }
@@ -71,6 +83,16 @@ export async function postComment(req: Request, res: Response, next: NextFunctio
       .parse(req.body)
     const comment = await addComment(req.params.id, req.user!.id, text, parentId)
     res.status(201).json(serializeComment({ ...comment.toObject(), isLiked: false, isOwn: true, replies: [] }, req.user!.id))
+
+    getEventOwnerId(req.params.id).then(ownerId => {
+      if (ownerId && ownerId !== req.user!.id) {
+        createNotification(ownerId, 'content_comment', {
+          actorId: req.user!.id,
+          payload: { text: text.slice(0, 80) },
+          url: `/events/${req.params.id}`,
+        }).catch(() => {})
+      }
+    })
   } catch (err) {
     next(err)
   }

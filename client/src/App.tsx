@@ -28,6 +28,7 @@ import AdminProfileTypes from './pages/admin/AdminProfileTypes.js'
 import GenreDetail from './pages/GenreDetail.js'
 import ChangePassword from './pages/ChangePassword.js'
 import MainFeed from './pages/MainFeed.js'
+import Notifications from './pages/Notifications.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/events/:id" element={<EventDetail />} />
 
         <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
+        <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
         <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
         <Route path="/profile/edit" element={<RequireAuth><ProfileEdit /></RequireAuth>} />
         <Route path="/events/new" element={<RequireAuth><EventNew /></RequireAuth>} />

@@ -1,6 +1,72 @@
 import { NotificationType } from '../models/NotificationType.js'
+import { Notification } from '../models/Notification.js'
 import { User } from '../models/User.js'
 import type { IUser } from '../models/User.js'
+import { sendPush, type PushPayload } from './pushService.js'
+import { logger } from '../utils/logger.js'
+
+export interface CreateNotificationInput {
+  actorId?: string
+  payload?: Record<string, unknown>
+  url?: string
+}
+
+const TYPE_LABELS: Record<string, { title: (actorName?: string) => string; body: (payload?: Record<string, unknown>) => string }> = {
+  follow_new:       { title: (a) => `${a ?? 'Alguien'} te siguio`,          body: () => 'Tiene un nuevo seguidor en REsonar' },
+  profile_like:     { title: (a) => `${a ?? 'Alguien'} le dio me gusta a tu perfil`, body: () => '' },
+  profile_comment:  { title: (a) => `${a ?? 'Alguien'} comento en tu perfil`, body: (p) => String(p?.text ?? '') },
+  content_like:     { title: (a) => `${a ?? 'Alguien'} reacciono a tu contenido`, body: () => '' },
+  content_comment:  { title: (a) => `${a ?? 'Alguien'} comento en tu contenido`, body: (p) => String(p?.text ?? '') },
+  media_like:       { title: (a) => `${a ?? 'Alguien'} reacciono a tu musica`, body: () => '' },
+  event_new_followed_profile: { title: (a) => `${a ?? 'Un perfil que seguis'} publico un evento`, body: (p) => String(p?.title ?? '') },
+  event_new_genre_match:      { title: () => 'Nuevo evento de tu genero', body: (p) => String(p?.title ?? '') },
+  chat_message_new:           { title: (a) => `${a ?? 'Alguien'} te envio un mensaje`, body: (p) => String(p?.preview ?? '') },
+  chat_message_reply:         { title: (a) => `${a ?? 'Alguien'} respondio tu mensaje`, body: (p) => String(p?.preview ?? '') },
+}
+
+export async function create(
+  userId: string,
+  typeKey: string,
+  input: CreateNotificationInput = {},
+): Promise<void> {
+  try {
+    const [type, user] = await Promise.all([
+      NotificationType.findOne({ key: typeKey }).lean(),
+      User.findById(userId),
+    ])
+    if (!type || !type.enabledByAdmin || !user) return
+    if (!isTypeEnabledForUser(user, typeKey, type.category)) return
+
+    // Fetch actor name if provided
+    let actorName: string | undefined
+    if (input.actorId) {
+      const actor = await User.findById(input.actorId).populate('profileId').lean() as any
+      actorName = actor?.profileId?.artistName
+    }
+
+    await Notification.create({
+      userId,
+      type: typeKey,
+      actorId: input.actorId,
+      payload: input.payload,
+      url: input.url,
+    })
+
+    if (user.pushOptIn) {
+      const template = TYPE_LABELS[typeKey]
+      if (template) {
+        const pushPayload: PushPayload = {
+          title: template.title(actorName),
+          body: template.body(input.payload),
+          url: input.url ?? '/',
+        }
+        await sendPush(userId, pushPayload)
+      }
+    }
+  } catch (err) {
+    logger.warn('notificationService.create failed (non-fatal)', { userId, typeKey, err })
+  }
+}
 
 export interface TypeWithUserState {
   key: string

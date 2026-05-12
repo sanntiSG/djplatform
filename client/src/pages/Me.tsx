@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { useMyProfile } from '../hooks/useProfile.js'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '../components/ui/Button.js'
 import { Card } from '../components/ui/Card.js'
 import { Pill } from '../components/ui/Pill.js'
 import { profilePath } from '../utils/slug.js'
+import { notificationsService } from '../services/notificationsService.js'
 import type { Availability } from '../types/index.js'
 
 const availabilityLabel: Record<Availability, string> = {
@@ -23,6 +25,12 @@ export default function Me() {
   const { user, clearAuth } = useAuthStore()
   const { data: profile, isLoading } = useMyProfile()
   const navigate = useNavigate()
+  const { data: inboxData } = useQuery({
+    queryKey: ['notification-inbox'],
+    queryFn: () => notificationsService.getInbox({ limit: 1 }),
+    enabled: !!user,
+    staleTime: 15_000,
+  })
 
   function handleLogout() {
     clearAuth()
@@ -113,10 +121,46 @@ export default function Me() {
           </Card>
         )}
 
+        {/* Notificaciones */}
+        <Link to="/me/notificaciones" className="block">
+          <Card elevated className="p-5 flex items-center justify-between gap-3 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--surface-elevated)] flex items-center justify-center">
+                <BellSmIcon />
+              </div>
+              <span className="font-sans text-sm font-medium text-[var(--text)]">Notificaciones</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {(inboxData?.unreadCount ?? 0) > 0 && (
+                <span className="min-w-[20px] h-5 rounded-full bg-[var(--accent)] text-[var(--bg)] text-[11px] font-bold px-1.5 flex items-center justify-center">
+                  {inboxData!.unreadCount > 99 ? '99+' : inboxData!.unreadCount}
+                </span>
+              )}
+              <ChevronIcon />
+            </div>
+          </Card>
+        </Link>
+
         <Button variant="outline" size="md" onClick={handleLogout}>
           Cerrar sesion
         </Button>
       </div>
     </div>
+  )
+}
+
+function BellSmIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  )
+}
+
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   )
 }

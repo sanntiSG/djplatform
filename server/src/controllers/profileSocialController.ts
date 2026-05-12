@@ -2,6 +2,13 @@ import type { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { parseObjectId } from '../utils/parseId.js'
 import * as service from '../services/profileSocialService.js'
+import { Profile } from '../models/Profile.js'
+import { create as createNotification } from '../services/notificationService.js'
+
+async function getProfileOwner(profileId: string): Promise<string | null> {
+  const profile = await Profile.findById(profileId, { userId: 1 }).lean()
+  return profile?.userId?.toString() ?? null
+}
 
 function extractProfileId(param: string): string | null {
   const id = parseObjectId(param)
@@ -45,6 +52,14 @@ export async function follow(req: Request, res: Response, next: NextFunction) {
 
     const result = await service.toggleFollow(req.user!.id, profileId)
     res.json(result)
+
+    if (result.followed) {
+      getProfileOwner(profileId).then(ownerId => {
+        if (ownerId && ownerId !== req.user!.id) {
+          createNotification(ownerId, 'follow_new', { actorId: req.user!.id, url: `/p/${profileId}` }).catch(() => {})
+        }
+      })
+    }
   } catch (err) {
     next(err)
   }
@@ -57,6 +72,14 @@ export async function likeProfile(req: Request, res: Response, next: NextFunctio
 
     const result = await service.toggleLike(req.user!.id, profileId)
     res.json(result)
+
+    if (result.liked) {
+      getProfileOwner(profileId).then(ownerId => {
+        if (ownerId && ownerId !== req.user!.id) {
+          createNotification(ownerId, 'profile_like', { actorId: req.user!.id, url: `/p/${profileId}` }).catch(() => {})
+        }
+      })
+    }
   } catch (err) {
     next(err)
   }
@@ -95,6 +118,16 @@ export async function postProfileComment(req: Request, res: Response, next: Next
       { ...comment.toObject?.() ?? comment, isLiked: false, isOwn: true, replies: [] } as Record<string, unknown>,
       req.user!.id,
     ))
+
+    getProfileOwner(profileId).then(ownerId => {
+      if (ownerId && ownerId !== req.user!.id) {
+        createNotification(ownerId, 'profile_comment', {
+          actorId: req.user!.id,
+          payload: { text: text.slice(0, 80) },
+          url: `/p/${profileId}`,
+        }).catch(() => {})
+      }
+    })
   } catch (err) {
     next(err)
   }
