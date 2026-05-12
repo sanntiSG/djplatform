@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import http from 'http'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -9,6 +10,7 @@ import router from './routes/index.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { generalLimiter, authLimiter, uploadLimiter } from './middleware/rateLimit.js'
 import { logger } from './utils/logger.js'
+import { initIO } from './realtime/io.js'
 
 const app = express()
 
@@ -63,15 +65,18 @@ app.use('/api/uploads', uploadLimiter)
 app.use('/api/media', uploadLimiter)
 app.use(errorHandler)
 
+const httpServer = http.createServer(app)
+initIO(httpServer)
+
 connectDB()
   .then(() => {
-    app.listen(Number(env.PORT), () => {
+    httpServer.listen(Number(env.PORT), () => {
       logger.info(`Servidor corriendo en http://localhost:${env.PORT}`)
     })
   })
   .catch((err: unknown) => {
     logger.error('Fallo al conectar a MongoDB, arrancando igual', err)
-    app.listen(Number(env.PORT), () => {
+    httpServer.listen(Number(env.PORT), () => {
       logger.info(`Servidor corriendo en http://localhost:${env.PORT} (sin DB)`)
     })
   })

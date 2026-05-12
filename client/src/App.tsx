@@ -30,6 +30,8 @@ import GenreDetail from './pages/GenreDetail.js'
 import ChangePassword from './pages/ChangePassword.js'
 import MainFeed from './pages/MainFeed.js'
 import Notifications from './pages/Notifications.js'
+import MessagesInbox from './pages/messages/Inbox.js'
+import MessagesConversation from './pages/messages/Conversation.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
@@ -78,6 +80,8 @@ export default function App() {
 
         <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
         <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
+        <Route path="/me/mensajes" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
+        <Route path="/me/mensajes/:id" element={<RequireAuth><MessagesConversation /></RequireAuth>} />
         <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
         <Route path="/profile/edit" element={<RequireAuth><ProfileEdit /></RequireAuth>} />
         <Route path="/events/new" element={<RequireAuth><EventNew /></RequireAuth>} />

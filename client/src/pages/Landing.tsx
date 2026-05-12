@@ -37,7 +37,7 @@ const FEATURES = [
   },
   {
     id: 'c',
-    title: 'Contacto directo por WhatsApp. Sin intermediarios.',
+    title: 'Mensajes internos. Contacto directo, sin intermediarios.',
     body: null,
     img: null,
     video: null,
@@ -464,7 +464,7 @@ export default function Landing() {
                       className="font-display font-bold mt-4 text-[var(--bg)] inline-flex items-center gap-2"
                       style={{ fontSize: '1rem' }}
                     >
-                      WhatsApp directo
+                      Mensajes directos
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
@@ -513,7 +513,7 @@ export default function Landing() {
             },
             {
               role: 'Para quienes buscan',
-              desc: 'Encontra el DJ perfecto para tu evento. Filtra por genero, ciudad y disponibilidad. Contactalo directo por WhatsApp.',
+              desc: 'Encontra el DJ perfecto para tu evento. Filtra por genero, ciudad y disponibilidad. Contactalo por mensaje interno.',
               cta: 'Explorar perfiles',
               href: '/profiles',
               accent: false,
@@ -566,6 +566,7 @@ export default function Landing() {
               autoPlay
               loop
               muted
+              playsInline
               className="w-full h-full object-cover absolute inset-0"
               style={{ filter: 'brightness(0.28) contrast(1.18) saturate(0.85)' }}
             />

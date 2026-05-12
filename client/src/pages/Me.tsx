@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card.js'
 import { Pill } from '../components/ui/Pill.js'
 import { profilePath } from '../utils/slug.js'
 import { notificationsService } from '../services/notificationsService.js'
+import { conversationsService } from '../services/conversationsService.js'
 import type { Availability } from '../types/index.js'
 
 const availabilityLabel: Record<Availability, string> = {
@@ -28,6 +29,12 @@ export default function Me() {
   const { data: inboxData } = useQuery({
     queryKey: ['notification-inbox'],
     queryFn: () => notificationsService.getInbox({ limit: 1 }),
+    enabled: !!user,
+    staleTime: 15_000,
+  })
+  const { data: convUnread } = useQuery({
+    queryKey: ['conversations-unread'],
+    queryFn: () => conversationsService.getUnreadTotal(),
     enabled: !!user,
     staleTime: 15_000,
   })
@@ -121,6 +128,26 @@ export default function Me() {
           </Card>
         )}
 
+        {/* Mensajes */}
+        <Link to="/me/mensajes" className="block">
+          <Card elevated className="p-5 flex items-center justify-between gap-3 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--surface-elevated)] flex items-center justify-center">
+                <MessageSmIcon />
+              </div>
+              <span className="font-sans text-sm font-medium text-[var(--text)]">Mensajes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {(convUnread?.total ?? 0) > 0 && (
+                <span className="min-w-[20px] h-5 rounded-full bg-[var(--accent)] text-[var(--bg)] text-[11px] font-bold px-1.5 flex items-center justify-center">
+                  {convUnread!.total > 99 ? '99+' : convUnread!.total}
+                </span>
+              )}
+              <ChevronIcon />
+            </div>
+          </Card>
+        </Link>
+
         {/* Notificaciones */}
         <Link to="/me/notificaciones" className="block">
           <Card elevated className="p-5 flex items-center justify-between gap-3 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer">
@@ -146,6 +173,14 @@ export default function Me() {
         </Button>
       </div>
     </div>
+  )
+}
+
+function MessageSmIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   )
 }
 

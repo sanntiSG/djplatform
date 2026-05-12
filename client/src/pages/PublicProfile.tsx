@@ -11,7 +11,7 @@ import {
   useProfileLike,
 } from '../hooks/useProfileSocial.js'
 import { EventCard } from '../components/events/EventCard.js'
-import { WhatsAppButton } from '../components/ui/WhatsAppButton.js'
+import { ContactButton } from '../components/ui/ContactButton.js'
 import { Pill } from '../components/ui/Pill.js'
 import { FollowButton } from '../components/ui/FollowButton.js'
 import { LikeButton } from '../components/ui/LikeButton.js'
@@ -560,12 +560,8 @@ export default function PublicProfile() {
                   isPending={followPending}
                 />
               )}
-              {profile.whatsapp && (
-                <WhatsAppButton
-                  number={profile.whatsapp}
-                  message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
-                  size="md"
-                />
+              {!isOwner && (
+                <ContactButton targetUserId={profile.userId} />
               )}
               {token && !isOwner && (
                 <div
@@ -756,13 +752,9 @@ export default function PublicProfile() {
                 </div>
               )}
 
-              {profile.whatsapp && (
+              {!isOwner && (
                 <div className="flex-shrink-0">
-                  <WhatsAppButton
-                    number={profile.whatsapp}
-                    message={`Hola ${profile.artistName}! Te escribo desde DJPlatform, me interesa contactarte.`}
-                    size="md"
-                  />
+                  <ContactButton targetUserId={profile.userId} variant="ghost" />
                 </div>
               )}
 

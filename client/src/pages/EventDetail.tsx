@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { useEvent } from '../hooks/useEvents.js'
-import { WhatsAppButton } from '../components/ui/WhatsAppButton.js'
+import { ContactButton } from '../components/ui/ContactButton.js'
 import { Button } from '../components/ui/Button.js'
 import { EventSocialBar } from '../components/events/EventSocialBar.js'
 import { EventComments } from '../components/events/EventComments.js'
@@ -134,13 +134,9 @@ export default function EventDetail() {
                 {event.profile.artistName}
               </Link>
             </div>
-            {event.profile.whatsapp && (
+            {event.profile.userId && (
               <div className="ml-auto flex-shrink-0">
-                <WhatsAppButton
-                  number={event.profile.whatsapp}
-                  message={`Hola ${event.profile.artistName}! Vi el evento "${event.title}" en DJPlatform y me interesa contactarte.`}
-                  size="sm"
-                />
+                <ContactButton targetUserId={event.profile.userId} variant="ghost" />
               </div>
             )}
           </div>

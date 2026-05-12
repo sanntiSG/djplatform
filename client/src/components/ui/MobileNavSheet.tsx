@@ -152,6 +152,15 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
                 </Link>
               )}
               <Link
+                to="/me/mensajes"
+                onClick={onClose}
+                className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
+                style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
+              >
+                Mensajes
+                <span className="text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-1" style={{ fontSize: '1.1rem' }}>›</span>
+              </Link>
+              <Link
                 to="/me"
                 onClick={onClose}
                 className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"

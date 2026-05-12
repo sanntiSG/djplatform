@@ -55,6 +55,9 @@ export function Header() {
                     <Button variant="ghost" size="sm">Admin</Button>
                   </Link>
                 )}
+                <Link to="/me/mensajes">
+                  <Button variant="ghost" size="sm">Mensajes</Button>
+                </Link>
                 <Link to="/me">
                   <Button variant="ghost" size="sm">Mi cuenta</Button>
                 </Link>

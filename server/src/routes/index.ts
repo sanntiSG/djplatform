@@ -11,6 +11,7 @@ import locationsRouter from './locations.js'
 import sitemapRouter from './sitemap.js'
 import pushRouter from './push.js'
 import notificationsRouter from './notifications.js'
+import conversationsRouter from './conversations.js'
 
 const router = Router()
 
@@ -29,6 +30,7 @@ router.use('/moderation', moderationRouter)
 router.use('/locations', locationsRouter)
 router.use('/push', pushRouter)
 router.use('/notifications', notificationsRouter)
+router.use('/conversations', conversationsRouter)
 router.use('/', sitemapRouter)
 
 export default router
