@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { User } from '../models/User.js'
 import { Profile } from '../models/Profile.js'
 import { Event } from '../models/Event.js'
@@ -247,4 +248,101 @@ export async function adminDeleteProfileType(id: string) {
   if (inUse > 0) throw Object.assign(new Error('Este tipo esta en uso por perfiles activos'), { status: 409 })
 
   await ProfileType.findByIdAndDelete(id)
+}
+
+// ── DB Storage Stats ──────────────────────────────────────────────────────
+
+export interface CollectionStat {
+  name: string
+  count: number
+  sizeMb: number
+  indexSizeMb: number
+}
+
+export interface DbStatsResult {
+  totalDataMb: number
+  totalStorageMb: number
+  totalIndexMb: number
+  collections: CollectionStat[]
+  recommendations: string[]
+}
+
+export async function getDbStats(): Promise<DbStatsResult> {
+  const db = mongoose.connection.db
+  if (!db) throw Object.assign(new Error('DB no conectada'), { status: 503 })
+
+  // Global stats
+  const globalStats = (await db.stats()) as {
+    dataSize?: number
+    storageSize?: number
+    indexSize?: number
+  }
+
+  // Per-collection stats via collStats command
+  const collectionInfos = await db.listCollections().toArray()
+  const collectionStats: CollectionStat[] = []
+
+  for (const info of collectionInfos) {
+    try {
+      const stats = (await db.command({ collStats: info.name })) as {
+        count?: number
+        size?: number
+        indexSizes?: Record<string, number>
+      }
+      const indexSizeBytes = Object.values(stats.indexSizes ?? {}).reduce((a, b) => a + b, 0)
+      collectionStats.push({
+        name: info.name,
+        count: stats.count ?? 0,
+        sizeMb: Math.round(((stats.size ?? 0) / 1024 / 1024) * 100) / 100,
+        indexSizeMb: Math.round((indexSizeBytes / 1024 / 1024) * 100) / 100,
+      })
+    } catch {
+      // collection may be empty/capped — skip
+    }
+  }
+
+  collectionStats.sort((a, b) => b.sizeMb - a.sizeMb)
+
+  // Recommendations
+  const recommendations: string[] = []
+
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  const inactiveProfiles = await Profile.countDocuments({
+    isVisible: false,
+    createdAt: { $lt: sixMonthsAgo },
+  })
+  if (inactiveProfiles > 0) {
+    recommendations.push(`${inactiveProfiles} perfil(es) oculto(s) sin actividad en 6 meses`)
+  }
+
+  const moderationCacheCollection = collectionStats.find((c) => c.name.toLowerCase().includes('moderationcache'))
+  if (moderationCacheCollection && moderationCacheCollection.sizeMb > 10) {
+    recommendations.push(`Cache de moderacion usa ${moderationCacheCollection.sizeMb} MB — considera limpiar entradas antiguas`)
+  }
+
+  return {
+    totalDataMb: Math.round(((globalStats.dataSize ?? 0) / 1024 / 1024) * 100) / 100,
+    totalStorageMb: Math.round(((globalStats.storageSize ?? 0) / 1024 / 1024) * 100) / 100,
+    totalIndexMb: Math.round(((globalStats.indexSize ?? 0) / 1024 / 1024) * 100) / 100,
+    collections: collectionStats,
+    recommendations,
+  }
+}
+
+export async function cleanupInactiveProfiles(): Promise<{ deleted: number }> {
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  const profiles = await Profile.find({ isVisible: false, createdAt: { $lt: sixMonthsAgo } }).lean()
+
+  let deleted = 0
+  for (const p of profiles) {
+    try {
+      await adminDeleteProfile((p._id as { toString(): string }).toString())
+      deleted++
+    } catch {
+      // skip — may have issues
+    }
+  }
+  return { deleted }
 }

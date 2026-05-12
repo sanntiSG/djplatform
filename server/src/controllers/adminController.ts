@@ -16,6 +16,8 @@ import {
   adminCreateProfileType,
   adminUpdateProfileType,
   adminDeleteProfileType,
+  getDbStats,
+  cleanupInactiveProfiles,
 } from '../services/adminService.js'
 
 export async function stats(req: Request, res: Response, next: NextFunction) {
@@ -173,6 +175,23 @@ export async function deleteProfileType(req: Request, res: Response, next: NextF
   try {
     await adminDeleteProfileType(req.params.id)
     res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function dbStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await getDbStats())
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function cleanupInactive(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await cleanupInactiveProfiles()
+    res.json(result)
   } catch (err) {
     next(err)
   }

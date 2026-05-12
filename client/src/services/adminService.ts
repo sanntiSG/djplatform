@@ -20,8 +20,25 @@ export interface AdminUser {
   createdAt: string
 }
 
+export interface CollectionStat {
+  name: string
+  count: number
+  sizeMb: number
+  indexSizeMb: number
+}
+
+export interface DbStats {
+  totalDataMb: number
+  totalStorageMb: number
+  totalIndexMb: number
+  collections: CollectionStat[]
+  recommendations: string[]
+}
+
 export const adminService = {
   getStats: () => apiClient.get<AdminStats>('/admin/stats'),
+  getDbStats: () => apiClient.get<DbStats>('/admin/db-stats'),
+  cleanupInactiveProfiles: () => apiClient.post<{ deleted: number }>('/admin/cleanup/inactive-profiles', {}),
 
   listProfiles: (params?: { visible?: 'all' | 'true' | 'false'; cursor?: string; limit?: number }) => {
     const qs = new URLSearchParams()

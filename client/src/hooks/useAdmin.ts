@@ -75,3 +75,23 @@ export function useAdminUsers() {
     queryFn: () => adminService.listUsers({ limit: 50 }),
   })
 }
+
+export function useAdminDbStats() {
+  return useQuery({
+    queryKey: ['admin', 'db-stats'],
+    queryFn: adminService.getDbStats,
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  })
+}
+
+export function useCleanupInactiveProfiles() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: adminService.cleanupInactiveProfiles,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'db-stats'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
