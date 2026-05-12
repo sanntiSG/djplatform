@@ -25,6 +25,7 @@ import { PublishMenu } from '../components/profile/PublishMenu.js'
 import { ContentViewer } from '../components/profile/viewer/ContentViewer.js'
 import { THEMES } from '../components/profile/ThemeSelector.js'
 import { prefersReducedMotion } from '../utils/motion.js'
+import { highlightItem } from '../utils/highlightItem.js'
 import { genreToColor } from '../utils/colors.js'
 import { RainbowPill } from '../components/ui/RainbowPill.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
@@ -262,25 +263,25 @@ export default function PublicProfile() {
     return () => { document.title = 'DJPlatform' }
   }, [profile])
 
-  // Open ContentViewer when arriving via deep-link hash (e.g. from GenreDetail)
+  // Scroll to and highlight a specific item when arriving via deep-link hash (e.g. from GenreDetail)
   useEffect(() => {
     if (!profile) return
     const hash = location.hash.replace('#', '')
     if (!hash) return
 
+    history.replaceState(null, '', location.pathname + location.search)
+
     const mediaMatch = profile.media.find((m) => m.id === hash)
     if (mediaMatch) {
       setTab('musica')
-      setViewerItem({ kind: 'media', id: hash })
-      history.replaceState(null, '', location.pathname + location.search)
+      setTimeout(() => highlightItem(hash), 800)
       return
     }
 
     const photoMatch = profile.photos?.find((p) => p.id === hash)
     if (photoMatch) {
       setTab('media')
-      setViewerItem({ kind: 'photo', id: hash })
-      history.replaceState(null, '', location.pathname + location.search)
+      setTimeout(() => highlightItem(hash), 800)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])

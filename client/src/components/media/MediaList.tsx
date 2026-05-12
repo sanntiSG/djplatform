@@ -41,6 +41,7 @@ export function MediaList({ items, editable = false, onRemove, onUpdate, onItemC
       {items.map((item, i) => (
         <div
           key={i}
+          data-item-id={item.id}
           className="media-item relative group"
           onClick={(e) => {
             if (!editable && onItemClick && item.id) {

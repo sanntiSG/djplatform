@@ -43,6 +43,7 @@ export function ProfileMediaTab({ profile, isOwner, onItemClick }: ProfileMediaT
         {photos.map((photo, i) => (
           <div
             key={photo.url + i}
+            data-item-id={photo.id}
             className="relative aspect-square overflow-hidden rounded-xl bg-[var(--surface-elevated)] cursor-pointer group"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
