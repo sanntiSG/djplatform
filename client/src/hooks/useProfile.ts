@@ -25,6 +25,14 @@ export function useProfiles(filters: ProfileFilters = {}) {
   })
 }
 
+export function useTopProfiles(limit = 10) {
+  return useQuery({
+    queryKey: ['profiles', 'top', limit],
+    queryFn: () => profileService.getTop(limit),
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useMyProfile() {
   const { token } = useAuthStore()
   return useQuery({

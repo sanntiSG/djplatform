@@ -131,6 +131,23 @@ export async function updateUserPreferences(
   }
 }
 
+/** Marks all unread chat notifications for a conversation as read (called when user reads a conversation). */
+export async function markChatNotificationsRead(userId: string, conversationId: string): Promise<void> {
+  try {
+    await Notification.updateMany(
+      {
+        userId,
+        type: { $in: ['chat_message_new', 'chat_message_reply'] },
+        'payload.conversationId': conversationId,
+        readAt: null,
+      },
+      { $set: { readAt: new Date() } },
+    )
+  } catch (err) {
+    logger.warn('markChatNotificationsRead failed (non-fatal)', { userId, conversationId, err })
+  }
+}
+
 /** Returns true if the user should receive this notification type. */
 export function isTypeEnabledForUser(
   user: IUser,

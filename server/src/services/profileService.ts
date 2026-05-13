@@ -1,4 +1,5 @@
 import { Profile, type IProfile } from '../models/Profile.js'
+import { ProfileFollow } from '../models/ProfileFollow.js'
 import { User } from '../models/User.js'
 import { normalizeWhatsApp } from '../utils/whatsapp.js'
 import { toSlug } from '../utils/slug.js'
@@ -88,6 +89,28 @@ export async function listProfiles(filters: {
     .sort(filters.q ? { score: { $meta: 'textScore' }, _id: -1 } : { _id: -1 })
     .limit(filters.limit ?? 20)
     .lean() as unknown as IProfile[]
+}
+
+export async function getTopProfilesByFollowers(limit = 10): Promise<IProfile[]> {
+  // Aggregate to count followers per profile and sort descending
+  const results = await ProfileFollow.aggregate([
+    { $group: { _id: '$followedId', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: limit },
+  ])
+
+  if (!results.length) {
+    // Fallback: return most recently created visible profiles
+    return Profile.find({ isVisible: true }).sort({ _id: -1 }).limit(limit).lean() as unknown as IProfile[]
+  }
+
+  const ids = results.map((r: { _id: unknown }) => r._id)
+  const profiles = await Profile.find({ _id: { $in: ids }, isVisible: true }).lean() as unknown as IProfile[]
+
+  // Re-sort to match follower order
+  return ids
+    .map((id: unknown) => profiles.find(p => p._id.toString() === id?.toString()))
+    .filter((p): p is IProfile => Boolean(p))
 }
 
 export async function updateMediaItem(

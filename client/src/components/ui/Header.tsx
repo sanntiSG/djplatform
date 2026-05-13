@@ -48,7 +48,7 @@ export function Header() {
             <NavLink to="/profiles">
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
-                  DJs
+                  Artistas
                 </Button>
               )}
             </NavLink>

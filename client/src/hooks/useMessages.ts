@@ -28,8 +28,10 @@ export function useSendMessage(conversationId: string) {
         old => {
           if (!old) return old
           const pages = [...old.pages]
-          const lastPage = pages[pages.length - 1]
-          pages[pages.length - 1] = [...lastPage, msg]
+          // pages[0] is always the most-recent page (initial fetch, no `before` cursor)
+          if (!pages[0]) return old
+          if (pages[0].some(m => m._id === msg._id)) return old
+          pages[0] = [...pages[0], msg]
           return { ...old, pages }
         },
       )

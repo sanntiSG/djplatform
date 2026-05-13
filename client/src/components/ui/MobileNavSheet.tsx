@@ -13,7 +13,7 @@ interface Props {
 
 const NAV_LINKS = [
   { to: '/feed', label: 'Inicio' },
-  { to: '/profiles', label: 'DJs' },
+  { to: '/profiles', label: 'Artistas' },
   { to: '/events', label: 'Eventos' },
 ]
 

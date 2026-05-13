@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useProfiles } from '../hooks/useProfile.js'
+import { useProfiles, useTopProfiles } from '../hooks/useProfile.js'
 import { useEventsFeed } from '../hooks/useEvents.js'
+import { useActivityFeed } from '../hooks/useActivityFeed.js'
+import type { ActivityEvent } from '../services/activityService.js'
 import { profilePath, eventPath, genrePath } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion, magneticHover, tiltCard } from '../utils/motion.js'
@@ -34,6 +36,11 @@ function hashInt(str: string): number {
 }
 
 const TYPE_LABEL: Record<string, string> = { dj: 'DJ', producer: 'Prod', other: 'Art' }
+const TYPE_SECTION_LABEL: Record<string, { kicker: string; title: string }> = {
+  dj: { kicker: 'Disponibles ahora', title: 'DJs en escena' },
+  producer: { kicker: 'Disponibles ahora', title: 'Productores' },
+  other: { kicker: 'Disponibles ahora', title: 'Artistas' },
+}
 
 const FILTER_GENRES = [
   'Todos', 'Techno', 'House', 'Deep House', 'Reggaeton',
@@ -299,6 +306,77 @@ function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
   )
 }
 
+const ACTIVITY_PILL: Record<string, { label: string; bg: string; text: string }> = {
+  profile_created: { label: 'Nuevo artista', bg: 'rgba(52,211,153,0.12)', text: '#34d399' },
+  event_published: { label: 'Evento', bg: 'rgba(96,165,250,0.12)', text: '#60a5fa' },
+  media_added:     { label: 'Nueva track', bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
+  photo_added:     { label: 'Nueva foto', bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
+  profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
+}
+
+const ACTIVITY_DESC: Record<string, (a: ActivityEvent) => string> = {
+  profile_created: (a) => `${a.actorName} se unio a la plataforma`,
+  event_published: (a) => `${a.actorName} publico "${a.targetTitle ?? 'un evento'}"`,
+  media_added:     (a) => `${a.actorName} subio "${a.targetTitle ?? 'una track'}"`,
+  photo_added:     (a) => `${a.actorName} agrego fotos nuevas`,
+  profile_updated: (a) => `${a.actorName} actualizo su perfil`,
+}
+
+function timeAgoActivity(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'ahora'
+  if (mins < 60) return `hace ${mins}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `hace ${hrs}h`
+  const days = Math.floor(hrs / 24)
+  return `hace ${days}d`
+}
+
+function ActivityCard({ event }: { event: ActivityEvent }) {
+  const pill = ACTIVITY_PILL[event.type] ?? ACTIVITY_PILL.profile_updated
+  const desc = ACTIVITY_DESC[event.type]?.(event) ?? `${event.actorName} tuvo actividad reciente`
+
+  return (
+    <Link
+      to={event.targetUrl ?? `/p/${event.actorSlug}`}
+      className="news-row group flex items-center gap-3 py-3 border-b transition-colors duration-200"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      {/* Avatar */}
+      <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[var(--surface)]">
+        {event.actorAvatar ? (
+          <img src={event.actorAvatar} alt={event.actorName} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="font-display font-semibold text-sm text-[var(--text-muted)]">
+              {event.actorName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <span
+          className="inline-block text-[9px] font-bold uppercase tracking-[0.14em] rounded-full px-2 py-0.5 mb-0.5"
+          style={{ background: pill.bg, color: pill.text }}
+        >
+          {pill.label}
+        </span>
+        <p className="font-sans text-[13px] text-[var(--text)] truncate leading-tight group-hover:text-[var(--accent)] transition-colors">
+          {desc}
+        </p>
+      </div>
+
+      {/* Time */}
+      <span className="font-sans text-[10px] text-[var(--text-muted)] flex-shrink-0 tabular-nums">
+        {timeAgoActivity(event.createdAt)}
+      </span>
+    </Link>
+  )
+}
+
 function NewsFeedRow({ event }: { event: EventResponse }) {
   const color = stringToColor(event.title)
   return (
@@ -375,15 +453,16 @@ export default function MainFeed() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFloatingCTA, setShowFloatingCTA] = useState(false)
 
-  const djsQuery = useProfiles({ availability: 'available' })
-  const profilesQuery = useProfiles({})
+  const artistsQuery = useProfiles({ availability: 'available' })
+  const topProfilesQuery = useTopProfiles(10)
   const eventsQuery = useEventsFeed()
+  const activityQuery = useActivityFeed(16)
 
-  const allDJs = djsQuery.data?.pages[0] ?? []
-  const featuredProfiles = profilesQuery.data?.pages[0]?.slice(0, 10) ?? []
+  const allAvailable = artistsQuery.data?.pages[0] ?? []
+  const topArtists = topProfilesQuery.data ?? []
   const featuredEvents = eventsQuery.data?.pages[0]?.slice(0, 8) ?? []
 
-  const filteredDJs = allDJs
+  const filteredArtists = allAvailable
     .filter((p) => {
       const matchGenre =
         activeGenre === 'Todos' ||
@@ -394,18 +473,28 @@ export default function MainFeed() {
         p.genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchGenre && matchSearch
     })
-    .slice(0, 14)
+    .slice(0, 42)
 
-  const topDJs = featuredProfiles.slice(0, 8)
+  // Group available artists by type — show each type as its own row
+  const artistsByType = (['dj', 'producer', 'other'] as const).reduce<Record<string, typeof filteredArtists>>(
+    (acc, t) => {
+      acc[t] = filteredArtists.filter(p => p.type === t).slice(0, 14)
+      return acc
+    },
+    {},
+  )
+  const activeTypes = (['dj', 'producer', 'other'] as const).filter(t => (artistsByType[t]?.length ?? 0) > 0)
+
   const trendingEvents = featuredEvents.slice(0, 4)
   const newsEvents = featuredEvents.slice(1, 5)
-  const spotlightProfile = featuredProfiles.find(
-    (p) => p.bio && p.bio.length > 40,
-  )
+  const activityItems = activityQuery.data ?? []
+  const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
+    ?? allAvailable.find((p) => p.bio && p.bio.length > 40)
 
-  const isReady = !djsQuery.isLoading && !profilesQuery.isLoading && !eventsQuery.isLoading
+  // Activity feed is non-blocking — page renders even if activity is loading
+  const isReady = !artistsQuery.isLoading && !eventsQuery.isLoading
   const hasContent =
-    allDJs.length > 0 || featuredEvents.length > 0 || featuredProfiles.length > 0
+    allAvailable.length > 0 || featuredEvents.length > 0 || topArtists.length > 0
 
   /* Floating CTA scroll trigger */
   useEffect(() => {
@@ -692,7 +781,7 @@ export default function MainFeed() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar DJs, generos, ciudades..."
+              placeholder="Buscar artistas, generos, ciudades..."
               className="w-full font-sans text-base text-[var(--text)] placeholder:text-[var(--text-muted)] rounded-[var(--radius-md)] px-4 py-2.5 pr-10 focus:outline-none"
               style={{
                 background: 'rgba(255,255,255,0.05)',
@@ -744,23 +833,33 @@ export default function MainFeed() {
       {isReady && hasContent && (
         <div className="flex flex-col gap-14 pb-32">
 
-          {/* DJs en escena */}
-          {allDJs.length > 0 && (
+          {/* Artistas disponibles por tipo */}
+          {allAvailable.length > 0 && (
             <section ref={djsRef}>
-              <SectionHead
-                kicker="Disponibles ahora"
-                title="DJs en escena"
-                href="/profiles?availability=available"
-              />
-              {filteredDJs.length > 0 ? (
-                <HScroll className="mt-5">
-                  {filteredDJs.map((profile) => (
-                    <DJSlot key={profile.id} profile={profile} />
-                  ))}
-                </HScroll>
+              {activeTypes.length > 0 ? (
+                <div className="flex flex-col gap-10">
+                  {activeTypes.map((type, idx) => {
+                    const group = artistsByType[type] ?? []
+                    const labels = TYPE_SECTION_LABEL[type] ?? { kicker: 'Disponibles ahora', title: 'Artistas' }
+                    return (
+                      <div key={type}>
+                        <SectionHead
+                          kicker={idx === 0 ? labels.kicker : ''}
+                          title={labels.title}
+                          href="/profiles?availability=available"
+                        />
+                        <HScroll className="mt-5">
+                          {group.map((profile) => (
+                            <DJSlot key={profile.id} profile={profile} />
+                          ))}
+                        </HScroll>
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
                 <p className="px-4 md:px-6 mt-4 font-sans text-sm text-[var(--text-muted)]">
-                  No hay DJs con ese genero disponibles ahora.
+                  No hay artistas con ese genero disponibles ahora.
                 </p>
               )}
             </section>
@@ -778,18 +877,18 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Top DJs ranked */}
-          {topDJs.length > 0 && (
+          {/* Top Artistas ranked por seguidores */}
+          {topArtists.length > 0 && (
             <section ref={topDJsRef}>
-              <SectionHead kicker="Escena" title="Top DJs" href="/profiles" />
+              <SectionHead kicker="Por seguidores" title="Top Artistas" href="/profiles" />
               <div className="mt-5 px-4 md:px-6 flex flex-col gap-2">
-                {topDJs.map((profile, i) => (
+                {topArtists.map((profile, i) => (
                   <NumberedListItem
                     key={profile.id}
                     rank={i + 1}
                     thumbUrl={profile.avatar}
                     title={profile.artistName}
-                    subtitle={profile.genres.slice(0, 2).join(' · ')}
+                    subtitle={[TYPE_LABEL[profile.type] ?? profile.type, ...profile.genres.slice(0, 1)].filter(Boolean).join(' · ')}
                     meta={profile.location}
                     color={genreToColor(profile.genres[0] ?? '')}
                     href={profilePath(profile.slug, profile.id)}
@@ -812,12 +911,12 @@ export default function MainFeed() {
           )}
 
           {/* Eventos por genero — ColorBlockCards HScroll */}
-          {featuredProfiles.length > 0 && (
+          {topArtists.length > 0 && (
             <section ref={genreCardsRef}>
               <SectionHead kicker="Por genero" title="Tu escena" />
               <HScroll className="mt-5">
                 {FILTER_GENRES.filter((g) => g !== 'Todos').map((genre) => {
-                  const count = featuredProfiles.filter((p) =>
+                  const count = topArtists.filter((p) =>
                     p.genres.some((g2) => g2.toLowerCase().includes(genre.toLowerCase())),
                   ).length
                   return (
@@ -844,7 +943,7 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Spotlight — CommentCard from profile bio */}
+          {/* Spotlight — CommentCard from top artist bio */}
           {spotlightProfile && (
             <section ref={spotlightRef} className="px-4 md:px-6">
               <SectionHead kicker="Voz de la escena" title="Destacado" />
@@ -865,14 +964,20 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* News feed */}
-          {newsEvents.length > 0 && (
+          {/* Activity feed — lo que esta pasando ahora */}
+          {(activityItems.length > 0 || newsEvents.length > 0) && (
             <section ref={newsRef} className="px-4 md:px-6">
-              <SectionHead kicker="Ultimas noticias" title="Feed" href="/events" />
+              <SectionHead kicker="En tiempo real" title="Ultimas noticias" href="/events" />
               <div className="mt-5">
-                {newsEvents.map((event) => (
-                  <NewsFeedRow key={event.id} event={event} />
-                ))}
+                {activityItems.length > 0 ? (
+                  activityItems.map((item) => (
+                    <ActivityCard key={item.id} event={item} />
+                  ))
+                ) : (
+                  newsEvents.map((event) => (
+                    <NewsFeedRow key={event.id} event={event} />
+                  ))
+                )}
               </div>
             </section>
           )}
@@ -886,7 +991,7 @@ export default function MainFeed() {
             La escena se esta construyendo.
           </p>
           <p className="font-sans text-sm text-[var(--text-muted)] max-w-[280px] leading-relaxed">
-            Se el primero en crear tu perfil de DJ o publicar un evento.
+            Se el primero en crear tu perfil artistico o publicar un evento.
           </p>
           <div className="flex gap-3 flex-wrap justify-center pt-2">
             <Link

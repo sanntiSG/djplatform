@@ -8,16 +8,28 @@ import {
   getProfileByUserId,
   getProfileById,
   listProfiles,
+  getTopProfilesByFollowers,
   serializeProfile,
 } from '../services/profileService.js'
 import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
+import { createActivity } from '../services/activityService.js'
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const data = CreateProfileSchema.parse(req.body)
     const profile = await createProfile(req.user!.id, data)
-    res.status(201).json(serializeProfile(profile))
+    const serialized = serializeProfile(profile)
+
+    createActivity({
+      type: 'profile_created',
+      actorProfileId: serialized.id,
+      actorName: serialized.artistName,
+      actorAvatar: serialized.avatar,
+      targetUrl: `/p/${serialized.slug}-${serialized.id}`,
+    }).catch(() => {})
+
+    res.status(201).json(serialized)
   } catch (err) {
     next(err)
   }
@@ -94,6 +106,16 @@ export async function updateMediaItemHandler(req: Request, res: Response, next: 
 
     const result = await updateMediaItem(req.user!.id, mediaId, patch)
     res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function topByFollowers(req: Request, res: Response, next: NextFunction) {
+  try {
+    const limit = req.query.limit ? Math.min(Number(req.query.limit), 20) : 10
+    const profiles = await getTopProfilesByFollowers(limit)
+    res.json(profiles.map(serializeProfile))
   } catch (err) {
     next(err)
   }

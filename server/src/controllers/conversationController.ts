@@ -8,7 +8,7 @@ import {
   markConversationRead,
   getTotalUnread,
 } from '../services/conversationService.js'
-import { create as createNotification } from '../services/notificationService.js'
+import { create as createNotification, markChatNotificationsRead } from '../services/notificationService.js'
 import { io, isUserViewingConversation } from '../realtime/io.js'
 import { logger } from '../utils/logger.js'
 
@@ -73,6 +73,9 @@ export async function readConversation(req: Request, res: Response) {
 
   await markConversationRead(conversationId, userId)
   io.to(`user:${userId}`).emit('conversation:read', { conversationId })
+
+  // Auto-clear chat notifications for this conversation
+  markChatNotificationsRead(userId, conversationId).catch(() => {})
 
   return res.json({ ok: true })
 }

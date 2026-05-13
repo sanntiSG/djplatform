@@ -15,6 +15,9 @@ export const profileService = {
       patch,
     ),
 
+  getTop: (limit = 10) =>
+    apiClient.get<ProfileResponse[]>(`/profiles/top?limit=${limit}`),
+
   list: (params?: {
     type?: string
     location?: string

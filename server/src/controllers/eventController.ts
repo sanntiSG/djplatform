@@ -10,12 +10,30 @@ import {
   serializeEvent,
 } from '../services/eventService.js'
 import { parseObjectId } from '../utils/parseId.js'
+import { createActivity } from '../services/activityService.js'
+import { Profile } from '../models/Profile.js'
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const data = CreateEventSchema.parse(req.body)
     const event = await createEvent(req.user!.id, data)
-    res.status(201).json(serializeEvent(event))
+    const serialized = serializeEvent(event)
+
+    // Fire activity event (non-blocking)
+    Profile.findOne({ userId: req.user!.id }).lean().then(profile => {
+      if (!profile) return
+      const pid = (profile._id as { toString(): string }).toString()
+      createActivity({
+        type: 'event_published',
+        actorProfileId: pid,
+        actorName: profile.artistName,
+        actorAvatar: profile.avatar,
+        targetTitle: serialized.title,
+        targetUrl: `/events/${serialized.slug ?? serialized.id}`,
+      }).catch(() => {})
+    }).catch(() => {})
+
+    res.status(201).json(serialized)
   } catch (err) {
     next(err)
   }
