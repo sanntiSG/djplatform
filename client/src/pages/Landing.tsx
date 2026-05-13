@@ -324,7 +324,7 @@ export default function Landing() {
             <div ref={ctaRef} {...ctaHandlers}>
               <Link to="/profiles">
                 <Button variant="primary" size="lg">
-                  Explorar DJs
+                  Explorar artistas
                 </Button>
               </Link>
             </div>
@@ -505,7 +505,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-4">
           {[
             {
-              role: 'Para DJs y productores',
+              role: 'Para artistas',
               desc: 'Crea tu perfil, sube tus sets, publica tus eventos y conecta con miles de personas que buscan tu sonido en toda Argentina.',
               cta: 'Crear perfil',
               href: '/auth/register',
@@ -582,14 +582,14 @@ export default function Landing() {
                 Tu sonido empieza aqui
               </h2>
               <p className="font-sans text-[var(--text-muted)] max-w-sm text-sm leading-relaxed">
-                Unite a la plataforma de DJs y servicios musicales de Argentina. Gratis, rapido y visual.
+                Unite a la plataforma de artistas y servicios musicales de Argentina. Gratis, rapido y visual.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link to="/auth/register">
                   <Button variant="primary" size="lg">Empezar gratis</Button>
                 </Link>
                 <Link to="/profiles">
-                  <Button variant="outline" size="lg">Ver DJs</Button>
+                  <Button variant="outline" size="lg">Ver artistas</Button>
                 </Link>
               </div>
             </div>

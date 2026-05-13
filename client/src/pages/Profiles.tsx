@@ -205,7 +205,7 @@ export default function Profiles() {
             className="font-display font-semibold text-[var(--text)]"
             style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}
           >
-            Encontra tu DJ
+            Encontra tu artista
           </h1>
           <p className="font-sans text-sm text-[var(--text-muted)]">
             Perfiles de DJs, productores y artistas en Argentina

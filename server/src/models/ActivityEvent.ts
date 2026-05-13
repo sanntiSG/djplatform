@@ -6,6 +6,7 @@ export type ActivityEventType =
   | 'media_added'
   | 'photo_added'
   | 'profile_updated'
+  | 'profile_followed'
 
 export interface IActivityEvent extends Document {
   _id: Types.ObjectId
@@ -23,7 +24,7 @@ const schema = new mongoose.Schema<IActivityEvent>(
   {
     type: {
       type: String,
-      enum: ['profile_created', 'event_published', 'media_added', 'photo_added', 'profile_updated'],
+      enum: ['profile_created', 'event_published', 'media_added', 'photo_added', 'profile_updated', 'profile_followed'],
       required: true,
     },
     actorProfileId: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
