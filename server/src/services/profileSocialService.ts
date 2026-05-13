@@ -5,12 +5,15 @@ import { ProfileComment, type IProfileComment } from '../models/ProfileComment.j
 import { Profile } from '../models/Profile.js'
 
 export async function getProfileSocialStats(profileId: string, userId?: string) {
+  const pId = new mongoose.Types.ObjectId(profileId)
+  const uId = userId ? new mongoose.Types.ObjectId(userId) : null
+
   const [followerCount, likeCount, commentCount, following, liked] = await Promise.all([
-    ProfileFollow.countDocuments({ followedId: profileId }),
-    ProfileLike.countDocuments({ profileId }),
-    ProfileComment.countDocuments({ profileId, parentId: null }),
-    userId ? ProfileFollow.findOne({ followerId: userId, followedId: profileId }).lean() : null,
-    userId ? ProfileLike.findOne({ userId, profileId }).lean() : null,
+    ProfileFollow.countDocuments({ followedId: pId }),
+    ProfileLike.countDocuments({ profileId: pId }),
+    ProfileComment.countDocuments({ profileId: pId, parentId: null }),
+    uId ? ProfileFollow.findOne({ followerId: uId, followedId: pId }).lean() : null,
+    uId ? ProfileLike.findOne({ userId: uId, profileId: pId }).lean() : null,
   ])
 
   return {
@@ -26,13 +29,16 @@ export async function toggleFollow(
   followerId: string,
   followedId: string,
 ): Promise<{ followed: boolean; followerCount: number }> {
-  const existing = await ProfileFollow.findOne({ followerId, followedId })
+  const fId = new mongoose.Types.ObjectId(followerId)
+  const bId = new mongoose.Types.ObjectId(followedId)
+
+  const existing = await ProfileFollow.findOne({ followerId: fId, followedId: bId })
   if (existing) {
-    await existing.deleteOne()
+    await ProfileFollow.deleteOne({ _id: existing._id })
   } else {
-    await ProfileFollow.create({ followerId, followedId })
+    await ProfileFollow.create({ followerId: fId, followedId: bId })
   }
-  const followerCount = await ProfileFollow.countDocuments({ followedId })
+  const followerCount = await ProfileFollow.countDocuments({ followedId: bId })
   return { followed: !existing, followerCount }
 }
 
@@ -40,13 +46,16 @@ export async function toggleLike(
   userId: string,
   profileId: string,
 ): Promise<{ liked: boolean; likeCount: number }> {
-  const existing = await ProfileLike.findOne({ userId, profileId })
+  const uId = new mongoose.Types.ObjectId(userId)
+  const pId = new mongoose.Types.ObjectId(profileId)
+
+  const existing = await ProfileLike.findOne({ userId: uId, profileId: pId })
   if (existing) {
-    await existing.deleteOne()
+    await ProfileLike.deleteOne({ _id: existing._id })
   } else {
-    await ProfileLike.create({ userId, profileId })
+    await ProfileLike.create({ userId: uId, profileId: pId })
   }
-  const likeCount = await ProfileLike.countDocuments({ profileId })
+  const likeCount = await ProfileLike.countDocuments({ profileId: pId })
   return { liked: !existing, likeCount }
 }
 
@@ -84,8 +93,8 @@ export async function addComment(
   parentId?: string,
 ): Promise<IProfileComment> {
   return ProfileComment.create({
-    userId,
-    profileId,
+    userId: new mongoose.Types.ObjectId(userId),
+    profileId: new mongoose.Types.ObjectId(profileId),
     userEmail,
     text,
     parentId: parentId ? new mongoose.Types.ObjectId(parentId) : null,

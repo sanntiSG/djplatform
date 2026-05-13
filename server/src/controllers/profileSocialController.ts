@@ -54,11 +54,18 @@ export async function follow(req: Request, res: Response, next: NextFunction) {
     res.json(result)
 
     if (result.followed) {
-      getProfileOwner(profileId).then(ownerId => {
-        if (ownerId && ownerId !== req.user!.id) {
-          createNotification(ownerId, 'follow_new', { actorId: req.user!.id, url: `/p/${profileId}` }).catch(() => {})
-        }
-      })
+      getProfileOwner(profileId)
+        .then(ownerId => {
+          if (ownerId && ownerId !== req.user!.id) {
+            return createNotification(ownerId, 'follow_new', {
+              actorId: req.user!.id,
+              url: `/p/${profileId}`
+            })
+          }
+        })
+        .catch(err => {
+          console.error('[follow notification error]', err)
+        })
     }
   } catch (err) {
     next(err)

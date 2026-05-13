@@ -23,7 +23,10 @@ export const authUploadLimiter = rateLimit({
   limit: 20,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  keyGenerator: (req: Request) => req.user?.id ?? req.ip ?? 'anonymous',
+  keyGenerator: (req: Request) => {
+    return req.user?.id || req.ip || 'anonymous'
+  },
+  validate: { keyGenerator: false },
   message: { error: 'Demasiadas subidas. Espera un momento antes de continuar.' },
 })
 
