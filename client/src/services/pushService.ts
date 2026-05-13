@@ -8,14 +8,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)))
 }
 
-function isIOS(): boolean {
+export function isIOS(): boolean {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   )
 }
 
-function isStandalone(): boolean {
+export function isStandalone(): boolean {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true

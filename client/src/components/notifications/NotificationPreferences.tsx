@@ -45,6 +45,15 @@ export function NotificationPreferences() {
 
   async function handlePushToggle(val: boolean) {
     if (val) {
+      // iOS Check: Before updating backend, check if we're on iOS but NOT standalone
+      // On iOS, push only works in standalone mode. If we update the backend now,
+      // the PWA will open with the toggle "ON" but without an actual subscription.
+      if (pushService.isIOS() && !pushService.isStandalone()) {
+        setShowInstallPrompt(true)
+        showToast('En iPhone, primero agrega la web a tu pantalla de inicio.', 'info')
+        return
+      }
+
       // Optimistic: update UI immediately
       update({ pushOptIn: true })
       if (user && token) setAuth(token, { ...user, pushOptIn: true })
@@ -54,6 +63,7 @@ export function NotificationPreferences() {
         // Rollback
         update({ pushOptIn: false })
         if (user && token) setAuth(token, { ...user, pushOptIn: false })
+        
         if (result.reason === 'ios-needs-pwa') {
           setShowInstallPrompt(true)
           return
@@ -100,9 +110,7 @@ export function NotificationPreferences() {
   const profileTypes = (types ?? []).filter(t => t.category === 'profile')
   const allTypes = (types ?? []).filter(t => t.category === 'all')
 
-  const iosWithoutPwa = typeof window !== 'undefined'
-    && /iPad|iPhone|iPod/.test(navigator.userAgent || '')
-    && !window.matchMedia('(display-mode: standalone)').matches
+  const iosWithoutPwa = pushService.isIOS() && !pushService.isStandalone()
 
   return (
     <div ref={containerRef} className="flex flex-col gap-7">
@@ -115,7 +123,7 @@ export function NotificationPreferences() {
             <path d="M12 8v4M12 16h.01" />
           </svg>
           <p className="text-xs text-[var(--text-muted)] leading-relaxed flex-1">
-            No se pudo guardar el cambio. Intenta recargar la pagina.
+            No se pudo guardar el cambio. Intenta recargar la pagina o cerrar y volver a abrir la web.
           </p>
           <button
             type="button"
@@ -176,7 +184,7 @@ export function NotificationPreferences() {
             disabled={isUpdating}
           />
         </div>
-        {prefs.pushOptIn && (
+        {prefs.pushOptIn ? (
           <button
             type="button"
             onClick={handleTestPush}
@@ -185,6 +193,10 @@ export function NotificationPreferences() {
           >
             {testingPush ? 'Enviando...' : 'Enviar push de prueba'}
           </button>
+        ) : (
+          <p className="text-[10px] text-[var(--text-muted)]/50 leading-relaxed italic">
+            Si activas y no recibes alertas, intenta cerrar y volver a abrir la web.
+          </p>
         )}
       </section>
 
