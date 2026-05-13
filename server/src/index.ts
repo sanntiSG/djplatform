@@ -11,6 +11,7 @@ import { errorHandler } from './middleware/errorHandler.js'
 import { generalLimiter, authLimiter, uploadLimiter } from './middleware/rateLimit.js'
 import { logger } from './utils/logger.js'
 import { initIO } from './realtime/io.js'
+import { startTrendingCron } from './jobs/trendingCron.js'
 
 const app = express()
 
@@ -70,6 +71,7 @@ initIO(httpServer)
 
 connectDB()
   .then(() => {
+    startTrendingCron()
     httpServer.listen(Number(env.PORT), () => {
       logger.info(`Servidor corriendo en http://localhost:${env.PORT}`)
     })

@@ -6,17 +6,22 @@ export type ActivityEventType =
   | 'media_added'
   | 'photo_added'
   | 'profile_updated'
+  | 'trending_track'
+  | 'trending_artist'
+  | 'news_article'
 
 export interface ActivityEvent {
   id: string
   type: ActivityEventType
-  actorProfileId: string
+  source?: string
+  actorProfileId: string | null
   actorName: string
   actorAvatar?: string
-  actorSlug?: string
+  actorSlug?: string | null
   targetTitle?: string
   targetUrl?: string
   createdAt: string
+  isExternal?: boolean
 }
 
 export const activityService = {

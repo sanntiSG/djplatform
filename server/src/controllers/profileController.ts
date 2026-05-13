@@ -51,12 +51,41 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
 export async function updateMe(req: Request, res: Response, next: NextFunction) {
   try {
     const data = UpdateProfileSchema.parse(req.body)
+
+    // Capture previous counts only when media/photos are being updated
+    const needsCheck = Boolean(data.media || data.photos)
+    let prevMedia = 0
+    let prevPhotos = 0
+    if (needsCheck) {
+      const prev = await Profile.findOne({ userId: req.user!.id }).select('media photos').lean()
+      prevMedia = (prev?.media as unknown[])?.length ?? 0
+      prevPhotos = (prev?.photos as unknown[])?.length ?? 0
+    }
+
     const profile = await updateProfile(req.user!.id, data)
     if (!profile) {
       res.status(404).json({ error: 'Perfil no encontrado' })
       return
     }
-    res.json(serializeProfile(profile))
+
+    const serialized = serializeProfile(profile)
+
+    if (needsCheck) {
+      const pid = serialized.id
+      const name = serialized.artistName
+      const avatar = serialized.avatar
+      const url = `/p/${serialized.slug}-${serialized.id}`
+
+      if (data.media && profile.media.length > prevMedia) {
+        const newest = profile.media[profile.media.length - 1]
+        createActivity({ type: 'media_added', actorProfileId: pid, actorName: name, actorAvatar: avatar, targetTitle: newest.title ?? undefined, targetUrl: url }).catch(() => {})
+      }
+      if (data.photos && (profile.photos?.length ?? 0) > prevPhotos) {
+        createActivity({ type: 'photo_added', actorProfileId: pid, actorName: name, actorAvatar: avatar, targetUrl: url }).catch(() => {})
+      }
+    }
+
+    res.json(serialized)
   } catch (err) {
     next(err)
   }

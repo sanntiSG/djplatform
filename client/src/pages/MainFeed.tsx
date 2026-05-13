@@ -307,19 +307,25 @@ function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
 }
 
 const ACTIVITY_PILL: Record<string, { label: string; bg: string; text: string }> = {
-  profile_created: { label: 'Nuevo artista', bg: 'rgba(52,211,153,0.12)', text: '#34d399' },
-  event_published: { label: 'Evento', bg: 'rgba(96,165,250,0.12)', text: '#60a5fa' },
-  media_added:     { label: 'Nueva track', bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
-  photo_added:     { label: 'Nueva foto', bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
-  profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
+  profile_created:  { label: 'Nuevo artista',    bg: 'rgba(52,211,153,0.12)',  text: '#34d399' },
+  event_published:  { label: 'Evento',            bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa' },
+  media_added:      { label: 'Nueva track',       bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
+  photo_added:      { label: 'Nueva foto',        bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
+  profile_updated:  { label: 'Actualizo perfil',  bg: 'rgba(212,255,0,0.1)',   text: 'var(--accent)' },
+  trending_track:   { label: 'En tendencia',      bg: 'rgba(239,68,68,0.12)',  text: '#f87171' },
+  trending_artist:  { label: 'Artista popular',   bg: 'rgba(239,68,68,0.12)',  text: '#f87171' },
+  news_article:     { label: 'Internacional',     bg: 'rgba(148,163,184,0.12)', text: '#94a3b8' },
 }
 
 const ACTIVITY_DESC: Record<string, (a: ActivityEvent) => string> = {
-  profile_created: (a) => `${a.actorName} se unio a la plataforma`,
-  event_published: (a) => `${a.actorName} publico "${a.targetTitle ?? 'un evento'}"`,
-  media_added:     (a) => `${a.actorName} subio "${a.targetTitle ?? 'una track'}"`,
-  photo_added:     (a) => `${a.actorName} agrego fotos nuevas`,
-  profile_updated: (a) => `${a.actorName} actualizo su perfil`,
+  profile_created:  (a) => `${a.actorName} se unio a la plataforma`,
+  event_published:  (a) => `${a.actorName} publico "${a.targetTitle ?? 'un evento'}"`,
+  media_added:      (a) => `${a.actorName} subio "${a.targetTitle ?? 'una track'}"`,
+  photo_added:      (a) => `${a.actorName} agrego fotos nuevas`,
+  profile_updated:  (a) => `${a.actorName} actualizo su perfil`,
+  trending_track:   (a) => a.targetTitle ?? 'Track en tendencia',
+  trending_artist:  (a) => `${a.actorName} en tendencia`,
+  news_article:     (a) => a.targetTitle ?? 'Articulo internacional',
 }
 
 function timeAgoActivity(iso: string): string {
@@ -336,15 +342,13 @@ function timeAgoActivity(iso: string): string {
 function ActivityCard({ event }: { event: ActivityEvent }) {
   const pill = ACTIVITY_PILL[event.type] ?? ACTIVITY_PILL.profile_updated
   const desc = ACTIVITY_DESC[event.type]?.(event) ?? `${event.actorName} tuvo actividad reciente`
+  const href = event.targetUrl ?? (event.actorSlug ? `/p/${event.actorSlug}` : '/feed')
+  const isExternal = event.isExternal || event.type === 'trending_track' || event.type === 'news_article'
 
-  return (
-    <Link
-      to={event.targetUrl ?? `/p/${event.actorSlug}`}
-      className="news-row group flex items-center gap-3 py-3 border-b transition-colors duration-200"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      {/* Avatar */}
-      <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[var(--surface)]">
+  const inner = (
+    <>
+      {/* Thumbnail / Avatar */}
+      <div className="w-9 h-9 rounded-[8px] overflow-hidden flex-shrink-0 bg-[var(--surface)]">
         {event.actorAvatar ? (
           <img src={event.actorAvatar} alt={event.actorName} className="w-full h-full object-cover" />
         ) : (
@@ -367,12 +371,39 @@ function ActivityCard({ event }: { event: ActivityEvent }) {
         <p className="font-sans text-[13px] text-[var(--text)] truncate leading-tight group-hover:text-[var(--accent)] transition-colors">
           {desc}
         </p>
+        {isExternal && event.actorName && (
+          <p className="font-sans text-[10px] text-[var(--text-muted)] truncate">{event.actorName}</p>
+        )}
       </div>
 
       {/* Time */}
       <span className="font-sans text-[10px] text-[var(--text-muted)] flex-shrink-0 tabular-nums">
         {timeAgoActivity(event.createdAt)}
       </span>
+    </>
+  )
+
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="news-row group flex items-center gap-3 py-3 border-b transition-colors duration-200"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        {inner}
+      </a>
+    )
+  }
+
+  return (
+    <Link
+      to={href}
+      className="news-row group flex items-center gap-3 py-3 border-b transition-colors duration-200"
+      style={{ borderColor: 'var(--border)' }}
+    >
+      {inner}
     </Link>
   )
 }

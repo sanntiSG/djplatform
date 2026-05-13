@@ -19,6 +19,7 @@ const EnvSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().default('mailto:ssantii200@gmail.com'),
+  LASTFM_API_KEY: z.string().optional(),
 })
 
 const parsed = EnvSchema.safeParse(process.env)
