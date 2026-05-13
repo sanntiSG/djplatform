@@ -122,13 +122,13 @@ export default function Conversation() {
   }, [sendMsg, replyTo])
 
   return (
-    <main className="flex flex-col h-[calc(100dvh-var(--header-h,56px))]" style={{ background: 'var(--bg)' }}>
+    <main className="flex flex-col h-dvh md:h-[calc(100dvh-var(--header-h,56px))]" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
       <header
         ref={headerRef}
-        className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[var(--bg)]/95 backdrop-blur-xl sticky top-0 z-10"
-        style={{ minHeight: 56 }}
+        className="flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 border-b border-white/5 bg-[var(--bg)]/95 backdrop-blur-xl sticky top-0 z-10"
+        style={{ minHeight: 52, paddingTop: 'max(env(safe-area-inset-top), 10px)' }}
       >
         <button
           type="button"
@@ -146,11 +146,14 @@ export default function Conversation() {
             to={otherUser.slug ? `/p/${otherUser.slug}` : '#'}
             className="flex items-center gap-2.5 flex-1 min-w-0 group"
           >
-            <div className="shrink-0 w-9 h-9 rounded-full bg-[var(--surface)] overflow-hidden ring-2 ring-white/5 group-hover:ring-[var(--accent)]/30 transition-all duration-200">
-              {otherUser.avatar
-                ? <img src={otherUser.avatar} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-xs font-display font-semibold text-[var(--text-muted)]">{otherUser.artistName.charAt(0)}</div>
-              }
+            {/* Avatar — ring on outer wrapper, overflow-hidden on inner to prevent clipping */}
+            <div className="shrink-0 rounded-full ring-2 ring-white/5 group-hover:ring-[var(--accent)]/30 transition-all duration-200">
+              <div className="w-9 h-9 rounded-full bg-[var(--surface)] overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                {otherUser.avatar
+                  ? <img src={otherUser.avatar} alt="" className="w-full h-full object-cover block" />
+                  : <div className="w-full h-full flex items-center justify-center text-xs font-display font-semibold text-[var(--text-muted)]">{otherUser.artistName.charAt(0)}</div>
+                }
+              </div>
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-display font-semibold text-sm text-[var(--text)] group-hover:text-[var(--accent)] transition-colors truncate">

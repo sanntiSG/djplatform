@@ -94,22 +94,27 @@ export default function Inbox() {
                 'group relative',
               )}
             >
-              {/* Avatar */}
+              {/* Avatar — ring on outer wrapper, overflow-hidden on inner */}
               <div className={cn(
-                'shrink-0 w-12 h-12 rounded-full overflow-hidden',
+                'shrink-0 rounded-full',
                 'ring-2 transition-all duration-200',
                 conv.unreadCount > 0
-                  ? 'ring-[var(--accent)]/40 bg-[var(--accent)]/10'
-                  : 'ring-white/5 bg-[var(--surface)]',
+                  ? 'ring-[var(--accent)]/40'
+                  : 'ring-white/5',
               )}>
-                {conv.otherUser.avatar
-                  ? <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover" />
-                  : (
-                    <div className="w-full h-full flex items-center justify-center text-sm font-display font-semibold text-[var(--text-muted)]">
-                      {conv.otherUser.artistName.charAt(0).toUpperCase()}
-                    </div>
-                  )
-                }
+                <div className={cn(
+                  'w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden',
+                  conv.unreadCount > 0 ? 'bg-[var(--accent)]/10' : 'bg-[var(--surface)]',
+                )} style={{ aspectRatio: '1/1' }}>
+                  {conv.otherUser.avatar
+                    ? <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover block" />
+                    : (
+                      <div className="w-full h-full flex items-center justify-center text-sm font-display font-semibold text-[var(--text-muted)]">
+                        {conv.otherUser.artistName.charAt(0).toUpperCase()}
+                      </div>
+                    )
+                  }
+                </div>
               </div>
 
               {/* Text */}

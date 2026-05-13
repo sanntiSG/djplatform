@@ -14,7 +14,7 @@ export function NotificationPreferences() {
   const { user, token, setAuth } = useAuthStore()
   const { show: showToast } = useToastStore()
   const { data: types } = useNotificationTypes()
-  const { data: prefs, update, isUpdating } = useNotificationPrefs()
+  const { data: prefs, update, isUpdating, updateError, resetUpdateError } = useNotificationPrefs()
   const containerRef = useRef<HTMLDivElement>(null)
   const levelTrackRef = useRef<HTMLDivElement>(null)
   const levelThumbRef = useRef<HTMLDivElement>(null)
@@ -106,6 +106,36 @@ export function NotificationPreferences() {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-7">
+
+      {/* Sync error hint — discrete, auto-dismissible */}
+      {updateError && (
+        <section className="flex items-center gap-2.5 bg-white/[0.03] rounded-[var(--radius-md)] px-4 py-3 border border-white/5 slide-up-in">
+          <svg className="shrink-0 text-[var(--text-muted)]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed flex-1">
+            No se pudo guardar el cambio. Intenta recargar la pagina.
+          </p>
+          <button
+            type="button"
+            onClick={() => { resetUpdateError(); window.location.reload() }}
+            className="shrink-0 text-[10px] font-semibold text-[var(--accent)] hover:opacity-75 transition-opacity"
+          >
+            Recargar
+          </button>
+          <button
+            type="button"
+            onClick={resetUpdateError}
+            className="shrink-0 text-white/30 hover:text-white/60 transition-colors"
+            aria-label="Cerrar"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </section>
+      )}
 
       {/* iOS banner */}
       {iosWithoutPwa && (
