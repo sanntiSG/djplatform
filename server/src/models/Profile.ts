@@ -5,6 +5,7 @@ interface IMediaItem {
   url: string
   embedId?: string
   embedHtml?: string
+  thumbnailUrl?: string
   type: 'audio' | 'video'
   title?: string
   description?: string
@@ -49,6 +50,7 @@ const mediaItemSchema = new mongoose.Schema<IMediaItem>(
     url: { type: String, required: true },
     embedId: { type: String },
     embedHtml: { type: String },
+    thumbnailUrl: { type: String },
     type: { type: String, enum: ['audio', 'video'], required: true },
     title: { type: String },
     description: { type: String, default: '', maxlength: 1000 },

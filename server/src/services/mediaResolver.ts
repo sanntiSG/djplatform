@@ -50,11 +50,20 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
 
   const spMatch = url.match(SPOTIFY_REGEX)
   if (spMatch) {
+    let thumbnailUrl: string | undefined
+    try {
+      const oembedRes = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`)
+      if (oembedRes.ok) {
+        const oembedData = (await oembedRes.json()) as { thumbnail_url?: string; title?: string }
+        thumbnailUrl = oembedData.thumbnail_url
+      }
+    } catch { /* non-fatal */ }
     return {
       platform: 'spotify',
       url,
       embedId: `${spMatch[1]}/${spMatch[2]}`,
       type: 'audio',
+      thumbnailUrl,
       description: '',
       genres: [],
     }
@@ -66,7 +75,7 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
     if (!res.ok) {
       throw Object.assign(new Error('No se pudo resolver el link de SoundCloud'), { status: 422 })
     }
-    const data = (await res.json()) as { html?: string; title?: string }
+    const data = (await res.json()) as { html?: string; title?: string; thumbnail_url?: string }
     const rawHtml = typeof data.html === 'string' ? data.html : ''
     const safeHtml = DOMPurify.sanitize(rawHtml, {
       ALLOWED_TAGS: ['iframe'],
@@ -76,6 +85,7 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
       platform: 'soundcloud',
       url,
       embedHtml: safeHtml,
+      thumbnailUrl: data.thumbnail_url,
       type: 'audio',
       title: data.title,
       description: '',

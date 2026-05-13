@@ -17,6 +17,7 @@ export interface IActivityEvent extends Document {
   actorSlug?: string
   targetTitle?: string
   targetUrl?: string
+  targetImage?: string
   createdAt: Date
 }
 
@@ -33,6 +34,7 @@ const schema = new mongoose.Schema<IActivityEvent>(
     actorSlug: { type: String },
     targetTitle: { type: String },
     targetUrl: { type: String },
+    targetImage: { type: String },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

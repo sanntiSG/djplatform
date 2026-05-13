@@ -26,10 +26,10 @@ interface FeedDef {
 // Para agregar mas fuentes AR, anadir entradas con region: 'ar'.
 const RSS_FEEDS: FeedDef[] = [
   { url: 'https://indiehoy.com/feed/', label: 'Indie Hoy', region: 'ar', maxItems: 2 },
-  { url: 'https://www.lanacion.com.ar/espectaculos/musica/rss/', label: 'La Nacion Musica', region: 'ar', maxItems: 2 },
-  { url: 'https://www.rollingstone.com.mx/feed/', label: 'Rolling Stone MX', region: 'latam', maxItems: 2 },
+  { url: 'https://billboard.com.ar/feed/', label: 'Billboard AR', region: 'ar', maxItems: 2 },
+  { url: 'https://es.rollingstone.com/feed/', label: 'Rolling Stone', region: 'latam', maxItems: 2 },
   { url: 'https://djmag.com/feed', label: 'DJ Mag', region: 'world', maxItems: 2 },
-  { url: 'https://mixmag.net/feed', label: 'Mixmag', region: 'world', maxItems: 2 },
+  { url: 'https://mixmag.net/rss-category/news', label: 'Mixmag', region: 'world', maxItems: 2 },
 ]
 
 function extractImage(item: Record<string, unknown>): string | undefined {

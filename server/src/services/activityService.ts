@@ -10,6 +10,7 @@ export interface CreateActivityInput {
   actorAvatar?: string
   targetTitle?: string
   targetUrl?: string
+  targetImage?: string
 }
 
 export async function createActivity(input: CreateActivityInput): Promise<void> {
@@ -27,6 +28,7 @@ export async function createActivity(input: CreateActivityInput): Promise<void> 
       actorSlug: doc.actorSlug,
       targetTitle: doc.targetTitle,
       targetUrl: doc.targetUrl,
+      targetImage: doc.targetImage,
       createdAt: doc.createdAt.toISOString(),
       isExternal: false,
     }
@@ -51,6 +53,7 @@ export async function getRecentActivity(limit = 20) {
     actorSlug: e.actorSlug,
     targetTitle: e.targetTitle,
     targetUrl: e.targetUrl,
+    targetImage: e.targetImage,
     createdAt: e.createdAt.toISOString(),
   }))
 }

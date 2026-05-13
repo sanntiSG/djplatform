@@ -11,6 +11,7 @@ export const MediaItemSchema = z.object({
   url: z.string().url(),
   embedId: z.string().optional(),
   embedHtml: z.string().optional(),
+  thumbnailUrl: z.string().optional(),
   type: MediaTypeSchema,
   title: z.string().optional(),
   description: z.string().max(1000).optional().default(''),
