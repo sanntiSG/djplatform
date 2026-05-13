@@ -37,7 +37,7 @@ export async function createActivity(input: CreateActivityInput): Promise<void> 
 }
 
 export async function getRecentActivity(limit = 20) {
-  const events = await ActivityEvent.find()
+  const events = await ActivityEvent.find({ type: { $ne: 'profile_followed' } })
     .sort({ createdAt: -1 })
     .limit(limit)
     .lean()

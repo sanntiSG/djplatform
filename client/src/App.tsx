@@ -27,7 +27,9 @@ import AdminUsers from './pages/admin/AdminUsers.js'
 import AdminGenres from './pages/admin/AdminGenres.js'
 import AdminProfileTypes from './pages/admin/AdminProfileTypes.js'
 import AdminNotifications from './pages/admin/AdminNotifications.js'
+import AdminSystem from './pages/admin/AdminSystem.js'
 import GenreDetail from './pages/GenreDetail.js'
+import Activity from './pages/Activity.js'
 import ChangePassword from './pages/ChangePassword.js'
 import MainFeed from './pages/MainFeed.js'
 import Notifications from './pages/Notifications.js'
@@ -83,6 +85,7 @@ export default function App() {
         <Route path="/feed" element={<MainFeed />} />
         <Route path="/events" element={<EventsFeed />} />
         <Route path="/events/:id" element={<EventDetail />} />
+        <Route path="/actividad" element={<Activity />} />
 
         <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
         <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
@@ -103,6 +106,7 @@ export default function App() {
           <Route path="genres" element={<AdminGenres />} />
           <Route path="profile-types" element={<AdminProfileTypes />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="system" element={<AdminSystem />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

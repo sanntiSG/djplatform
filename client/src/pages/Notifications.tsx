@@ -18,7 +18,7 @@ export default function Notifications() {
 
   return (
     <main className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-5xl mx-auto px-4 pt-6 pb-20 md:px-8">
+      <div className="max-w-5xl mx-auto px-4 pt-20 pb-20 md:px-8 md:pt-28">
 
         {/* Header */}
         <div ref={headerRef} className="mb-10">

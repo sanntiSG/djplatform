@@ -95,3 +95,21 @@ export function useCleanupInactiveProfiles() {
     },
   })
 }
+
+export function useSystemSettings() {
+  return useQuery({
+    queryKey: ['admin', 'system'],
+    queryFn: adminService.getSystem,
+    staleTime: 30_000,
+  })
+}
+
+export function useUpdateSystemSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: adminService.updateSystem,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'system'] })
+    },
+  })
+}

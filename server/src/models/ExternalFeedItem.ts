@@ -2,11 +2,13 @@ import mongoose, { type Document, type Types } from 'mongoose'
 
 export type ExternalFeedType = 'trending_track' | 'trending_artist' | 'news_article'
 export type ExternalFeedSource = 'lastfm' | 'rss'
+export type ExternalFeedRegion = 'ar' | 'latam' | 'world'
 
 export interface IExternalFeedItem extends Document {
   _id: Types.ObjectId
   type: ExternalFeedType
   source: ExternalFeedSource
+  region: ExternalFeedRegion
   title: string
   subtitle?: string
   imageUrl?: string
@@ -18,6 +20,7 @@ const schema = new mongoose.Schema<IExternalFeedItem>(
   {
     type: { type: String, enum: ['trending_track', 'trending_artist', 'news_article'], required: true },
     source: { type: String, enum: ['lastfm', 'rss'], required: true },
+    region: { type: String, enum: ['ar', 'latam', 'world'], default: 'world' },
     title: { type: String, required: true, maxlength: 200 },
     subtitle: { type: String, maxlength: 200 },
     imageUrl: { type: String },

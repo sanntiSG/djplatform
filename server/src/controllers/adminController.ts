@@ -1,4 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
+import { getSettings, updateSettings } from '../services/systemSettingsService.js'
+import { restartTrendingCron } from '../jobs/trendingCron.js'
 import {
   getStats,
   adminListProfiles,
@@ -196,3 +199,26 @@ export async function cleanupInactive(req: Request, res: Response, next: NextFun
     next(err)
   }
 }
+
+export async function getSystem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const settings = await getSettings()
+    res.json({ trendingRefreshMinutes: settings.trendingRefreshMinutes })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateSystem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { trendingRefreshMinutes } = z
+      .object({ trendingRefreshMinutes: z.number().int().min(1).max(1440) })
+      .parse(req.body)
+    const settings = await updateSettings({ trendingRefreshMinutes })
+    restartTrendingCron(trendingRefreshMinutes)
+    res.json({ trendingRefreshMinutes: settings.trendingRefreshMinutes })
+  } catch (err) {
+    next(err)
+  }
+}
+

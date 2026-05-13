@@ -20,6 +20,8 @@ import {
   deleteProfileType,
   dbStats,
   cleanupInactive,
+  getSystem,
+  updateSystem,
 } from '../controllers/adminController.js'
 import {
   listNotificationTypes,
@@ -61,5 +63,8 @@ router.post('/notification-types/bulk', bulkUpdateNotificationTypes)
 
 router.get('/push-status', getPushStatus)
 router.post('/push-test', testPushAdmin)
+
+router.get('/system', getSystem)
+router.patch('/system', updateSystem)
 
 export default router

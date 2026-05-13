@@ -90,6 +90,13 @@ export const adminService = {
 
   testPush: (userId?: string) =>
     apiClient.post<{ ok: boolean; attempted: number }>('/admin/push-test', userId ? { userId } : {}),
+
+  getSystem: () => apiClient.get<SystemSettings>('/admin/system'),
+  updateSystem: (data: SystemSettings) => apiClient.patch<SystemSettings>('/admin/system', data),
+}
+
+export interface SystemSettings {
+  trendingRefreshMinutes: number
 }
 
 export interface AdminNotificationType {

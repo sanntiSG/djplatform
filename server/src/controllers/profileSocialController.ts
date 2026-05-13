@@ -4,7 +4,6 @@ import { parseObjectId } from '../utils/parseId.js'
 import * as service from '../services/profileSocialService.js'
 import { Profile } from '../models/Profile.js'
 import { create as createNotification } from '../services/notificationService.js'
-import { createActivity } from '../services/activityService.js'
 
 async function getProfileOwner(profileId: string): Promise<string | null> {
   const profile = await Profile.findById(profileId, { userId: 1 }).lean()
@@ -55,28 +54,16 @@ export async function follow(req: Request, res: Response, next: NextFunction) {
     res.json(result)
 
     if (result.followed) {
-      Promise.all([
-        getProfileOwner(profileId),
-        Profile.findOne({ userId: req.user!.id }, { artistName: 1, avatar: 1, _id: 1 }).lean(),
-        Profile.findById(profileId, { artistName: 1 }).lean(),
-      ]).then(([ownerId, actorProfile, targetProfile]) => {
-        if (ownerId && ownerId !== req.user!.id) {
-          createNotification(ownerId, 'follow_new', {
-            actorId: req.user!.id,
-            url: `/p/${profileId}`
-          }).catch(() => {})
-        }
-        if (actorProfile) {
-          createActivity({
-            type: 'profile_followed',
-            actorProfileId: actorProfile._id.toString(),
-            actorName: actorProfile.artistName,
-            actorAvatar: actorProfile.avatar,
-            targetTitle: targetProfile?.artistName,
-            targetUrl: `/p/${profileId}`,
-          }).catch(() => {})
-        }
-      }).catch(() => {})
+      getProfileOwner(profileId)
+        .then(ownerId => {
+          if (ownerId && ownerId !== req.user!.id) {
+            return createNotification(ownerId, 'follow_new', {
+              actorId: req.user!.id,
+              url: `/p/${profileId}`
+            })
+          }
+        })
+        .catch(() => {})
     }
   } catch (err) {
     next(err)

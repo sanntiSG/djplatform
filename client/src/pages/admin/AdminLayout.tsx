@@ -9,11 +9,12 @@ const NAV = [
   { to: '/admin/users', label: 'Usuarios', end: false },
   { to: '/admin/genres', label: 'Generos', end: false },
   { to: '/admin/profile-types', label: 'Tipos de perfil', end: false },
+  { to: '/admin/system', label: 'Sistema', end: false },
 ]
 
 export default function AdminLayout() {
   return (
-    <div className="min-h-screen bg-[var(--bg)] pt-16">
+    <div className="min-h-screen bg-[var(--bg)] pt-20 md:pt-28">
       <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <div>

@@ -6,7 +6,6 @@ export type ActivityEventType =
   | 'media_added'
   | 'photo_added'
   | 'profile_updated'
-  | 'profile_followed'
   | 'trending_track'
   | 'trending_artist'
   | 'news_article'
@@ -15,6 +14,7 @@ export interface ActivityEvent {
   id: string
   type: ActivityEventType
   source?: string
+  region?: 'ar' | 'latam' | 'world'
   actorProfileId: string | null
   actorName: string
   actorAvatar?: string

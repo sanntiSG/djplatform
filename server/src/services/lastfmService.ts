@@ -1,4 +1,4 @@
-import { ExternalFeedItem } from '../models/ExternalFeedItem.js'
+import { ExternalFeedItem, type ExternalFeedRegion } from '../models/ExternalFeedItem.js'
 import { env } from '../config/env.js'
 import { logger } from '../utils/logger.js'
 
@@ -43,6 +43,7 @@ export async function fetchAndCacheLastFm(): Promise<void> {
   const items: Array<{
     type: 'trending_track'
     source: 'lastfm'
+    region: ExternalFeedRegion
     title: string
     subtitle: string
     imageUrl?: string
@@ -52,15 +53,16 @@ export async function fetchAndCacheLastFm(): Promise<void> {
 
   const now = new Date()
 
-  const addTracks = (tracks: LastFmTrack[] | undefined, region: string) => {
+  const addTracks = (tracks: LastFmTrack[] | undefined, region: ExternalFeedRegion, label: string) => {
     if (!tracks) return
     for (const t of tracks) {
       const img = t.image?.find(i => i.size === 'medium')?.['#text']
       items.push({
         type: 'trending_track',
         source: 'lastfm',
+        region,
         title: t.name,
-        subtitle: `${t.artist.name}${region ? ` · ${region}` : ''}`,
+        subtitle: `${t.artist.name}${label ? ` · ${label}` : ''}`,
         imageUrl: img && !img.includes('2a96cbd8b46e442fc41c2b86b821562f') ? img : undefined,
         url: t.url,
         fetchedAt: now,
@@ -68,8 +70,8 @@ export async function fetchAndCacheLastFm(): Promise<void> {
     }
   }
 
-  addTracks(tracksAr?.tracks?.track, 'Argentina')
-  addTracks(tracksGlobal?.tracks?.track, 'Global')
+  addTracks(tracksAr?.tracks?.track, 'ar', 'Argentina')
+  addTracks(tracksGlobal?.tracks?.track, 'world', 'Global')
 
   if (!items.length) return
 

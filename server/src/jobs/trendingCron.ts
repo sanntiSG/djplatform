@@ -1,9 +1,10 @@
 import { fetchAndCacheLastFm } from '../services/lastfmService.js'
 import { fetchAndCacheRss } from '../services/rssService.js'
+import { getSettings } from '../services/systemSettingsService.js'
 import { logger } from '../utils/logger.js'
 
-const TWO_HOURS = 2 * 60 * 60 * 1000
-const FOUR_HOURS = 4 * 60 * 60 * 1000
+let lastFmTimer: ReturnType<typeof setInterval> | null = null
+let rssTimer: ReturnType<typeof setInterval> | null = null
 
 async function runLastFm() {
   try {
@@ -21,13 +22,26 @@ async function runRss() {
   }
 }
 
-export function startTrendingCron() {
-  // Run immediately on startup, then on intervals
+function startTimers(minutes: number) {
+  if (lastFmTimer) clearInterval(lastFmTimer)
+  if (rssTimer) clearInterval(rssTimer)
+  const ms = minutes * 60 * 1000
+  lastFmTimer = setInterval(() => void runLastFm(), ms)
+  rssTimer = setInterval(() => void runRss(), ms)
+  logger.info(`trendingCron: activo (cada ${minutes} min)`)
+}
+
+export async function startTrendingCron() {
   void runLastFm()
   void runRss()
+  try {
+    const settings = await getSettings()
+    startTimers(settings.trendingRefreshMinutes)
+  } catch {
+    startTimers(1)
+  }
+}
 
-  setInterval(() => void runLastFm(), TWO_HOURS)
-  setInterval(() => void runRss(), FOUR_HOURS)
-
-  logger.info('trendingCron: iniciado (Last.fm cada 2h, RSS cada 4h)')
+export function restartTrendingCron(minutes: number) {
+  startTimers(minutes)
 }
