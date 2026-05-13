@@ -41,6 +41,7 @@ export default function Conversation() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const atBottomRef = useRef(true)
   const scrollPillRef = useRef<HTMLButtonElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
 
   // Register presence + socket listeners
   useChatSocket(conversationId)
@@ -51,6 +52,16 @@ export default function Conversation() {
     qc.invalidateQueries({ queryKey: ['conversations'] })
     qc.invalidateQueries({ queryKey: ['conversations-unread'] })
   }, [conversationId, qc])
+
+  // Header entrance animation
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el || prefersReducedMotion()) return
+    gsap.fromTo(el,
+      { opacity: 0, y: -8 },
+      { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut },
+    )
+  }, [])
 
   // Listen for typing from other user
   useEffect(() => {
@@ -84,9 +95,9 @@ export default function Conversation() {
     if (!el || prefersReducedMotion()) { setShowScrollPill(show); return }
     if (show) {
       setShowScrollPill(true)
-      gsap.fromTo(el, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.softOut })
+      gsap.fromTo(el, { opacity: 0, y: 12, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: DURATION.base, ease: EASE.pop })
     } else {
-      gsap.to(el, { opacity: 0, y: 8, duration: DURATION.micro, ease: EASE.softIn, onComplete: () => setShowScrollPill(false) })
+      gsap.to(el, { opacity: 0, y: 8, scale: 0.95, duration: DURATION.micro, ease: EASE.softIn, onComplete: () => setShowScrollPill(false) })
     }
   }
 
@@ -114,14 +125,18 @@ export default function Conversation() {
     <main className="flex flex-col h-[calc(100dvh-var(--header-h,56px))]" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[var(--bg)]/95 backdrop-blur-md sticky top-0 z-10">
+      <header
+        ref={headerRef}
+        className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[var(--bg)]/95 backdrop-blur-xl sticky top-0 z-10"
+        style={{ minHeight: 56 }}
+      >
         <button
           type="button"
           onClick={() => navigate('/me/mensajes')}
-          className="shrink-0 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          className="shrink-0 w-8 h-8 rounded-full bg-[var(--surface)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-elevated)] transition-all duration-150 active:scale-90"
           aria-label="Volver"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
@@ -131,15 +146,20 @@ export default function Conversation() {
             to={otherUser.slug ? `/p/${otherUser.slug}` : '#'}
             className="flex items-center gap-2.5 flex-1 min-w-0 group"
           >
-            <div className="shrink-0 w-9 h-9 rounded-full bg-[var(--surface)] overflow-hidden">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-[var(--surface)] overflow-hidden ring-2 ring-white/5 group-hover:ring-[var(--accent)]/30 transition-all duration-200">
               {otherUser.avatar
                 ? <img src={otherUser.avatar} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xs font-display font-semibold text-[var(--text-muted)]">{otherUser.artistName.charAt(0)}</div>
               }
             </div>
-            <span className="font-display font-semibold text-sm text-[var(--text)] group-hover:text-[var(--accent)] transition-colors truncate">
-              {otherUser.artistName}
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-display font-semibold text-sm text-[var(--text)] group-hover:text-[var(--accent)] transition-colors truncate">
+                {otherUser.artistName}
+              </span>
+              {isTyping && (
+                <span className="text-[10px] text-[var(--accent)] font-medium">escribiendo...</span>
+              )}
+            </div>
           </Link>
         ) : <div className="flex-1" />}
       </header>
@@ -148,11 +168,14 @@ export default function Conversation() {
       <div
         ref={listRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2"
+        className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-2.5"
+        style={{
+          background: 'linear-gradient(180deg, rgba(8,8,10,0.98) 0%, var(--bg) 100%)',
+        }}
       >
         {isFetching && (
-          <div className="flex justify-center py-2">
-            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+          <div className="flex justify-center py-3">
+            <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-[var(--accent)]/60 animate-spin" />
           </div>
         )}
 
@@ -188,8 +211,12 @@ export default function Conversation() {
             animatePill(false)
             bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
           }}
-          className="absolute bottom-28 left-1/2 -translate-x-1/2 bg-[var(--surface-elevated)] text-[var(--text)] text-xs font-medium px-3 py-1.5 rounded-full border border-white/10 shadow-xl"
+          className="absolute bottom-28 left-1/2 -translate-x-1/2 bg-[var(--surface-elevated)] text-[var(--text)] text-xs font-medium px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-1.5 backdrop-blur-sm"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
         >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M12 5v14M19 12l-7 7-7-7" />
+          </svg>
           Nuevos mensajes
         </button>
       )}

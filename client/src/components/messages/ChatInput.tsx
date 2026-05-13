@@ -14,8 +14,10 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const sendRef = useRef<HTMLButtonElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)
+  const prevHasContent = useRef(false)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -24,6 +26,30 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
     ta.style.height = 'auto'
     ta.style.height = `${Math.min(ta.scrollHeight, 128)}px`
   }, [value])
+
+  // Animate send button appearance when text becomes non-empty
+  const hasContent = value.trim().length > 0
+  useEffect(() => {
+    const btn = sendRef.current
+    if (!btn || prefersReducedMotion()) { prevHasContent.current = hasContent; return }
+    if (hasContent && !prevHasContent.current) {
+      gsap.fromTo(btn,
+        { scale: 0.6, opacity: 0.5 },
+        { scale: 1, opacity: 1, duration: DURATION.base, ease: EASE.pop, overwrite: true },
+      )
+    }
+    prevHasContent.current = hasContent
+  }, [hasContent])
+
+  // Entrance animation for the composer
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || prefersReducedMotion()) return
+    gsap.fromTo(el,
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut },
+    )
+  }, [])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setValue(e.target.value)
@@ -54,7 +80,7 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
     const btn = sendRef.current
     if (btn && !prefersReducedMotion()) {
       gsap.timeline()
-        .to(btn, { scale: 0.88, duration: DURATION.tap, ease: EASE.out })
+        .to(btn, { scale: 0.82, duration: DURATION.tap, ease: EASE.out })
         .to(btn, { scale: 1, duration: DURATION.base, ease: EASE.pop })
     }
 
@@ -65,14 +91,16 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
     setValue('')
   }
 
-  const hasContent = value.trim().length > 0
-
   return (
-    <div className={cn(
-      'flex items-end gap-2 px-3 py-3',
-      'bg-[var(--surface)] border-t border-white/5',
-    )}>
-      <div className="flex-1 min-w-0 flex items-end bg-[var(--surface-elevated)] rounded-full px-4 py-2.5 backdrop-blur-sm">
+    <div
+      ref={containerRef}
+      className={cn(
+        'flex items-end gap-2.5 px-3 py-3',
+        'bg-[var(--bg)] border-t border-white/5',
+      )}
+      style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+    >
+      <div className="flex-1 min-w-0 flex items-end bg-[var(--surface)] rounded-[22px] px-4 py-2.5 border border-white/5 transition-colors duration-200 focus-within:border-white/12">
         <textarea
           ref={textareaRef}
           value={value}
@@ -81,7 +109,7 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
           placeholder="Mensaje..."
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-transparent resize-none text-sm text-[var(--text)] placeholder:text-white/30 outline-none leading-relaxed max-h-32 overflow-y-auto"
+          className="flex-1 bg-transparent resize-none text-sm text-[var(--text)] placeholder:text-white/25 outline-none leading-relaxed max-h-32 overflow-y-auto"
         />
       </div>
       <button
@@ -92,8 +120,8 @@ export function ChatInput({ onSend, disabled, onTypingStart, onTypingStop }: Pro
         className={cn(
           'shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200',
           hasContent
-            ? 'bg-[var(--accent)] text-[var(--bg)]'
-            : 'bg-[var(--surface-elevated)] text-white/20',
+            ? 'bg-[var(--accent)] text-[var(--bg)] shadow-[0_2px_12px_rgba(212,255,0,0.25)]'
+            : 'bg-[var(--surface)] text-white/20',
         )}
         aria-label="Enviar mensaje"
       >

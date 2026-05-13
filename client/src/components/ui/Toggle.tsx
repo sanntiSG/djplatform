@@ -22,7 +22,7 @@ export function Toggle({ checked, onChange, disabled = false, label, id, classNa
     if (!thumb || !track) return
 
     const reduced = prefersReducedMotion()
-    const duration = reduced ? 0 : 0.2
+    const duration = reduced ? 0 : 0.14
     const targetX = checked ? 20 : 0
     const targetBg = checked ? 'var(--accent)' : 'var(--surface-elevated)'
 
@@ -30,11 +30,13 @@ export function Toggle({ checked, onChange, disabled = false, label, id, classNa
       x: targetX,
       duration,
       ease: 'cubic-bezier(0.32, 0.72, 0, 1)',
+      overwrite: true,
     })
     gsap.to(track, {
       backgroundColor: targetBg,
-      duration: duration + 0.02,
+      duration: duration + 0.01,
       ease: 'power2.out',
+      overwrite: true,
     })
   }, [checked])
 
@@ -48,13 +50,14 @@ export function Toggle({ checked, onChange, disabled = false, label, id, classNa
       return
     }
 
-    // Quick scale bounce on click
+    // Quick scale bounce on click — faster feel
     gsap.to(thumb, {
-      scale: 0.88,
-      duration: 0.08,
+      scale: 0.9,
+      duration: 0.06,
       ease: 'power2.in',
+      overwrite: true,
       onComplete: () => {
-        gsap.to(thumb, { scale: 1, duration: 0.32, ease: 'elastic.out(1, 0.6)' })
+        gsap.to(thumb, { scale: 1, duration: 0.2, ease: 'elastic.out(1, 0.6)', overwrite: true })
       },
     })
 

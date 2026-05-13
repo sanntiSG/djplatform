@@ -233,3 +233,20 @@ body {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50%       { opacity: 0.2; transform: scale(1.08); }
 }
+
+/* Unread badge entrance */
+@keyframes badge-pop {
+  0%   { scale: 0; opacity: 0; }
+  60%  { scale: 1.2; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+
+.unread-badge {
+  animation: badge-pop 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unread-badge {
+    animation: none;
+  }
+}

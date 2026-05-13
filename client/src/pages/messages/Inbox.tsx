@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useConversations } from '../../hooks/useConversations.js'
 import { useChatSocket } from '../../hooks/useChatSocket.js'
-import { revealStagger, prefersReducedMotion } from '../../utils/motion.js'
+import { revealStagger, prefersReducedMotion, DURATION, EASE } from '../../utils/motion.js'
 import { cn } from '../../utils/cn.js'
+import gsap from 'gsap'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -19,6 +20,18 @@ export default function Inbox() {
   const { data: convs, isLoading } = useConversations()
   useChatSocket()
   const listRef = useRef<HTMLDivElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const navigate = useNavigate()
+
+  // Title entrance animation
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el || prefersReducedMotion()) return
+    gsap.fromTo(el,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut },
+    )
+  }, [])
 
   useEffect(() => {
     if (!listRef.current || isLoading || !convs?.length) return
@@ -40,7 +53,7 @@ export default function Inbox() {
             <span className="text-[var(--border)] text-xs">/</span>
             <span className="text-xs font-medium text-[var(--text)]">Mensajes</span>
           </div>
-          <h1 className="font-display font-semibold text-3xl text-[var(--text)]">Mensajes</h1>
+          <h1 ref={titleRef} className="font-display font-semibold text-3xl text-[var(--text)]">Mensajes</h1>
         </div>
 
         {isLoading && (
@@ -52,13 +65,20 @@ export default function Inbox() {
         )}
 
         {!isLoading && !convs?.length && (
-          <div className="flex flex-col items-center gap-4 py-20 text-center">
-            <div className="w-14 h-14 rounded-full bg-[var(--surface)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-white/30">
+          <div className="flex flex-col items-center gap-5 py-20 text-center">
+            <div className="w-16 h-16 rounded-full bg-[var(--surface)] flex items-center justify-center border border-white/5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/20">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </div>
-            <p className="text-sm text-[var(--text-muted)]">No tienes conversaciones aun.<br />Visita un perfil para enviar un mensaje.</p>
+            <div>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                No tienes conversaciones aún.
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-1 opacity-60">
+                Visita un perfil para enviar un mensaje.
+              </p>
+            </div>
           </div>
         )}
 
@@ -70,12 +90,18 @@ export default function Inbox() {
               data-conv
               className={cn(
                 'flex items-center gap-3 px-4 py-4 rounded-[var(--radius-md)]',
-                'hover:bg-[var(--surface)] transition-colors duration-150',
+                'hover:bg-[var(--surface)] active:scale-[0.98] transition-all duration-150',
                 'group relative',
               )}
             >
               {/* Avatar */}
-              <div className="shrink-0 w-11 h-11 rounded-full bg-[var(--surface)] overflow-hidden">
+              <div className={cn(
+                'shrink-0 w-12 h-12 rounded-full overflow-hidden',
+                'ring-2 transition-all duration-200',
+                conv.unreadCount > 0
+                  ? 'ring-[var(--accent)]/40 bg-[var(--accent)]/10'
+                  : 'ring-white/5 bg-[var(--surface)]',
+              )}>
                 {conv.otherUser.avatar
                   ? <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover" />
                   : (
@@ -95,11 +121,11 @@ export default function Inbox() {
                   )}>
                     {conv.otherUser.artistName}
                   </span>
-                  <span className="text-[10px] text-[var(--text-muted)] shrink-0">{timeAgo(conv.lastMessageAt)}</span>
+                  <span className="text-[10px] text-[var(--text-muted)] shrink-0 tabular-nums">{timeAgo(conv.lastMessageAt)}</span>
                 </div>
                 <p className={cn(
-                  'text-xs truncate mt-0.5',
-                  conv.unreadCount > 0 ? 'text-[var(--text)]' : 'text-[var(--text-muted)]',
+                  'text-xs truncate mt-0.5 leading-relaxed',
+                  conv.unreadCount > 0 ? 'text-[var(--text)] font-medium' : 'text-[var(--text-muted)]',
                 )}>
                   {conv.lastMessagePreview || 'Sin mensajes'}
                 </p>
@@ -107,7 +133,9 @@ export default function Inbox() {
 
               {/* Unread badge */}
               {conv.unreadCount > 0 && (
-                <div className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold flex items-center justify-center px-1">
+                <div className="shrink-0 min-w-[20px] h-[20px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold flex items-center justify-center px-1.5"
+                  style={{ boxShadow: '0 0 8px rgba(212,255,0,0.3)' }}
+                >
                   {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                 </div>
               )}

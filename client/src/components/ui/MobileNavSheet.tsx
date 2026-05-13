@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import gsap from 'gsap'
 import { useAuthStore } from '../../store/useAuthStore.js'
+import { useConversationUnread } from '../../hooks/useConversations.js'
 import { cn } from '../../utils/cn.js'
 
 interface Props {
@@ -24,6 +25,9 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
   const navRef = useRef<HTMLDivElement>(null)
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const didInit = useRef(false)
+
+  const { data: unread } = useConversationUnread()
+  const unreadCount = unread?.total ?? 0
 
   // Close on route change
   useEffect(() => {
@@ -157,7 +161,14 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
                 className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
                 style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
               >
-                Mensajes
+                <span className="flex items-center gap-3">
+                  Mensajes
+                  {unreadCount > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[11px] font-bold px-1.5 leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </span>
                 <span className="text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-1" style={{ fontSize: '1.1rem' }}>›</span>
               </Link>
               <Link

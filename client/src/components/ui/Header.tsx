@@ -1,14 +1,26 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore.js'
+import { useConversationUnread } from '../../hooks/useConversations.js'
 import { Button } from './Button.js'
 import { MobileNavSheet } from './MobileNavSheet.js'
 import { cn } from '../../utils/cn.js'
+
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null
+  return (
+    <span className="unread-badge inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold px-1 leading-none ml-1.5">
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
 
 export function Header() {
   const { user, clearAuth } = useAuthStore()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const { data: unread } = useConversationUnread()
+  const unreadCount = unread?.total ?? 0
 
   function handleLogout() {
     clearAuth()
@@ -56,7 +68,10 @@ export function Header() {
                   </Link>
                 )}
                 <Link to="/me/mensajes">
-                  <Button variant="ghost" size="sm">Mensajes</Button>
+                  <Button variant="ghost" size="sm" className="relative">
+                    Mensajes
+                    <UnreadBadge count={unreadCount} />
+                  </Button>
                 </Link>
                 <Link to="/me">
                   <Button variant="ghost" size="sm">Mi cuenta</Button>
@@ -113,6 +128,10 @@ export function Header() {
         }}
         aria-label={open ? 'Cerrar menu' : 'Abrir menu'}
       >
+        {/* Unread indicator dot on hamburger */}
+        {unreadCount > 0 && !open && (
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--accent)]" style={{ boxShadow: '0 0 6px rgba(212,255,0,0.5)' }} />
+        )}
         <span
           className={cn(
             'block w-[15px] h-px bg-[var(--text)] transition-transform duration-200 origin-center',

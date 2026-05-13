@@ -21,8 +21,28 @@ export function useNotificationPrefs() {
   const mutation = useMutation({
     mutationFn: (data: Partial<NotificationPreferences & { overrides: Record<string, boolean> }>) =>
       notificationsService.updatePreferences(data),
-    onSuccess: (data) => {
-      queryClient.setQueryData(['notification-prefs'], data)
+    onMutate: async (data) => {
+      // Cancel in-flight fetches so they don't overwrite our optimistic state
+      await queryClient.cancelQueries({ queryKey: ['notification-prefs'] })
+      const previous = queryClient.getQueryData<NotificationPreferences>(['notification-prefs'])
+      // Optimistic update — merge the partial data immediately
+      if (previous) {
+        queryClient.setQueryData<NotificationPreferences>(['notification-prefs'], {
+          ...previous,
+          ...data,
+          overrides: { ...previous.overrides, ...(data.overrides ?? {}) },
+        })
+      }
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(['notification-prefs'], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification-prefs'] })
     },
   })
 

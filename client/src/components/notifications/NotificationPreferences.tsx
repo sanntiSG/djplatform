@@ -45,8 +45,15 @@ export function NotificationPreferences() {
 
   async function handlePushToggle(val: boolean) {
     if (val) {
+      // Optimistic: update UI immediately
+      update({ pushOptIn: true })
+      if (user && token) setAuth(token, { ...user, pushOptIn: true })
+
       const result = await pushService.subscribe()
       if (!result.ok) {
+        // Rollback
+        update({ pushOptIn: false })
+        if (user && token) setAuth(token, { ...user, pushOptIn: false })
         if (result.reason === 'ios-needs-pwa') {
           setShowInstallPrompt(true)
           return
@@ -54,13 +61,13 @@ export function NotificationPreferences() {
         showToast(reasonToMessage(result.reason), 'error')
         return
       }
-      update({ pushOptIn: true })
-      if (user && token) setAuth(token, { ...user, pushOptIn: true })
       showToast('Notificaciones push activadas.', 'success')
     } else {
-      await pushService.unsubscribe()
+      // Optimistic: update UI immediately
       update({ pushOptIn: false })
       if (user && token) setAuth(token, { ...user, pushOptIn: false })
+      // Fire-and-forget the unsubscribe cleanup
+      pushService.unsubscribe().catch(() => {})
     }
   }
 
