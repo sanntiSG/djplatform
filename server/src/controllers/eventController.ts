@@ -30,8 +30,8 @@ export async function create(req: Request, res: Response, next: NextFunction) {
         actorAvatar: profile.avatar,
         targetTitle: serialized.title,
         targetUrl: `/events/${serialized.slug ?? serialized.id}`,
-      }).catch(() => {})
-    }).catch(() => {})
+      }).catch(() => { })
+    }).catch(() => { })
 
     res.status(201).json(serialized)
   } catch (err) {

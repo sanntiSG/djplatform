@@ -25,11 +25,11 @@ interface FeedDef {
 // Si un feed AR/LATAM falla, la seccion sigue funcionando con los demas.
 // Para agregar mas fuentes AR, anadir entradas con region: 'ar'.
 const RSS_FEEDS: FeedDef[] = [
-  { url: 'https://indiehoy.com/feed/', label: 'Indie Hoy', region: 'ar', maxItems: 2 },
-  { url: 'https://billboard.com.ar/feed/', label: 'Billboard AR', region: 'ar', maxItems: 2 },
-  { url: 'https://es.rollingstone.com/feed/', label: 'Rolling Stone', region: 'latam', maxItems: 2 },
-  { url: 'https://djmag.com/feed', label: 'DJ Mag', region: 'world', maxItems: 2 },
-  { url: 'https://mixmag.net/rss-category/news', label: 'Mixmag', region: 'world', maxItems: 2 },
+  { url: 'https://indiehoy.com/feed/', label: 'Indie Hoy', region: 'ar', maxItems: 5 },
+  { url: 'https://billboard.com.ar/feed/', label: 'Billboard AR', region: 'ar', maxItems: 5 },
+  { url: 'https://es.rollingstone.com/feed/', label: 'Rolling Stone', region: 'latam', maxItems: 5 },
+  { url: 'https://djmag.com/feed', label: 'DJ Mag', region: 'world', maxItems: 5 },
+  { url: 'https://mixmag.net/rss-category/news', label: 'Mixmag', region: 'world', maxItems: 5 },
 ]
 
 function extractImage(item: Record<string, unknown>): string | undefined {
@@ -77,6 +77,7 @@ export async function fetchAndCacheRss(): Promise<void> {
       const recent = (parsed.items ?? []).slice(0, feed.maxItems)
       for (const item of recent) {
         if (!item.title || !item.link) continue
+        const itemDate = item.isoDate ? new Date(item.isoDate) : now
         items.push({
           type: 'news_article',
           source: 'rss',
@@ -85,7 +86,7 @@ export async function fetchAndCacheRss(): Promise<void> {
           subtitle: feed.label,
           imageUrl: extractImage(item as unknown as Record<string, unknown>),
           url: item.link,
-          fetchedAt: now,
+          fetchedAt: itemDate,
         })
       }
     } catch (err) {

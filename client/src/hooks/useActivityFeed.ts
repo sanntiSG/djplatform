@@ -29,7 +29,7 @@ export function useActivityFeed(limit = 20) {
   return useQuery({
     queryKey: ['activity-feed', limit],
     queryFn: () => activityService.list(limit),
-    staleTime: 60_000,
-    refetchInterval: 120_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   })
 }

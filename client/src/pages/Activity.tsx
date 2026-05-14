@@ -3,25 +3,25 @@ import { useActivityFeed } from '../hooks/useActivityFeed.js'
 import type { ActivityEvent } from '../services/activityService.js'
 
 const PILL: Record<string, { label: string; bg: string; text: string }> = {
-  profile_created:  { label: 'Nuevo artista',    bg: 'rgba(52,211,153,0.12)',  text: '#34d399' },
-  event_published:  { label: 'Evento',            bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa' },
-  media_added:      { label: 'Nueva track',       bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
-  photo_added:      { label: 'Nueva foto',        bg: 'rgba(251,191,36,0.12)',  text: '#fbbf24' },
-  profile_updated:  { label: 'Actualizo perfil',  bg: 'rgba(212,255,0,0.1)',    text: 'var(--accent)' },
-  trending_track:   { label: 'En tendencia',      bg: 'rgba(239,68,68,0.12)',  text: '#f87171' },
-  trending_artist:  { label: 'Artista popular',   bg: 'rgba(239,68,68,0.12)',  text: '#f87171' },
-  news_article:     { label: 'Noticias',          bg: 'rgba(148,163,184,0.12)', text: '#94a3b8' },
+  profile_created: { label: 'Nuevo artista', bg: 'rgba(52,211,153,0.12)', text: '#34d399' },
+  event_published: { label: 'Evento', bg: 'rgba(96,165,250,0.12)', text: '#60a5fa' },
+  media_added: { label: 'Nueva track', bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
+  photo_added: { label: 'Nueva foto', bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
+  profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
+  trending_track: { label: 'En tendencia', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
+  trending_artist: { label: 'Artista popular', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
+  news_article: { label: 'Noticias', bg: 'rgba(148,163,184,0.12)', text: '#94a3b8' },
 }
 
 const DESC: Record<string, (a: ActivityEvent) => string> = {
-  profile_created:  (a) => `${a.actorName} se unio a la plataforma`,
-  event_published:  (a) => `${a.actorName} publico un evento`,
-  media_added:      (a) => `${a.actorName} subio nueva musica`,
-  photo_added:      (a) => `${a.actorName} agrego fotos`,
-  profile_updated:  (a) => `${a.actorName} actualizo su perfil`,
-  trending_track:   (a) => a.actorName,
-  trending_artist:  (a) => a.actorName,
-  news_article:     (a) => a.actorName,
+  profile_created: (a) => `${a.actorName} se unio a la plataforma`,
+  event_published: (a) => `${a.actorName} publico un evento`,
+  media_added: (a) => `${a.actorName} subio nueva musica`,
+  photo_added: (a) => `${a.actorName} agrego fotos`,
+  profile_updated: (a) => `${a.actorName} actualizo su perfil`,
+  trending_track: (a) => a.actorName,
+  trending_artist: (a) => a.actorName,
+  news_article: (a) => a.actorName,
 }
 
 const REGION_LABEL: Record<string, string> = {

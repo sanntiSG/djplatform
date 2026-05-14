@@ -13,13 +13,21 @@ export async function listActivity(req: Request, res: Response, next: NextFuncti
       ExternalFeedItem.find().sort({ fetchedAt: -1 }).limit(50).lean(),
     ])
 
-    // Sort external: AR first, then LATAM, then World; within same region by fetchedAt desc
-    const sortedExternal = [...external].sort((a, b) => {
-      const rA = REGION_ORDER[a.region ?? 'world'] ?? 2
-      const rB = REGION_ORDER[b.region ?? 'world'] ?? 2
-      if (rA !== rB) return rA - rB
-      return b.fetchedAt.getTime() - a.fetchedAt.getTime()
-    })
+    // Sort external: AR first, then LATAM, then World
+    const grouped: Record<string, any[]> = { ar: [], latam: [], world: [] }
+    for (const e of external) {
+      const reg = e.region || 'world'
+      if (grouped[reg]) grouped[reg].push(e)
+      else grouped.world.push(e)
+    }
+
+    // Shuffle within regions to provide variety
+    const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5)
+    const sortedExternal = [
+      ...shuffle(grouped.ar),
+      ...shuffle(grouped.latam),
+      ...shuffle(grouped.world),
+    ]
 
     const externalNormalized = sortedExternal.map(e => ({
       id: e._id.toString(),
@@ -36,11 +44,14 @@ export async function listActivity(req: Request, res: Response, next: NextFuncti
       isExternal: true,
     }))
 
-    // Internal activity first (recent platform events), then external sorted by region
-    const all = [
-      ...internal.map(i => ({ ...i, isExternal: false })),
-      ...externalNormalized,
-    ].slice(0, limit)
+    // Interleave: [Internal, External, Internal, External...]
+    const all: any[] = []
+    const max = Math.max(internal.length, externalNormalized.length)
+    for (let i = 0; i < max; i++) {
+      if (internal[i]) all.push({ ...internal[i], isExternal: false })
+      if (externalNormalized[i]) all.push(externalNormalized[i])
+      if (all.length >= limit) break
+    }
 
     res.json(all)
   } catch (err) {

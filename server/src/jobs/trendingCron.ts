@@ -43,5 +43,7 @@ export async function startTrendingCron() {
 }
 
 export function restartTrendingCron(minutes: number) {
+  void runLastFm()
+  void runRss()
   startTimers(minutes)
 }
