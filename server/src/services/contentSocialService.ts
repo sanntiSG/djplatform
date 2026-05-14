@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 import { ContentLike } from '../models/ContentLike.js'
 import { ContentComment, type IContentComment } from '../models/ContentComment.js'
 import { Profile } from '../models/Profile.js'
+import * as notificationService from './notificationService.js'
+import { toSlug } from '../utils/slug.js'
 
 type TargetKind = 'photo' | 'media'
 
@@ -111,6 +113,18 @@ export async function toggleContentLike(
       targetKind,
       targetId,
     })
+
+    // Notify owner
+    const profile = await Profile.findById(profileId).select('userId artistName').lean()
+    if (profile && profile.userId.toString() !== userId) {
+      const typeKey = targetKind === 'photo' ? 'content_like' : 'media_like'
+      const slug = toSlug(profile.artistName)
+      const url = `/p/${slug}-${profile._id.toString()}`
+      notificationService.create(profile.userId.toString(), typeKey, {
+        actorId: userId,
+        url,
+      }).catch(() => {})
+    }
   }
 
   const likeCount = await ContentLike.countDocuments({
@@ -165,7 +179,7 @@ export async function addContentComment(
   text: string,
   parentId?: string,
 ): Promise<IContentComment> {
-  return ContentComment.create({
+  const comment = await ContentComment.create({
     userId,
     profileId,
     targetKind,
@@ -173,7 +187,21 @@ export async function addContentComment(
     userEmail,
     text,
     parentId: parentId ? new mongoose.Types.ObjectId(parentId) : null,
-  }) as unknown as IContentComment
+  })
+
+  // Notify owner
+  const profile = await Profile.findById(profileId).select('userId artistName').lean()
+  if (profile && profile.userId.toString() !== userId) {
+    const slug = toSlug(profile.artistName)
+    const url = `/p/${slug}-${profile._id.toString()}`
+    notificationService.create(profile.userId.toString(), 'content_comment', {
+      actorId: userId,
+      payload: { text },
+      url,
+    }).catch(() => {})
+  }
+
+  return comment as unknown as IContentComment
 }
 
 export async function editContentComment(

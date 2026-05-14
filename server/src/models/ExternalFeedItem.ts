@@ -12,6 +12,7 @@ export interface IExternalFeedItem extends Document {
   title: string
   subtitle?: string
   imageUrl?: string
+  logoUrl?: string
   url: string
   fetchedAt: Date
 }
@@ -24,6 +25,7 @@ const schema = new mongoose.Schema<IExternalFeedItem>(
     title: { type: String, required: true, maxlength: 200 },
     subtitle: { type: String, maxlength: 200 },
     imageUrl: { type: String },
+    logoUrl: { type: String },
     url: { type: String, required: true },
     fetchedAt: { type: Date, default: Date.now, required: true },
   },

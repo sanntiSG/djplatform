@@ -36,10 +36,11 @@ export async function listActivity(req: Request, res: Response, next: NextFuncti
       region: e.region ?? 'world',
       actorProfileId: null,
       actorName: e.subtitle ?? e.source,
-      actorAvatar: e.imageUrl,
+      actorAvatar: e.logoUrl || e.imageUrl,
       actorSlug: null,
       targetTitle: e.title,
       targetUrl: e.url,
+      targetImage: e.imageUrl,
       createdAt: e.fetchedAt.toISOString(),
       isExternal: true,
     }))

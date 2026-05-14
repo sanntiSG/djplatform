@@ -67,6 +67,7 @@ export async function fetchAndCacheRss(): Promise<void> {
     title: string
     subtitle: string
     imageUrl?: string
+    logoUrl?: string
     url: string
     fetchedAt: Date
   }> = []
@@ -75,6 +76,7 @@ export async function fetchAndCacheRss(): Promise<void> {
     try {
       const parsed = await parser.parseURL(feed.url)
       const recent = (parsed.items ?? []).slice(0, feed.maxItems)
+      const logoUrl = parsed.image?.url
       for (const item of recent) {
         if (!item.title || !item.link) continue
         const itemDate = item.isoDate ? new Date(item.isoDate) : now
@@ -85,6 +87,7 @@ export async function fetchAndCacheRss(): Promise<void> {
           title: item.title.slice(0, 180),
           subtitle: feed.label,
           imageUrl: extractImage(item as unknown as Record<string, unknown>),
+          logoUrl,
           url: item.link,
           fetchedAt: itemDate,
         })
