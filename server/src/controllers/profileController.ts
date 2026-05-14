@@ -78,10 +78,26 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
 
       if (data.media && profile.media.length > prevMedia) {
         const newest = profile.media[profile.media.length - 1]
-        createActivity({ type: 'media_added', actorProfileId: pid, actorName: name, actorAvatar: avatar, targetTitle: newest.title ?? undefined, targetUrl: url }).catch(() => { })
+        createActivity({
+          type: 'media_added',
+          actorProfileId: pid,
+          actorName: name,
+          actorAvatar: avatar,
+          targetTitle: newest.title ?? undefined,
+          targetUrl: url,
+          targetImage: newest.thumbnailUrl,
+        }).catch(() => { })
       }
       if (data.photos && (profile.photos?.length ?? 0) > prevPhotos) {
-        createActivity({ type: 'photo_added', actorProfileId: pid, actorName: name, actorAvatar: avatar, targetUrl: url }).catch(() => { })
+        const newestPhoto = profile.photos[profile.photos.length - 1]
+        createActivity({
+          type: 'photo_added',
+          actorProfileId: pid,
+          actorName: name,
+          actorAvatar: avatar,
+          targetUrl: url,
+          targetImage: newestPhoto.url,
+        }).catch(() => { })
       }
     }
 

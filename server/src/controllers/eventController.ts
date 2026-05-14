@@ -29,7 +29,8 @@ export async function create(req: Request, res: Response, next: NextFunction) {
         actorName: profile.artistName,
         actorAvatar: profile.avatar,
         targetTitle: serialized.title,
-        targetUrl: `/events/${serialized.slug ?? serialized.id}`,
+        targetUrl: `/events/${serialized.slug}-${serialized.id}`,
+        targetImage: serialized.cover,
       }).catch(() => { })
     }).catch(() => { })
 

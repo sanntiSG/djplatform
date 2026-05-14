@@ -23,7 +23,8 @@ function formatDate(iso: string) {
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>()
-  const { data: event, isLoading } = useEvent(id!)
+  const eventMongoId = id ? id.match(/[0-9a-fA-F]{24}$/)?.[0] ?? id : ''
+  const { data: event, isLoading } = useEvent(eventMongoId!)
   const contentRef = useRef<HTMLDivElement>(null)
   const commentsRef = useRef<HTMLDivElement>(null) as React.MutableRefObject<HTMLDivElement>
 
