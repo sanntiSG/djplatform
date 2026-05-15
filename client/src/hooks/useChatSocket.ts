@@ -58,12 +58,23 @@ export function useChatSocket(conversationId?: string) {
       qc.invalidateQueries({ queryKey: ['conversations-unread'] })
     }
 
+    // Re-sync after a socket reconnect (may have missed events while offline)
+    function onReconnect() {
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['conversations-unread'] })
+      if (conversationId) {
+        qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+      }
+    }
+
     socket.on('message:new', onMessageNew)
     socket.on('conversation:read', onConversationRead)
+    socket.on('connect', onReconnect)
 
     return () => {
       socket.off('message:new', onMessageNew)
       socket.off('conversation:read', onConversationRead)
+      socket.off('connect', onReconnect)
     }
   }, [qc, conversationId, markReadNow])
 

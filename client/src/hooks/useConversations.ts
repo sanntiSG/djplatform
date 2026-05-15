@@ -6,7 +6,10 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: () => conversationsService.list(),
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    // Socket invalidates in real time; this is a fallback for missed reconnects
+    refetchInterval: 5 * 60_000,
   })
 }
 
@@ -26,6 +29,9 @@ export function useConversationUnread() {
   return useQuery({
     queryKey: ['conversations-unread'],
     queryFn: () => conversationsService.getUnreadTotal(),
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    // Socket keeps this in sync; fallback for missed reconnects only
+    refetchInterval: 5 * 60_000,
   })
 }
