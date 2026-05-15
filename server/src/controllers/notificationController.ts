@@ -101,7 +101,7 @@ export async function markRead(req: Request, res: Response, next: NextFunction) 
       { _id: id, userId: req.user!.id },
       { readAt: new Date() },
     )
-    io.to(`user:${req.user!.id}`).emit('notification:read', { id })
+    try { io.to(`user:${req.user!.id}`).emit('notification:read', { id }) } catch { /* non-fatal */ }
     res.json({ ok: true })
   } catch (err) {
     next(err)
@@ -114,7 +114,7 @@ export async function markAllRead(req: Request, res: Response, next: NextFunctio
       { userId: req.user!.id, readAt: null },
       { readAt: new Date() },
     )
-    io.to(`user:${req.user!.id}`).emit('notification:read-all')
+    try { io.to(`user:${req.user!.id}`).emit('notification:read-all') } catch { /* non-fatal */ }
     res.json({ ok: true })
   } catch (err) {
     next(err)
@@ -129,7 +129,7 @@ export async function deleteNotification(req: Request, res: Response, next: Next
       return
     }
     await Notification.deleteOne({ _id: id, userId: req.user!.id })
-    io.to(`user:${req.user!.id}`).emit('notification:removed', { id })
+    try { io.to(`user:${req.user!.id}`).emit('notification:removed', { id }) } catch { /* non-fatal */ }
     res.json({ ok: true })
   } catch (err) {
     next(err)
