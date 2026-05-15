@@ -1,0 +1,71 @@
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { getSocket } from '../services/socket.js'
+
+type InboxData = {
+  items: Array<{ _id: string; readAt: string | null }>
+  unreadCount: number
+  nextCursor: string | null
+}
+
+export function useNotificationsSocket() {
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    const socket = getSocket()
+
+    function onNew() {
+      // Refetch so the new notification appears in the inbox with full actor info
+      qc.invalidateQueries({ queryKey: ['notification-inbox'] })
+    }
+
+    function onRead({ id }: { id: string }) {
+      qc.setQueryData<InboxData>(['notification-inbox'], (old) => {
+        if (!old) return old
+        const wasUnread = old.items.find((n) => n._id === id && !n.readAt)
+        return {
+          ...old,
+          items: old.items.map((n) =>
+            n._id === id ? { ...n, readAt: new Date().toISOString() } : n,
+          ),
+          unreadCount: wasUnread ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+        }
+      })
+    }
+
+    function onReadAll() {
+      qc.setQueryData<InboxData>(['notification-inbox'], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          items: old.items.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
+          unreadCount: 0,
+        }
+      })
+    }
+
+    function onRemoved({ id }: { id: string }) {
+      qc.setQueryData<InboxData>(['notification-inbox'], (old) => {
+        if (!old) return old
+        const wasUnread = old.items.find((n) => n._id === id && !n.readAt)
+        return {
+          ...old,
+          items: old.items.filter((n) => n._id !== id),
+          unreadCount: wasUnread ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+        }
+      })
+    }
+
+    socket.on('notification:new', onNew)
+    socket.on('notification:read', onRead)
+    socket.on('notification:read-all', onReadAll)
+    socket.on('notification:removed', onRemoved)
+
+    return () => {
+      socket.off('notification:new', onNew)
+      socket.off('notification:read', onRead)
+      socket.off('notification:read-all', onReadAll)
+      socket.off('notification:removed', onRemoved)
+    }
+  }, [qc])
+}

@@ -4,6 +4,7 @@ import * as notificationService from '../services/notificationService.js'
 import { Notification } from '../models/Notification.js'
 import { User } from '../models/User.js'
 import { Profile } from '../models/Profile.js'
+import { io } from '../realtime/io.js'
 
 export async function getTypes(req: Request, res: Response, next: NextFunction) {
   try {
@@ -100,6 +101,7 @@ export async function markRead(req: Request, res: Response, next: NextFunction) 
       { _id: id, userId: req.user!.id },
       { readAt: new Date() },
     )
+    io.to(`user:${req.user!.id}`).emit('notification:read', { id })
     res.json({ ok: true })
   } catch (err) {
     next(err)
@@ -112,6 +114,7 @@ export async function markAllRead(req: Request, res: Response, next: NextFunctio
       { userId: req.user!.id, readAt: null },
       { readAt: new Date() },
     )
+    io.to(`user:${req.user!.id}`).emit('notification:read-all')
     res.json({ ok: true })
   } catch (err) {
     next(err)
@@ -126,6 +129,7 @@ export async function deleteNotification(req: Request, res: Response, next: Next
       return
     }
     await Notification.deleteOne({ _id: id, userId: req.user!.id })
+    io.to(`user:${req.user!.id}`).emit('notification:removed', { id })
     res.json({ ok: true })
   } catch (err) {
     next(err)

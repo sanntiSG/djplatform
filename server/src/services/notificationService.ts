@@ -4,6 +4,7 @@ import { User } from '../models/User.js'
 import type { IUser } from '../models/User.js'
 import { sendPush, type PushPayload } from './pushService.js'
 import { logger } from '../utils/logger.js'
+import { io } from '../realtime/io.js'
 
 export interface CreateNotificationInput {
   actorId?: string
@@ -51,6 +52,13 @@ export async function create(
       payload: input.payload,
       url: input.url,
     })
+
+    // Push to user's socket room so inbox and badge update instantly
+    try {
+      io.to(`user:${userId}`).emit('notification:new')
+    } catch {
+      // io may not be initialized in test environments — non-fatal
+    }
 
     if (user.pushOptIn) {
       const template = TYPE_LABELS[typeKey]

@@ -7,8 +7,10 @@ export function useNotificationInbox() {
   const query = useQuery({
     queryKey: ['notification-inbox'],
     queryFn: () => notificationsService.getInbox({ limit: 50 }),
-    refetchInterval: 30_000,
-    staleTime: 10_000,
+    // Socket keeps inbox in sync; this is a fallback for missed reconnects
+    refetchInterval: 5 * 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   })
 
   const markRead = useMutation({

@@ -8,6 +8,8 @@ import { RequireAuth } from './components/auth/RequireAuth.js'
 import { NotificationPermissionModal } from './components/notifications/NotificationPermissionModal.js'
 import { InstallPwaPrompt } from './components/notifications/InstallPwaPrompt.js'
 import { useNotificationsPermission } from './hooks/useNotificationsPermission.js'
+import { useNotificationsSocket } from './hooks/useNotificationsSocket.js'
+import { useAuthStore } from './store/useAuthStore.js'
 import Landing from './pages/Landing.js'
 import Login from './pages/Login.js'
 import Register from './pages/Register.js'
@@ -45,10 +47,17 @@ function ToastRenderer() {
   return <Toast message={message} variant={variant} onDismiss={dismiss} />
 }
 
+function NotificationSocketMount() {
+  useNotificationsSocket()
+  return null
+}
+
 function NotificationsGate() {
+  const { user } = useAuthStore()
   const { open, handleActivate, handleDismiss, showInstallPrompt, setShowInstallPrompt } = useNotificationsPermission()
   return (
     <>
+      {user && <NotificationSocketMount />}
       <NotificationPermissionModal
         open={open}
         onActivate={handleActivate}
