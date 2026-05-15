@@ -10,6 +10,7 @@ import { profilePath, eventPath, genrePath } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion, magneticHover, tiltCard } from '../utils/motion.js'
 import { genreToColor, stringToColor, COLOR_VAR } from '../utils/colors.js'
+import SplashScreen from '../components/ui/SplashScreen.js'
 import { RainbowPill } from '../components/ui/RainbowPill.js'
 import { NumberedListItem } from '../components/ui/NumberedListItem.js'
 import { ColorBlockCard } from '../components/ui/ColorBlockCard.js'
@@ -527,6 +528,9 @@ export default function MainFeed() {
   const hasContent =
     allAvailable.length > 0 || featuredEvents.length > 0 || topArtists.length > 0
 
+  // Skip splash when data is already cached (isReady true on first render)
+  const [splashDone, setSplashDone] = useState(() => isReady)
+
   /* Floating CTA scroll trigger */
   useEffect(() => {
     const onScroll = () => setShowFloatingCTA(window.scrollY > 350)
@@ -746,6 +750,10 @@ export default function MainFeed() {
     setSearchQuery('')
   }, [])
 
+  if (!splashDone) {
+    return <SplashScreen ready={isReady} onExited={() => setSplashDone(true)} />
+  }
+
   return (
     <div ref={pageRef} className="min-h-screen bg-[var(--bg)] md:pt-16 overflow-x-hidden">
 
@@ -854,14 +862,7 @@ export default function MainFeed() {
         </div>
       </section>
 
-      {/* Loading */}
-      {!isReady && (
-        <div className="flex items-center justify-center py-24">
-          <span className="w-7 h-7 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {isReady && hasContent && (
+      {hasContent && (
         <div className="flex flex-col gap-14 pb-32">
 
           {/* Artistas disponibles por tipo */}
@@ -1016,7 +1017,7 @@ export default function MainFeed() {
         </div>
       )}
 
-      {isReady && !hasContent && (
+      {!hasContent && (
         <div className="flex flex-col items-center justify-center min-h-[55vh] gap-5 px-6 text-center">
           <p className="font-display text-[var(--text-muted)] tracking-tight" style={{ fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>
             La escena se esta construyendo.
