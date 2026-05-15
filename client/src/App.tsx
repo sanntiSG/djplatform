@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Header } from './components/ui/Header.js'
+import BootGate from './components/ui/BootGate.js'
 import { Toast } from './components/ui/Toast.js'
 import { useToastStore } from './store/useToastStore.js'
 import { RequireAuth } from './components/auth/RequireAuth.js'
@@ -70,47 +71,49 @@ export default function App() {
   }, [pathname])
 
   return (
-    <>
-      {showHeader && <Header />}
-      <ToastRenderer />
-      <NotificationsGate />
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/auth/login" element={<Login />} />
-        <Route path="/auth/register" element={<Register />} />
-        <Route path="/auth/change-password" element={<ChangePassword />} />
-        <Route path="/profiles" element={<Profiles />} />
-        <Route path="/p/:id" element={<PublicProfile />} />
-        <Route path="/g/:slug" element={<GenreDetail />} />
-        <Route path="/feed" element={<MainFeed />} />
-        <Route path="/events" element={<EventsFeed />} />
-        <Route path="/events/:id" element={<EventDetail />} />
-        <Route path="/actividad" element={<Activity />} />
+    <BootGate>
+      <>
+        {showHeader && <Header />}
+        <ToastRenderer />
+        <NotificationsGate />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/change-password" element={<ChangePassword />} />
+          <Route path="/profiles" element={<Profiles />} />
+          <Route path="/p/:id" element={<PublicProfile />} />
+          <Route path="/g/:slug" element={<GenreDetail />} />
+          <Route path="/feed" element={<MainFeed />} />
+          <Route path="/events" element={<EventsFeed />} />
+          <Route path="/events/:id" element={<EventDetail />} />
+          <Route path="/actividad" element={<Activity />} />
 
-        <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
-        <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
-        <Route path="/me/mensajes" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
-        <Route path="/me/mensajes/:id" element={<RequireAuth><MessagesConversation /></RequireAuth>} />
-        <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
-        <Route path="/profile/edit" element={<RequireAuth><ProfileEdit /></RequireAuth>} />
-        <Route path="/events/new" element={<RequireAuth><EventNew /></RequireAuth>} />
+          <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
+          <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
+          <Route path="/me/mensajes" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
+          <Route path="/me/mensajes/:id" element={<RequireAuth><MessagesConversation /></RequireAuth>} />
+          <Route path="/profile/setup" element={<RequireAuth><ProfileSetup /></RequireAuth>} />
+          <Route path="/profile/edit" element={<RequireAuth><ProfileEdit /></RequireAuth>} />
+          <Route path="/events/new" element={<RequireAuth><EventNew /></RequireAuth>} />
 
-        <Route
-          path="/admin"
-          element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}
-        >
-          <Route index element={<AdminDashboard />} />
-          <Route path="profiles" element={<AdminProfiles />} />
-          <Route path="events" element={<AdminEvents />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="genres" element={<AdminGenres />} />
-          <Route path="profile-types" element={<AdminProfileTypes />} />
-          <Route path="notifications" element={<AdminNotifications />} />
-          <Route path="system" element={<AdminSystem />} />
-        </Route>
+          <Route
+            path="/admin"
+            element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="profiles" element={<AdminProfiles />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="genres" element={<AdminGenres />} />
+            <Route path="profile-types" element={<AdminProfileTypes />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="system" element={<AdminSystem />} />
+          </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </>
+    </BootGate>
   )
 }
