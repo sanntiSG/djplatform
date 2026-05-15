@@ -46,7 +46,7 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
   const desc = DESC[event.type]?.(event) ?? event.actorName
   const isExternal = event.isExternal || event.type === 'trending_track' || event.type === 'news_article' || event.type === 'trending_artist'
   const href = event.targetUrl ?? (event.actorSlug ? `/p/${event.actorSlug}` : '/feed')
-  const img = event.actorAvatar
+  const img = event.targetImage ?? event.actorAvatar
 
   const inner = (
     <div className="flex flex-col gap-3 h-full">

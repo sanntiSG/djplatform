@@ -21,6 +21,7 @@ export interface ActivityEvent {
   actorSlug?: string | null
   targetTitle?: string
   targetUrl?: string
+  targetImage?: string
   createdAt: string
   isExternal?: boolean
 }
