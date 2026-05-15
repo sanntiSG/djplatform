@@ -52,7 +52,7 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
     <div className="flex flex-col gap-3 h-full">
       {/* Image */}
       {img && (
-        <div className="w-full aspect-video rounded-lg overflow-hidden bg-[var(--surface-elevated)] flex-shrink-0">
+        <div className="w-full aspect-square rounded-lg overflow-hidden bg-[var(--surface-elevated)] flex-shrink-0">
           <img
             src={img}
             alt=""
@@ -63,7 +63,7 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
       )}
       {!img && (
         <div
-          className="w-full aspect-video rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center"
+          className="w-full aspect-square rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center"
           style={{ background: 'var(--surface-elevated)' }}
         >
           <span className="font-display font-semibold text-2xl text-[var(--text-muted)]">
@@ -87,12 +87,12 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
         </div>
 
         {event.targetTitle && (
-          <p className="font-sans text-sm font-medium text-[var(--text)] leading-snug line-clamp-2">
+          <p className="font-sans text-xs md:text-sm font-medium text-[var(--text)] leading-snug line-clamp-2">
             {event.targetTitle}
           </p>
         )}
 
-        <p className="font-sans text-xs text-[var(--text-muted)] line-clamp-1">{desc}</p>
+        <p className="font-sans text-[10px] md:text-xs text-[var(--text-muted)] line-clamp-1">{desc}</p>
 
         {event.region && (
           <span className="font-sans text-[10px] text-[var(--text-muted)]">
@@ -124,7 +124,7 @@ export default function Activity() {
   const { data: items, isLoading } = useActivityFeed(100)
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-6 pb-24 pt-20 md:pt-28">
+    <div className="min-h-screen bg-[var(--bg)] px-4 md:px-6 pb-24 pt-20 md:pt-28">
       <div className="max-w-7xl mx-auto flex flex-col gap-8">
 
         <div className="flex flex-col gap-2">
@@ -151,7 +151,7 @@ export default function Activity() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
             {items.map((item) => (
               <ActivityItem key={item.id} event={item} />
             ))}
