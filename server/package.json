@@ -15,7 +15,8 @@
     "seed:profile-types": "tsx src/scripts/seedProfileTypes.ts",
     "migrate:photo-ts": "tsx src/scripts/migratePhotoAndMediaTimestamps.ts",
     "migrate:content-ids": "tsx src/scripts/migrateContentIds.ts",
-    "migrate:profile-roles": "tsx src/scripts/migrateProfileRoles.ts"
+    "migrate:profile-roles": "tsx src/scripts/migrateProfileRoles.ts",
+    "seed:notification-types": "tsx src/scripts/seedNotificationTypes.ts"
   },
   "dependencies": {
     "@dj/shared": "*",

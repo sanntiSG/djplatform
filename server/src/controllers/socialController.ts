@@ -46,6 +46,17 @@ export async function attend(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await toggleAttend(req.params.id, req.user!.id)
     res.json(result)
+
+    if (result.attending) {
+      getEventOwnerId(req.params.id).then(ownerId => {
+        if (ownerId && ownerId !== req.user!.id) {
+          createNotification(ownerId, 'event_attend', {
+            actorId: req.user!.id,
+            url: `/events/${req.params.id}`,
+          }).catch(() => {})
+        }
+      })
+    }
   } catch (err) {
     next(err)
   }
