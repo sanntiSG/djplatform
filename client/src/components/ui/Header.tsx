@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { useConversationUnread } from '../../hooks/useConversations.js'
+import { useTransition } from '../transition/TransitionProvider.js'
 import { Button } from './Button.js'
 import { MobileNavSheet } from './MobileNavSheet.js'
 import { cn } from '../../utils/cn.js'
@@ -21,8 +22,10 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const { data: unread } = useConversationUnread()
   const unreadCount = unread?.total ?? 0
+  const { arm } = useTransition()
 
   function handleLogout() {
+    arm()
     clearAuth()
     navigate('/')
     setOpen(false)
@@ -38,28 +41,28 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <NavLink to="/feed">
+            <NavLink to="/feed" onClick={() => arm()}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Inicio
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/profiles">
+            <NavLink to="/profiles" onClick={() => arm()}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Artistas
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/events">
+            <NavLink to="/events" onClick={() => arm()}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Eventos
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/oportunidades">
+            <NavLink to="/oportunidades" onClick={() => arm()}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Oportunidades
@@ -70,17 +73,17 @@ export function Header() {
             {user ? (
               <>
                 {user.role === 'admin' && (
-                  <Link to="/admin">
+                  <Link to="/admin" onClick={() => arm()}>
                     <Button variant="ghost" size="sm">Admin</Button>
                   </Link>
                 )}
-                <Link to="/me/mensajes">
+                <Link to="/me/mensajes" onClick={() => arm()}>
                   <Button variant="ghost" size="sm" className="relative">
                     Mensajes
                     <UnreadBadge count={unreadCount} />
                   </Button>
                 </Link>
-                <Link to="/me">
+                <Link to="/me" onClick={() => arm()}>
                   <Button variant="ghost" size="sm">Mi cuenta</Button>
                 </Link>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -89,10 +92,10 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link to="/auth/login">
+                <Link to="/auth/login" onClick={() => arm()}>
                   <Button variant="ghost" size="sm">Ingresar</Button>
                 </Link>
-                <Link to="/auth/register">
+                <Link to="/auth/register" onClick={() => arm()}>
                   <Button variant="primary" size="sm">Registrarse</Button>
                 </Link>
               </>
@@ -104,6 +107,7 @@ export function Header() {
       {/* Mobile floating wordmark pill — top-left, hidden on md+ */}
       <Link
         to="/"
+        onClick={() => arm()}
         className={cn(
           'fixed z-[90] glass-pill rounded-full md:hidden h-11 px-4',
           'flex items-center justify-center font-display font-semibold tracking-tight',

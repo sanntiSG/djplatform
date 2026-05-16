@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import gsap from 'gsap'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { useConversationUnread } from '../../hooks/useConversations.js'
+import { useTransition } from '../transition/TransitionProvider.js'
 import { cn } from '../../utils/cn.js'
 
 interface Props {
@@ -21,6 +22,7 @@ const NAV_LINKS = [
 export function MobileNavSheet({ open, onClose, onLogout }: Props) {
   const { user } = useAuthStore()
   const location = useLocation()
+  const { arm } = useTransition()
   const sheetRef = useRef<HTMLDivElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLDivElement>(null)
@@ -121,7 +123,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
             <Link
               key={to}
               to={to}
-              onClick={onClose}
+              onClick={() => { arm(); onClose() }}
               className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
               style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
             >
@@ -140,7 +142,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
               {user.role === 'admin' && (
                 <Link
                   to="/admin"
-                  onClick={onClose}
+                  onClick={() => { arm(); onClose() }}
                   className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
                   style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
                 >
@@ -150,7 +152,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
               )}
               <Link
                 to="/me/mensajes"
-                onClick={onClose}
+                onClick={() => { arm(); onClose() }}
                 className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
                 style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
               >
@@ -166,7 +168,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
               </Link>
               <Link
                 to="/me"
-                onClick={onClose}
+                onClick={() => { arm(); onClose() }}
                 className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
                 style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
               >
@@ -189,7 +191,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
             <>
               <Link
                 to="/auth/login"
-                onClick={onClose}
+                onClick={() => { arm(); onClose() }}
                 className="font-display font-semibold text-[var(--text)] flex items-center justify-between border-b border-[var(--border)] group"
                 style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
               >
@@ -198,7 +200,7 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
               </Link>
               <Link
                 to="/auth/register"
-                onClick={onClose}
+                onClick={() => { arm(); onClose() }}
                 className="font-display font-semibold text-[var(--accent)] flex items-center justify-between group"
                 style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
               >
