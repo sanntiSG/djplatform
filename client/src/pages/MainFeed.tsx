@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useProfiles, useTopProfiles } from '../hooks/useProfile.js'
+import { useProfiles, useTopProfiles, useMyProfile } from '../hooks/useProfile.js'
 import { useEventsFeed } from '../hooks/useEvents.js'
 import { useActivityFeed } from '../hooks/useActivityFeed.js'
 import type { ActivityEvent } from '../services/activityService.js'
@@ -473,6 +473,9 @@ function NewsFeedRow({ event }: { event: EventResponse }) {
 export default function MainFeed() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { data: myProfile } = useMyProfile()
+  const ctaLabel = !user ? 'Publicar mi perfil' : !myProfile ? 'Crear mi perfil' : 'Ver mi perfil'
+  const ctaTo = !user ? '/auth/register' : !myProfile ? '/profile/setup' : profilePath(myProfile.slug, myProfile.id)
   const pageRef = useRef<HTMLDivElement>(null)
   const musicLibRef = useRef<HTMLElement>(null)
   const djsRef = useRef<HTMLElement>(null)
@@ -1061,14 +1064,14 @@ export default function MainFeed() {
         }}
       >
         <Link
-          to="/auth/register"
+          to={ctaTo}
           className="glass-pill flex items-center gap-2.5 px-5 py-3 rounded-full font-sans font-semibold text-sm text-[var(--text)] transition-transform duration-200 hover:scale-[1.04] active:scale-[0.97] whitespace-nowrap"
         >
           <span
             className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"
             style={{ animation: 'pulse-ring 2s ease-in-out infinite' }}
           />
-          Publicar mi perfil
+          {ctaLabel}
         </Link>
       </div>
 
