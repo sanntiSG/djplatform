@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { useTracksByGenre } from '../hooks/useTracksByGenre.js'
@@ -70,6 +70,19 @@ export default function GenreDetail() {
   const color = genreToColor(displayName)
   const colorVar = COLOR_VAR[color]
 
+  useLayoutEffect(() => {
+    // Force immediate scroll restoration before paint
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    document.body.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    
+    // Fallback for async rendering/layout shifts
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
+
   useEffect(() => {
     if (!containerRef.current || prefersReducedMotion()) {
       if (titleRef.current) {
@@ -88,10 +101,9 @@ export default function GenreDetail() {
       const gradStart = `linear-gradient(105deg, ${colorVar} 0%, rgba(0,0,0,0.9) 70%, black 100%)`
       const gradFull = `linear-gradient(90deg, ${colorVar} 0%, rgba(0,0,0,0.8) 60%, black 100%)`
 
-      // Ensure title is visible for animation and properly centered
+      // Ensure title is positioned correctly before animation
       gsap.set(titleRef.current, { 
         visibility: 'visible', 
-        autoAlpha: 1, 
         xPercent: -50, 
         yPercent: -50,
         left: '50%',
@@ -305,8 +317,8 @@ export default function GenreDetail() {
             textAlign: 'center',
             margin: 0,
             letterSpacing: '-0.05em',
-            opacity: 1,
-            visibility: 'visible',
+            opacity: 0,
+            visibility: 'hidden',
             width: '100%',
           }}
         >

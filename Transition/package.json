@@ -1,0 +1,20 @@
+{
+  "name": "transition",
+  "version": "1.0.0",
+  "main": "layout.js",
+  "scripts": {
+    "dev": "next dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "next": "^16.2.6",
+    "next-transition-router": "^0.2.11",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}

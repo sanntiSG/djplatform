@@ -975,7 +975,7 @@ export default function MainFeed() {
                         title={genre}
                         meta={count > 0 ? `${count} artista${count !== 1 ? 's' : ''}` : 'Explorar'}
                         className="h-full"
-                        onClick={() => navigate(genrePath(genre))}
+                        to={genrePath(genre)}
                       />
                     </div>
                   )

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Mi%20PC/Documents/Codigos/gsapComponents/BASICS/Transition/app/about/page.js"],"sourcesContent":["const about = () => {\r\n    return (\r\n        <section className=\"hero\">\r\n            <h1>About</h1>\r\n        </section>\r\n    );\r\n};\r\nexport default about;"],"names":["about","className"],"mappings":";;;;;;AAAA,MAAMA,QAAQ;IACV,qBACI,8OAAC;QAAQC,WAAU;kBACf,cAAA,8OAAC;sBAAG;;;;;;;;;;;AAGhB;uCACeD"}}]
+}

@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { cn } from '../../utils/cn.js'
 import { type RainbowColor, COLOR_VAR } from '../../utils/colors.js'
@@ -11,6 +12,7 @@ interface ColorBlockCardProps {
   coverUrl?: string
   children?: React.ReactNode
   onClick?: () => void
+  to?: string
   className?: string
   style?: React.CSSProperties
 }
@@ -24,24 +26,28 @@ export function ColorBlockCard({
   coverUrl,
   children,
   onClick,
+  to,
   className,
   style,
 }: ColorBlockCardProps) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLAnchorElement & HTMLDivElement>(null)
 
   const handleEnter = () => {
-    if (!ref.current) return
+    if (!ref.current || !window.matchMedia('(hover: hover)').matches) return
     gsap.to(ref.current, { y: -5, duration: 0.32, ease: 'power2.out', overwrite: 'auto' })
   }
   const handleLeave = () => {
-    if (!ref.current) return
+    if (!ref.current || !window.matchMedia('(hover: hover)').matches) return
     gsap.to(ref.current, { y: 0, duration: 0.55, ease: 'elastic.out(1,0.5)', overwrite: 'auto' })
   }
 
+  const Component = to ? Link : 'div'
+
   return (
-    <div
-      ref={ref}
-      className={cn('cbcard relative overflow-hidden rounded-[var(--radius-lg)] cursor-pointer select-none', className)}
+    <Component
+      to={to as any}
+      ref={ref as any}
+      className={cn('cbcard block relative overflow-hidden rounded-[var(--radius-lg)] cursor-pointer select-none', className)}
       style={{
         background: `linear-gradient(145deg, ${COLOR_VAR[color]} 0%, oklch(from ${COLOR_VAR[color]} calc(l - 0.18) c h) 100%)`,
         ...style,
@@ -87,6 +93,6 @@ export function ColorBlockCard({
         )}
         {children && <div className="mt-auto">{children}</div>}
       </div>
-    </div>
+    </Component>
   )
 }

@@ -1,0 +1,380 @@
+/* [project]/app/globals.css [app-client] (css) */
+:root {
+  --bg: #f0f2ef;
+  --fg: #171717;
+  --transition-stroke-1: #44ef4f;
+  --transition-stroke-2: #9710b9;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  z-index: 2;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  position: fixed;
+}
+
+.navbar-items {
+  gap: clamp(1rem, 4vw, 2rem);
+  display: flex;
+}
+
+.navbar a {
+  color: var(--fg);
+  font-family: var(--font-dm-sans);
+  letter-spacing: -2%;
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.hero {
+  background-color: va(--bg);
+  width: 100%;
+  height: 100svh;
+  color: var(--fg);
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero h1 {
+  text-transform: uppercase;
+  font-family: var(--font-barlow-condensed);
+  letter-spacing: -2%;
+  font-size: clamp(5rem, 15vw, 20rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.transition-svg {
+  pointer-events: none;
+  z-index: 100;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)scale(1.5);
+}
+
+.transition-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.transition-svg path {
+  stroke-dashoffset: 99999px;
+  stroke-dasharray: 99999;
+}
+
+/* [next]/internal/font/google/barlow_condensed_8f1f056f.module.css [app-client] (css) */
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("../media/ef2a69a54e80c24f-s.0yoptc8smfjqs.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("../media/5e46adfd3d7959dd-s.0a_47huasx1o8.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("../media/62da4f04ac854ecd-s.p.0e~~xqh7zc_wk.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("../media/b82ae70244c99308-s.06qclql4xl69..woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("../media/cf75adda188f1e88-s.0azt6cb5gjua-.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("../media/37050d64945ecb66-s.p.0.lizf5-p~gq-.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("../media/816b742dc462f6cc-s.0xjbn3doyt2~7.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("../media/3618bc22ac2369c1-s.0-~_kagr30u95.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("../media/ec9bfd7424624ade-s.p.03wbl90e.nw21.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../media/a1e1e2ab4a689572-s.11ak.ruyvs7kt.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../media/b84cc1c14eba5dc9-s.0~xypnw-ehxyx.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../media/4f530f52d514af96-s.p.0aapj9pyt9oam.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../media/2bbd88c7cbebcb5b-s.0_7vt~x.jmkdi.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../media/e3c10b17cdb86a23-s.0eksbdcyszb_..woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../media/612838607db3d51d-s.p.0yvdtz6_qans-.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../media/9710cef2a2a6ac70-s.0-te5e~caphot.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../media/a978fc28c69736ab-s.0u_vzk7t4r43a.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../media/303804218d80822e-s.p.11p_15xsjt-ie.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../media/e37557cf0085218d-s.0rhxww97q7~b_.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../media/146a3e5eadafdf83-s.0jayii92089rt.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../media/d9b5d46d9a89ffe6-s.p.0agk34fg-1.z0.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../media/5a938ab334846ae8-s.05o1bpa1vbol~.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../media/3dae58b0b46c3f93-s.0oviuialj85z..woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../media/89232e6535d3b87e-s.p.0uy8evdve.ea3.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../media/91a39433b4ff06b2-s.0qrn5m~u2b.t9.woff2") format("woff2");
+  unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../media/a6365570ca21fbb9-s.0locfeaqvhyn-.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Barlow Condensed;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../media/ddf6ae3f623ba878-s.p.0yabx1ygi_y9y.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Barlow Condensed Fallback;
+  src: local(Arial);
+  ascent-override: 130.73%;
+  descent-override: 26.15%;
+  line-gap-override: 0.0%;
+  size-adjust: 76.49%;
+}
+
+.barlow_condensed_8f1f056f-module__WNOiNG__className {
+  font-family: Barlow Condensed, Barlow Condensed Fallback;
+  font-style: normal;
+}
+
+.barlow_condensed_8f1f056f-module__WNOiNG__variable {
+  --font-barlow-condensed: "Barlow Condensed", "Barlow Condensed Fallback";
+}
+
+/* [next]/internal/font/google/dm_sans_231ac798.module.css [app-client] (css) */
+@font-face {
+  font-family: DM Sans;
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../media/c3cb240f9c892514-s.163v2i5cux7-c.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: DM Sans;
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../media/5c285b27cdda1fe8-s.p.0yo6-5yoeeudq.woff2") format("woff2");
+  unicode-range: U+??, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: DM Sans Fallback;
+  src: local(Arial);
+  ascent-override: 94.9%;
+  descent-override: 29.66%;
+  line-gap-override: 0.0%;
+  size-adjust: 104.53%;
+}
+
+.dm_sans_231ac798-module__kLmm8W__className {
+  font-family: DM Sans, DM Sans Fallback;
+  font-style: normal;
+}
+
+.dm_sans_231ac798-module__kLmm8W__variable {
+  --font-dm-sans: "DM Sans", "DM Sans Fallback";
+}
+
+/*# sourceMappingURL=%5Broot-of-the-server%5D__05-wb3m._.css.map*/

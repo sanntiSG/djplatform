@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Mi%20PC/Documents/Codigos/gsapComponents/BASICS/Transition/app/contact/page.js"],"sourcesContent":["import React from \"react\";\n\nconst Contact = () => {\n    return (\n        <section className=\"hero\">\n            <h1>Contact</h1>\n        </section>\n    );\n};\n\nexport default Contact;\n"],"names":["Contact","className"],"mappings":";;;;;AAAA;;;AAEA,MAAMA,UAAU;IACZ,qBACI,8OAAC;QAAQC,WAAU;kBACf,cAAA,8OAAC;sBAAG;;;;;;;;;;;AAGhB;uCAEeD"}}]
+}
