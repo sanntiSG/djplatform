@@ -14,6 +14,7 @@ import {
 import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
+import { getSuggestionsFor } from '../services/matchingService.js'
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -161,6 +162,21 @@ export async function topByFollowers(req: Request, res: Response, next: NextFunc
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 20) : 10
     const profiles = await getTopProfilesByFollowers(limit)
     res.json(profiles.map(serializeProfile))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getSuggestions(req: Request, res: Response, next: NextFunction) {
+  try {
+    const profile = await getProfileByUserId(req.user!.id)
+    if (!profile) {
+      res.json([])
+      return
+    }
+    const limit = req.query.limit ? Math.min(Number(req.query.limit), 20) : 8
+    const suggestions = await getSuggestionsFor(profile._id.toString(), req.user!.id, limit)
+    res.json(suggestions)
   } catch (err) {
     next(err)
   }

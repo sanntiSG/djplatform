@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { optionalAuth } from '../middleware/optionalAuth.js'
-import { create, getMe, updateMe, updatePhotoCaption, updateMediaItemHandler, getById, list, topByFollowers } from '../controllers/profileController.js'
+import { create, getMe, updateMe, updatePhotoCaption, updateMediaItemHandler, getById, list, topByFollowers, getSuggestions } from '../controllers/profileController.js'
 import { listByProfile } from '../controllers/eventController.js'
 import {
   getProfileSocial,
@@ -29,6 +29,7 @@ router.get('/', list)
 router.get('/top', topByFollowers)
 router.post('/', requireAuth, create)
 router.get('/me', requireAuth, getMe)
+router.get('/me/suggestions', requireAuth, getSuggestions)
 router.patch('/me', requireAuth, updateMe)
 router.patch('/me/photos/:photoId', requireAuth, updatePhotoCaption)
 router.patch('/me/media/:mediaId', requireAuth, updateMediaItemHandler)

@@ -1,6 +1,20 @@
 import { apiClient } from './apiClient.js'
 import type { ProfileResponse, CreateProfileInput, UpdateProfileInput } from '../types/index.js'
 
+export interface SuggestionResult {
+  id: string
+  slug: string
+  userId: string
+  artistName: string
+  avatar?: string
+  type: string
+  roles: string[]
+  location?: string
+  openToWork: boolean
+  score: number
+  reason: string
+}
+
 export const profileService = {
   create: (data: CreateProfileInput) => apiClient.post<ProfileResponse>('/profiles', data),
   getMine: () => apiClient.get<ProfileResponse>('/profiles/me'),
@@ -40,4 +54,7 @@ export const profileService = {
     const q = qs.toString()
     return apiClient.get<ProfileResponse[]>(`/profiles${q ? `?${q}` : ''}`)
   },
+
+  getSuggestions: (limit = 8) =>
+    apiClient.get<SuggestionResult[]>(`/profiles/me/suggestions?limit=${limit}`),
 }

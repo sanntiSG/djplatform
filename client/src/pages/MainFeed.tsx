@@ -15,6 +15,8 @@ import { RainbowPill } from '../components/ui/RainbowPill.js'
 import { NumberedListItem } from '../components/ui/NumberedListItem.js'
 import { ColorBlockCard } from '../components/ui/ColorBlockCard.js'
 import { CommentCard } from '../components/ui/CommentCard.js'
+import { SuggestionsRail } from '../components/social/SuggestionsRail.js'
+import { useAuthStore } from '../store/useAuthStore.js'
 import type { ReactNode } from 'react'
 import type { ProfileResponse, EventResponse } from '../types/index.js'
 
@@ -470,6 +472,7 @@ function NewsFeedRow({ event }: { event: EventResponse }) {
 
 export default function MainFeed() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const pageRef = useRef<HTMLDivElement>(null)
   const musicLibRef = useRef<HTMLElement>(null)
   const djsRef = useRef<HTMLElement>(null)
@@ -896,6 +899,9 @@ export default function MainFeed() {
               )}
             </section>
           )}
+
+          {/* Sugerencias de colaboracion — solo para usuarios con sesion */}
+          {user && <SuggestionsRail />}
 
           {/* Trending Today */}
           {trendingEvents.length > 0 && (
