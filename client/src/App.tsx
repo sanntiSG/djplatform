@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Route, useLocation } from 'react-router-dom'
 import { Header } from './components/ui/Header.js'
+import { TransitionProvider } from './components/transition/TransitionProvider.js'
 import { Toast } from './components/ui/Toast.js'
 import { useToastStore } from './store/useToastStore.js'
 import { RequireAuth } from './components/auth/RequireAuth.js'
@@ -76,16 +76,12 @@ export default function App() {
   const { pathname } = useLocation()
   const showHeader = !HIDE_HEADER_PATHS.includes(pathname)
 
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-
   return (
     <>
       {showHeader && <Header />}
       <ToastRenderer />
       <NotificationsGate />
-      <Routes>
+      <TransitionProvider>
         <Route path="/" element={<Landing />} />
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
@@ -124,7 +120,7 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<NotFound />} />
-      </Routes>
+      </TransitionProvider>
     </>
   )
 }
