@@ -1,13 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { useMyProfile } from '../hooks/useProfile.js'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { profilePath } from '../utils/slug.js'
 import { Button } from '../components/ui/Button.js'
 import { Card } from '../components/ui/Card.js'
 import { Pill } from '../components/ui/Pill.js'
-import { profilePath } from '../utils/slug.js'
 import { notificationsService } from '../services/notificationsService.js'
 import { conversationsService } from '../services/conversationsService.js'
+import { collaborationsService } from '../services/collaborationsService.js'
 import type { Availability } from '../types/index.js'
 
 const availabilityLabel: Record<Availability, string> = {
@@ -37,6 +38,23 @@ export default function Me() {
     queryFn: () => conversationsService.getUnreadTotal(),
     enabled: !!user,
     staleTime: 15_000,
+  })
+
+  const queryClient = useQueryClient()
+  const { data: pendingCollabs } = useQuery({
+    queryKey: ['collaborations', 'pending'],
+    queryFn: () => collaborationsService.listPending(),
+    enabled: !!profile,
+    staleTime: 60_000,
+  })
+
+  const confirmCollab = useMutation({
+    mutationFn: (id: string) => collaborationsService.confirm(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collaborations'] }),
+  })
+  const rejectCollab = useMutation({
+    mutationFn: (id: string) => collaborationsService.reject(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collaborations'] }),
   })
 
   function handleLogout() {
@@ -147,6 +165,57 @@ export default function Me() {
             </div>
           </Card>
         </Link>
+
+        {/* Colaboraciones pendientes */}
+        {pendingCollabs && pendingCollabs.length > 0 && (
+          <Card elevated className="p-5 flex flex-col gap-3">
+            <p className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-[var(--accent)]">
+              Colaboraciones pendientes
+            </p>
+            {pendingCollabs.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-start gap-3 pb-3"
+                style={{ borderBottom: '1px solid var(--border)' }}
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
+                  {c.fromAvatar ? (
+                    <img src={c.fromAvatar} alt={c.fromArtistName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[var(--surface)] flex items-center justify-center">
+                      <span className="font-display text-xs text-[var(--text-muted)]">{c.fromArtistName.charAt(0)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-xs text-[var(--text-muted)] mb-0.5">
+                    <span className="font-medium text-[var(--text)]">{c.fromArtistName}</span> propuso:
+                  </p>
+                  <p className="font-sans text-sm font-medium text-[var(--text)] mb-2">{c.title}</p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={confirmCollab.isPending}
+                      onClick={() => confirmCollab.mutate(c.id)}
+                    >
+                      Confirmar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      loading={rejectCollab.isPending}
+                      onClick={() => rejectCollab.mutate(c.id)}
+                      className="text-[var(--text-muted)]"
+                    >
+                      Rechazar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Card>
+        )}
 
         {/* Notificaciones */}
         <Link to="/me/notificaciones" className="block">

@@ -14,6 +14,7 @@ import notificationsRouter from './notifications.js'
 import conversationsRouter from './conversations.js'
 import activityRouter from './activity.js'
 import opportunitiesRouter from './opportunities.js'
+import collaborationsRouter from './collaborations.js'
 
 const router = Router()
 
@@ -35,6 +36,7 @@ router.use('/notifications', notificationsRouter)
 router.use('/conversations', conversationsRouter)
 router.use('/activity', activityRouter)
 router.use('/opportunities', opportunitiesRouter)
+router.use('/collaborations', collaborationsRouter)
 router.use('/', sitemapRouter)
 
 export default router

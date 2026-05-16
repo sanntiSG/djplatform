@@ -23,6 +23,8 @@ const TYPE_LABELS: Record<string, { title: (actorName?: string) => string; body:
   event_new_genre_match:      { title: () => 'Nuevo evento de tu genero', body: (p) => String(p?.title ?? '') },
   chat_message_new:           { title: (a) => `${a ?? 'Alguien'} te envio un mensaje`, body: (p) => String(p?.preview ?? '') },
   chat_message_reply:         { title: (a) => `${a ?? 'Alguien'} respondio tu mensaje`, body: (p) => String(p?.preview ?? '') },
+  collab_request:             { title: (a) => `${a ?? 'Alguien'} te propuso una colaboracion`, body: (p) => String(p?.title ?? '') },
+  collab_confirmed:           { title: (a) => `${a ?? 'Alguien'} confirmo tu colaboracion`, body: (p) => String(p?.title ?? '') },
 }
 
 export async function create(
