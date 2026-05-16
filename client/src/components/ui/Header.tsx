@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { useConversationUnread } from '../../hooks/useConversations.js'
-import { useTransition } from '../transition/TransitionProvider.js'
 import { Button } from './Button.js'
 import { MobileNavSheet } from './MobileNavSheet.js'
 import { cn } from '../../utils/cn.js'
+
+const MENU_STATE = { menuNav: true } as const
 
 function UnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null
@@ -22,12 +23,10 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const { data: unread } = useConversationUnread()
   const unreadCount = unread?.total ?? 0
-  const { arm } = useTransition()
 
   function handleLogout() {
-    arm()
     clearAuth()
-    navigate('/')
+    navigate('/', { state: MENU_STATE })
     setOpen(false)
   }
 
@@ -41,28 +40,28 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <NavLink to="/feed" onClick={() => arm()}>
+            <NavLink to="/feed" state={MENU_STATE}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Inicio
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/profiles" onClick={() => arm()}>
+            <NavLink to="/profiles" state={MENU_STATE}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Artistas
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/events" onClick={() => arm()}>
+            <NavLink to="/events" state={MENU_STATE}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Eventos
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/oportunidades" onClick={() => arm()}>
+            <NavLink to="/oportunidades" state={MENU_STATE}>
               {({ isActive }) => (
                 <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
                   Oportunidades
@@ -73,17 +72,17 @@ export function Header() {
             {user ? (
               <>
                 {user.role === 'admin' && (
-                  <Link to="/admin" onClick={() => arm()}>
+                  <Link to="/admin" state={MENU_STATE}>
                     <Button variant="ghost" size="sm">Admin</Button>
                   </Link>
                 )}
-                <Link to="/me/mensajes" onClick={() => arm()}>
+                <Link to="/me/mensajes" state={MENU_STATE}>
                   <Button variant="ghost" size="sm" className="relative">
                     Mensajes
                     <UnreadBadge count={unreadCount} />
                   </Button>
                 </Link>
-                <Link to="/me" onClick={() => arm()}>
+                <Link to="/me" state={MENU_STATE}>
                   <Button variant="ghost" size="sm">Mi cuenta</Button>
                 </Link>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -92,10 +91,10 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link to="/auth/login" onClick={() => arm()}>
+                <Link to="/auth/login" state={MENU_STATE}>
                   <Button variant="ghost" size="sm">Ingresar</Button>
                 </Link>
-                <Link to="/auth/register" onClick={() => arm()}>
+                <Link to="/auth/register" state={MENU_STATE}>
                   <Button variant="primary" size="sm">Registrarse</Button>
                 </Link>
               </>
@@ -107,7 +106,7 @@ export function Header() {
       {/* Mobile floating wordmark pill — top-left, hidden on md+ */}
       <Link
         to="/"
-        onClick={() => arm()}
+        state={MENU_STATE}
         className={cn(
           'fixed z-[90] glass-pill rounded-full md:hidden h-11 px-4',
           'flex items-center justify-center font-display font-semibold tracking-tight',

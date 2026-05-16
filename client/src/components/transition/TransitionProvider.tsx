@@ -1,16 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigationType, Routes } from 'react-router-dom'
 import gsap from 'gsap'
-
-interface TransitionContextValue {
-  arm: () => void
-}
-
-const TransitionContext = createContext<TransitionContextValue>({ arm: () => {} })
-
-export function useTransition(): TransitionContextValue {
-  return useContext(TransitionContext)
-}
 
 interface Props {
   children: ReactNode
@@ -28,11 +18,6 @@ export function TransitionProvider({ children }: Props) {
   const pathsRef = useRef<SVGPathElement[]>([])
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const isAnimating = useRef(false)
-  const armedRef = useRef(false)
-
-  function arm() {
-    armedRef.current = true
-  }
 
   // Init path dasharray from their actual total length
   useEffect(() => {
@@ -53,25 +38,10 @@ export function TransitionProvider({ children }: Props) {
       return
     }
 
-    // Back/forward navigation — swap instantly, no animation
-    if (navigationType === 'POP') {
-      armedRef.current = false
-      setDisplayedLocation(location)
-      window.scrollTo(0, 0)
-      return
-    }
-
-    // Not armed — this navigation came from a card/link inside a page, not the menu
-    if (!armedRef.current) {
-      setDisplayedLocation(location)
-      window.scrollTo(0, 0)
-      return
-    }
-
-    // Consume the arm flag
-    armedRef.current = false
-
-    if (prefersReducedMotion()) {
+    // Only animate when explicitly navigating from the menu (state.menuNav === true)
+    // and not on browser back/forward (POP)
+    const menuNav = (location.state as { menuNav?: boolean } | null)?.menuNav === true
+    if (navigationType === 'POP' || !menuNav || prefersReducedMotion()) {
       setDisplayedLocation(location)
       window.scrollTo(0, 0)
       return
@@ -128,14 +98,11 @@ export function TransitionProvider({ children }: Props) {
 
     tlRef.current = leaveTl
 
-    return () => {
-      leaveTl.kill()
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
   return (
-    <TransitionContext.Provider value={{ arm }}>
+    <>
       {/* SVG overlay — always mounted, paths hidden initially */}
       <div className="transition-svg">
         <svg
@@ -165,6 +132,6 @@ export function TransitionProvider({ children }: Props) {
       <Routes location={displayedLocation}>
         {children}
       </Routes>
-    </TransitionContext.Provider>
+    </>
   )
 }
