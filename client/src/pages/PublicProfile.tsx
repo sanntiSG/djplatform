@@ -516,6 +516,18 @@ export default function PublicProfile() {
                   label={AVAILABILITY_LABEL[profile.availability]}
                   variant={AVAILABILITY_VARIANT[profile.availability]}
                 />
+                {(profile as any).openToWork && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-xs font-semibold"
+                    style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[var(--bg)] opacity-70"
+                      style={{ animation: 'pulse-ring 2s ease-in-out infinite' }}
+                    />
+                    Open to work
+                  </span>
+                )}
               </div>
             </div>
 
@@ -692,6 +704,18 @@ export default function PublicProfile() {
                   label={AVAILABILITY_LABEL[profile.availability]}
                   variant={AVAILABILITY_VARIANT[profile.availability]}
                 />
+                {(profile as any).openToWork && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-xs font-semibold"
+                    style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[var(--bg)] opacity-70"
+                      style={{ animation: 'pulse-ring 2s ease-in-out infinite' }}
+                    />
+                    Open to work
+                  </span>
+                )}
               </div>
             </div>
 

@@ -33,6 +33,14 @@ export type CreateProfileInput = z.infer<typeof CreateProfileSchema>
 export const ProfileThemeSchema = z.enum(['minimal', 'neon', 'cosmic', 'fire', 'void'])
 export type ProfileTheme = z.infer<typeof ProfileThemeSchema>
 
+const BpmRangeSchema = z.object({
+  min: z.number().int().min(0).max(250),
+  max: z.number().int().min(0).max(250),
+})
+
+export const ProfileIntentSchema = z.enum(['collab', 'events', 'both', 'none'])
+export type ProfileIntent = z.infer<typeof ProfileIntentSchema>
+
 export const UpdateProfileSchema = CreateProfileSchema.partial().extend({
   avatar: z.string().url().optional(),
   coverImage: z.string().url().optional(),
@@ -41,6 +49,13 @@ export const UpdateProfileSchema = CreateProfileSchema.partial().extend({
   locationVerified: z.boolean().optional(),
   media: z.array(MediaItemSchema).max(20).optional(),
   photos: z.array(PhotoSchema).max(30).optional(),
+  roles: z.array(z.string().max(40)).max(6).optional(),
+  lookingFor: z.array(z.string().max(40)).max(6).optional(),
+  openToWork: z.boolean().optional(),
+  intent: ProfileIntentSchema.optional(),
+  influences: z.array(z.string().max(60)).max(10).optional(),
+  tools: z.array(z.string().max(60)).max(15).optional(),
+  bpmRange: BpmRangeSchema.optional(),
 })
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 
@@ -66,6 +81,13 @@ export const ProfileResponseSchema = z.object({
   priceRange: z.string().optional(),
   isVisible: z.boolean(),
   createdAt: z.string(),
+  roles: z.array(z.string()).default([]),
+  lookingFor: z.array(z.string()).default([]),
+  openToWork: z.boolean().default(false),
+  intent: ProfileIntentSchema.optional(),
+  influences: z.array(z.string()).default([]),
+  tools: z.array(z.string()).default([]),
+  bpmRange: z.object({ min: z.number(), max: z.number() }).optional(),
 })
 export type ProfileResponse = z.infer<typeof ProfileResponseSchema>
 

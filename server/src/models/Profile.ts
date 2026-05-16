@@ -40,6 +40,13 @@ export interface IProfile extends Document {
   photos: IPhoto[]
   priceRange?: string
   isVisible: boolean
+  roles: string[]
+  lookingFor: string[]
+  openToWork: boolean
+  intent?: 'collab' | 'events' | 'both' | 'none'
+  influences: string[]
+  tools: string[]
+  bpmRange?: { min: number; max: number }
   createdAt: Date
   updatedAt: Date
 }
@@ -97,6 +104,16 @@ const profileSchema = new mongoose.Schema<IProfile>(
     photos: [photoSchema],
     priceRange: { type: String },
     isVisible: { type: Boolean, default: true },
+    roles: [{ type: String }],
+    lookingFor: [{ type: String }],
+    openToWork: { type: Boolean, default: false },
+    intent: { type: String, enum: ['collab', 'events', 'both', 'none'] },
+    influences: [{ type: String }],
+    tools: [{ type: String }],
+    bpmRange: {
+      min: { type: Number },
+      max: { type: Number },
+    },
   },
   { timestamps: true },
 )

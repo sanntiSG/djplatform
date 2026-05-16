@@ -184,5 +184,12 @@ export function serializeProfile(p: IProfile) {
     priceRange: p.priceRange,
     isVisible: p.isVisible,
     createdAt: p.createdAt.toISOString(),
+    roles: p.roles ?? [],
+    lookingFor: p.lookingFor ?? [],
+    openToWork: p.openToWork ?? false,
+    intent: p.intent,
+    influences: p.influences ?? [],
+    tools: p.tools ?? [],
+    bpmRange: p.bpmRange ? { min: p.bpmRange.min, max: p.bpmRange.max } : undefined,
   }
 }

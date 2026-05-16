@@ -17,15 +17,33 @@ import { uploadImage } from '../services/uploadService.js'
 import { moderationService } from '../services/moderationService.js'
 import { AnalyzingIndicator } from '../components/ui/AnalyzingIndicator.js'
 import { useProfileTypes } from '../hooks/useProfileTypes.js'
+import { Toggle } from '../components/ui/Toggle.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion } from '../utils/motion.js'
 import type { CreateProfileInput, MediaItem, Photo, ProfileTheme } from '../types/index.js'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
+  { id: 'red', label: 'Red' },
   { id: 'media', label: 'Media' },
   { id: 'visual', label: 'Visual' },
   { id: 'musica', label: 'Musica' },
+]
+
+const ROLE_OPTIONS = [
+  { id: 'dj', label: 'DJ' },
+  { id: 'producer', label: 'Productor' },
+  { id: 'vocalist', label: 'Vocalista' },
+  { id: 'designer', label: 'Disenador' },
+  { id: 'organizer', label: 'Organizador' },
+  { id: 'visuals', label: 'Visuales' },
+]
+
+const INTENT_OPTIONS = [
+  { id: 'collab', label: 'Colaboraciones' },
+  { id: 'events', label: 'Eventos' },
+  { id: 'both', label: 'Ambos' },
+  { id: 'none', label: 'Ninguno por ahora' },
 ]
 
 const BASE_TYPE_LABEL: Record<string, string> = {
@@ -58,6 +76,17 @@ export default function ProfileEdit() {
   const [localAccent, setLocalAccent] = useState('')
   const [localCover, setLocalCover] = useState<string | undefined>(undefined)
   const [localPhotos, setLocalPhotos] = useState<Photo[]>([])
+  const [localRoles, setLocalRoles] = useState<string[]>([])
+  const [localLookingFor, setLocalLookingFor] = useState<string[]>([])
+  const [localOpenToWork, setLocalOpenToWork] = useState(false)
+  const [localIntent, setLocalIntent] = useState<'collab' | 'events' | 'both' | 'none'>('none')
+  const [localInfluences, setLocalInfluences] = useState<string[]>([])
+  const [localTools, setLocalTools] = useState<string[]>([])
+  const [localBpmRange, setLocalBpmRange] = useState<{ min: number; max: number }>({ min: 120, max: 140 })
+  const [bpmEnabled, setBpmEnabled] = useState(false)
+  const [netSaved, setNetSaved] = useState(false)
+  const [influenceInput, setInfluenceInput] = useState('')
+  const [toolInput, setToolInput] = useState('')
   const [visualSaved, setVisualSaved] = useState(false)
   const [photosSaved, setPhotosSaved] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -75,6 +104,16 @@ export default function ProfileEdit() {
       setLocalAccent(profile.accentColor ?? '')
       setLocalCover(profile.coverImage)
       setLocalPhotos(profile.photos ?? [])
+      setLocalRoles((profile as any).roles ?? [])
+      setLocalLookingFor((profile as any).lookingFor ?? [])
+      setLocalOpenToWork((profile as any).openToWork ?? false)
+      setLocalIntent(((profile as any).intent as any) ?? 'none')
+      setLocalInfluences((profile as any).influences ?? [])
+      setLocalTools((profile as any).tools ?? [])
+      if ((profile as any).bpmRange) {
+        setLocalBpmRange((profile as any).bpmRange)
+        setBpmEnabled(true)
+      }
     }
   }, [profile])
 
@@ -112,6 +151,46 @@ export default function ProfileEdit() {
 
   async function handleCoverUploaded(url: string) {
     setLocalCover(url)
+  }
+
+  function toggleRole(id: string) {
+    setLocalRoles((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+    )
+  }
+
+  function toggleLookingFor(id: string) {
+    setLocalLookingFor((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+    )
+  }
+
+  function addInfluence() {
+    const val = influenceInput.trim()
+    if (!val || localInfluences.length >= 10 || localInfluences.includes(val)) return
+    setLocalInfluences((prev) => [...prev, val])
+    setInfluenceInput('')
+  }
+
+  function addTool() {
+    const val = toolInput.trim()
+    if (!val || localTools.length >= 15 || localTools.includes(val)) return
+    setLocalTools((prev) => [...prev, val])
+    setToolInput('')
+  }
+
+  async function handleSaveNetwork() {
+    await update({
+      roles: localRoles,
+      lookingFor: localLookingFor,
+      openToWork: localOpenToWork,
+      intent: localIntent,
+      influences: localInfluences,
+      tools: localTools,
+      bpmRange: bpmEnabled ? localBpmRange : undefined,
+    } as any)
+    setNetSaved(true)
+    setTimeout(() => setNetSaved(false), 2000)
   }
 
   async function handleSaveVisual() {
@@ -311,6 +390,258 @@ export default function ProfileEdit() {
               onSubmit={handleInfoSubmit}
               submitLabel="Guardar cambios"
             />
+          </div>
+        )}
+
+        {/* ─── RED ─── */}
+        {tab === 'red' && (
+          <div className="flex flex-col gap-8">
+
+            {/* Roles */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Mis roles
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)] mb-4">
+                Selecciona todo lo que aplica. Ayuda al sistema a sugerirte colaboradores relevantes.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => toggleRole(r.id)}
+                    className={cn(
+                      'rounded-full px-5 py-2 font-sans text-sm font-medium transition-all duration-200 select-none active:scale-95',
+                      localRoles.includes(r.id)
+                        ? 'bg-[var(--accent)] text-[var(--bg)]'
+                        : 'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Open to work toggle */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-sans text-sm font-medium text-[var(--text)]">Open to work</p>
+                <p className="font-sans text-xs text-[var(--text-muted)] mt-0.5">
+                  Apareces como disponible para colaborar. Se muestra en tu perfil publico.
+                </p>
+              </div>
+              <Toggle
+                checked={localOpenToWork}
+                onChange={setLocalOpenToWork}
+              />
+            </div>
+
+            {/* Intent */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-4">
+                Que busco en la plataforma
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {INTENT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setLocalIntent(opt.id as typeof localIntent)}
+                    className={cn(
+                      'rounded-full px-5 py-2 font-sans text-sm font-medium transition-all duration-200 select-none active:scale-95',
+                      localIntent === opt.id
+                        ? 'bg-[var(--accent)] text-[var(--bg)]'
+                        : 'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Looking for */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Busco colaborar con
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)] mb-4">
+                Roles que te interesan para tu proximo proyecto.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => toggleLookingFor(r.id)}
+                    className={cn(
+                      'rounded-full px-5 py-2 font-sans text-sm font-medium transition-all duration-200 select-none active:scale-95',
+                      localLookingFor.includes(r.id)
+                        ? 'bg-[var(--surface)] border border-[var(--accent)]/60 text-[var(--accent)]'
+                        : 'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-white/25 hover:text-[var(--text)]',
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Influences */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Influencias
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)] mb-4">
+                Artistas, generos o estilos que te inspiran. Max 10.
+              </p>
+              {localInfluences.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {localInfluences.map((inf) => (
+                    <span
+                      key={inf}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-sm bg-[var(--surface)] border border-[var(--border)] text-[var(--text)]"
+                    >
+                      {inf}
+                      <button
+                        type="button"
+                        onClick={() => setLocalInfluences((prev) => prev.filter((v) => v !== inf))}
+                        className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                        aria-label={`Eliminar ${inf}`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {localInfluences.length < 10 && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={influenceInput}
+                    onChange={(e) => setInfluenceInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addInfluence() } }}
+                    placeholder="Ej: Aphex Twin, Techno industrial..."
+                    maxLength={60}
+                    className="flex-1 bg-transparent border-b border-[var(--border)] px-1 py-1.5 text-base sm:text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={addInfluence}
+                    className="font-sans text-sm px-3 py-1 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-white/25 transition-all active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Tools */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                Herramientas
+              </p>
+              <p className="font-sans text-xs text-[var(--text-muted)] mb-4">
+                DAW, sintes, equipos o software que usas. Max 15.
+              </p>
+              {localTools.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {localTools.map((tool) => (
+                    <span
+                      key={tool}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-sm bg-[var(--surface)] border border-[var(--border)] text-[var(--text)]"
+                    >
+                      {tool}
+                      <button
+                        type="button"
+                        onClick={() => setLocalTools((prev) => prev.filter((v) => v !== tool))}
+                        className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                        aria-label={`Eliminar ${tool}`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {localTools.length < 15 && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={toolInput}
+                    onChange={(e) => setToolInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTool() } }}
+                    placeholder="Ej: Ableton Live, Pioneer DDJ, Korg..."
+                    maxLength={60}
+                    className="flex-1 bg-transparent border-b border-[var(--border)] px-1 py-1.5 text-base sm:text-sm font-sans text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={addTool}
+                    className="font-sans text-sm px-3 py-1 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-white/25 transition-all active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* BPM Range */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)]">
+                  Rango de BPM
+                </p>
+                <Toggle checked={bpmEnabled} onChange={setBpmEnabled} />
+              </div>
+              <p className="font-sans text-xs text-[var(--text-muted)] mb-4">
+                Opcional. Indica el rango de tempo en el que trabajas.
+              </p>
+              {bpmEnabled && (
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="font-sans text-xs text-[var(--text-muted)]">Min</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={250}
+                      value={localBpmRange.min}
+                      onChange={(e) => setLocalBpmRange((prev) => ({ ...prev, min: Number(e.target.value) }))}
+                      className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 font-sans text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    />
+                  </div>
+                  <span className="font-sans text-sm text-[var(--text-muted)] mt-5">—</span>
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="font-sans text-xs text-[var(--text-muted)]">Max</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={250}
+                      value={localBpmRange.max}
+                      onChange={(e) => setLocalBpmRange((prev) => ({ ...prev, max: Number(e.target.value) }))}
+                      className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 font-sans text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              loading={isPending}
+              onClick={handleSaveNetwork}
+            >
+              {netSaved ? 'Guardado' : 'Guardar datos de red'}
+            </Button>
           </div>
         )}
 
