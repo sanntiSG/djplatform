@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { to: '/feed', label: 'Inicio' },
   { to: '/profiles', label: 'Artistas' },
   { to: '/events', label: 'Eventos' },
+  { to: '/oportunidades', label: 'Oportunidades' },
 ]
 
 export function MobileNavSheet({ open, onClose, onLogout }: Props) {

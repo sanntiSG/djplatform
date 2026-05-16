@@ -13,6 +13,7 @@ import pushRouter from './push.js'
 import notificationsRouter from './notifications.js'
 import conversationsRouter from './conversations.js'
 import activityRouter from './activity.js'
+import opportunitiesRouter from './opportunities.js'
 
 const router = Router()
 
@@ -33,6 +34,7 @@ router.use('/push', pushRouter)
 router.use('/notifications', notificationsRouter)
 router.use('/conversations', conversationsRouter)
 router.use('/activity', activityRouter)
+router.use('/opportunities', opportunitiesRouter)
 router.use('/', sitemapRouter)
 
 export default router

@@ -37,6 +37,9 @@ import MainFeed from './pages/MainFeed.js'
 import Notifications from './pages/Notifications.js'
 import MessagesInbox from './pages/messages/Inbox.js'
 import MessagesConversation from './pages/messages/Conversation.js'
+import Opportunities from './pages/Opportunities.js'
+import OpportunityNew from './pages/OpportunityNew.js'
+import OpportunityDetail from './pages/OpportunityDetail.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
@@ -94,6 +97,9 @@ export default function App() {
         <Route path="/events" element={<EventsFeed />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/actividad" element={<Activity />} />
+        <Route path="/oportunidades" element={<Opportunities />} />
+        <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
+        <Route path="/oportunidades/nueva" element={<RequireAuth><OpportunityNew /></RequireAuth>} />
 
         <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
         <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />

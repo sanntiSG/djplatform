@@ -59,6 +59,13 @@ export function Header() {
                 </Button>
               )}
             </NavLink>
+            <NavLink to="/oportunidades">
+              {({ isActive }) => (
+                <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
+                  Oportunidades
+                </Button>
+              )}
+            </NavLink>
             <div className="w-px h-4 bg-[var(--border)] mx-2" />
             {user ? (
               <>
