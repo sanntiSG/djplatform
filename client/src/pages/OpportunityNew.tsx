@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { opportunityService } from '../services/opportunityService.js'
 import { Button } from '../components/ui/Button.js'
 import { Toggle } from '../components/ui/Toggle.js'
+import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
 import { cn } from '../utils/cn.js'
 
 const ROLE_OPTIONS = [
@@ -20,6 +21,7 @@ export default function OpportunityNew() {
   const [description, setDescription] = useState('')
   const [lookingForRoles, setLookingForRoles] = useState<string[]>([])
   const [location, setLocation] = useState('')
+  const [locationVerified, setLocationVerified] = useState(false)
   const [eventDate, setEventDate] = useState('')
   const [isPaid, setIsPaid] = useState(false)
   const [isRemote, setIsRemote] = useState(false)
@@ -128,13 +130,10 @@ export default function OpportunityNew() {
               <label className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)]">
                 Ubicacion
               </label>
-              <input
-                type="text"
+              <LocationAutocomplete
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(name, verified) => { setLocation(name); setLocationVerified(verified) }}
                 placeholder="Ej: Buenos Aires"
-                maxLength={100}
-                className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 font-sans text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
               />
             </div>
             <div className="flex flex-col gap-2">
