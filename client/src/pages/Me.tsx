@@ -6,6 +6,7 @@ import { profilePath } from '../utils/slug.js'
 import { Button } from '../components/ui/Button.js'
 import { Card } from '../components/ui/Card.js'
 import { Pill } from '../components/ui/Pill.js'
+import { PublishMenu } from '../components/profile/PublishMenu.js'
 import { notificationsService } from '../services/notificationsService.js'
 import { conversationsService } from '../services/conversationsService.js'
 import { collaborationsService } from '../services/collaborationsService.js'
@@ -120,16 +121,16 @@ export default function Me() {
                 />
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Link to={profilePath(profile.slug, profile.id)}>
-                <Button variant="outline" size="sm">Ver perfil publico</Button>
-              </Link>
-              <Link to="/profile/edit">
-                <Button variant="ghost" size="sm">Editar perfil</Button>
-              </Link>
-              <Link to="/events/new">
-                <Button variant="ghost" size="sm">Publicar evento</Button>
-              </Link>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                <Link to="/profile/edit">
+                  <Button variant="outline" size="sm">Editar perfil</Button>
+                </Link>
+                <Link to={profilePath(profile.slug, profile.id)}>
+                  <Button variant="ghost" size="sm">Ver perfil</Button>
+                </Link>
+              </div>
+              <PublishMenu profileSlug={profile.slug} profileId={profile.id} />
             </div>
           </Card>
         ) : (
