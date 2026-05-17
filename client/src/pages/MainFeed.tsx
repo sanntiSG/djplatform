@@ -69,11 +69,11 @@ function AvailRing() {
   )
 }
 
-function DJSlot({ profile }: { profile: ProfileResponse }) {
+function ArtistSlot({ profile }: { profile: ProfileResponse }) {
   return (
     <Link
       to={profilePath(profile.slug, profile.id)}
-      className="dj-slot flex-shrink-0 flex flex-col items-center gap-2.5 group"
+      className="dj-slot flex-shrink-0 flex flex-col items-center gap-2 group"
       style={{ scrollSnapAlign: 'start' }}
     >
       <div className="relative" style={{ width: 78, height: 78 }}>
@@ -109,6 +109,12 @@ function DJSlot({ profile }: { profile: ProfileResponse }) {
         style={{ maxWidth: 76, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
       >
         {profile.artistName}
+      </span>
+      <span
+        className="font-sans text-[8px] font-bold uppercase tracking-widest rounded-full px-2 py-0.5"
+        style={{ background: 'var(--surface-elevated)', color: 'var(--text-muted)' }}
+      >
+        {TYPE_LABEL[profile.type] ?? profile.type}
       </span>
     </Link>
   )
@@ -540,15 +546,13 @@ export default function MainFeed() {
     })
     .slice(0, 42)
 
-  // Group available artists by type — show each type as its own row
-  const artistsByType = (['dj', 'producer', 'other'] as const).reduce<Record<string, typeof filteredArtists>>(
-    (acc, t) => {
-      acc[t] = filteredArtists.filter(p => p.type === t).slice(0, 14)
-      return acc
-    },
-    {},
-  )
-  const activeTypes = (['dj', 'producer', 'other'] as const).filter(t => (artistsByType[t]?.length ?? 0) > 0)
+  // Stable daily shuffle — mixes all artist types in one row
+  const dayIndex = Math.floor(Date.now() / 86_400_000)
+  const sceneMix = [...filteredArtists].sort((a, b) => {
+    const ha = Math.abs(hashInt(a.id + dayIndex))
+    const hb = Math.abs(hashInt(b.id + dayIndex))
+    return ha - hb
+  }).slice(0, 28)
 
   const trendingEvents = featuredEvents.slice(0, 4)
   const newsEvents = featuredEvents.slice(1, 5)
@@ -898,30 +902,16 @@ export default function MainFeed() {
       {hasContent && (
         <div className="flex flex-col gap-14 pb-32">
 
-          {/* Artistas disponibles por tipo */}
+          {/* Artistas en escena — todos los tipos mezclados */}
           {allAvailable.length > 0 && (
             <section ref={djsRef}>
-              {activeTypes.length > 0 ? (
-                <div className="flex flex-col gap-10">
-                  {activeTypes.map((type, idx) => {
-                    const group = artistsByType[type] ?? []
-                    const labels = TYPE_SECTION_LABEL[type] ?? { kicker: 'Disponibles ahora', title: 'Artistas' }
-                    return (
-                      <div key={type}>
-                        <SectionHead
-                          kicker={idx === 0 ? labels.kicker : ''}
-                          title={labels.title}
-                          href="/profiles?availability=available"
-                        />
-                        <HScroll className="mt-5">
-                          {group.map((profile) => (
-                            <DJSlot key={profile.id} profile={profile} />
-                          ))}
-                        </HScroll>
-                      </div>
-                    )
-                  })}
-                </div>
+              <SectionHead kicker="En escena ahora" title="Artistas en escena" href="/profiles?availability=available" />
+              {sceneMix.length > 0 ? (
+                <HScroll className="mt-5">
+                  {sceneMix.map((profile) => (
+                    <ArtistSlot key={profile.id} profile={profile} />
+                  ))}
+                </HScroll>
               ) : (
                 <p className="px-4 md:px-6 mt-4 font-sans text-sm text-[var(--text-muted)]">
                   No hay artistas con ese genero disponibles ahora.
