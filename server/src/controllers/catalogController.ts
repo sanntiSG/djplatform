@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { getGenres, getEventTypes } from '../services/catalogService.js'
+import { getGenres, getEventTypes, getGenresByPopularity } from '../services/catalogService.js'
 import { publicListProfileTypes } from '../services/adminService.js'
 
 export async function listGenres(req: Request, res: Response, next: NextFunction) {
@@ -23,6 +23,14 @@ export async function listEventTypes(req: Request, res: Response, next: NextFunc
 export async function listProfileTypes(req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await publicListProfileTypes())
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function listGenresByPopularity(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await getGenresByPopularity())
   } catch (err) {
     next(err)
   }

@@ -18,8 +18,15 @@ export interface AdminProfileTypeItem {
   order: number
 }
 
+export interface GenreWithCount {
+  name: string
+  slug: string
+  count: number
+}
+
 export const catalogService = {
   getGenres: () => apiClient.get<CatalogItem[]>('/catalogs/genres'),
+  getGenresByPopularity: () => apiClient.get<GenreWithCount[]>('/catalogs/genres/by-popularity'),
   getEventTypes: () => apiClient.get<CatalogItem[]>('/catalogs/event-types'),
   getProfileTypes: () => apiClient.get<CatalogItem[]>('/catalogs/profile-types'),
 

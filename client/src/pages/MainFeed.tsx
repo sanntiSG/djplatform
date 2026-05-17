@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useProfiles, useTopProfiles, useMyProfile } from '../hooks/useProfile.js'
 import { useEventsFeed } from '../hooks/useEvents.js'
 import { useActivityFeed } from '../hooks/useActivityFeed.js'
+import { useGenresByPopularity } from '../hooks/useCatalogs.js'
 import type { ActivityEvent } from '../services/activityService.js'
 import { profilePath, eventPath, genrePath } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
@@ -516,6 +517,7 @@ export default function MainFeed() {
   const topProfilesQuery = useTopProfiles(10)
   const eventsQuery = useEventsFeed()
   const activityQuery = useActivityFeed(16)
+  const genresByPopQuery = useGenresByPopularity()
 
   const allAvailable = artistsQuery.data?.pages[0] ?? []
   const topArtists = topProfilesQuery.data ?? []
@@ -972,35 +974,30 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Eventos por genero — ColorBlockCards HScroll */}
-          {topArtists.length > 0 && (
+          {/* Eventos por genero — ColorBlockCards HScroll — ordered by track count */}
+          {(genresByPopQuery.data?.length ?? 0) > 0 && (
             <section ref={genreCardsRef}>
               <SectionHead kicker="Por genero" title="Tu escena" />
               <HScroll className="mt-5">
-                {FILTER_GENRES.filter((g) => g !== 'Todos').map((genre) => {
-                  const count = topArtists.filter((p) =>
-                    p.genres.some((g2) => g2.toLowerCase().includes(genre.toLowerCase())),
-                  ).length
-                  return (
-                    <div
-                      key={genre}
-                      style={{
-                        width: 'clamp(170px, 42vw, 210px)',
-                        height: 172,
-                        flexShrink: 0,
-                        scrollSnapAlign: 'start',
-                      }}
-                    >
-                      <ColorBlockCard
-                        color={genreToColor(genre)}
-                        title={genre}
-                        meta={count > 0 ? `${count} artista${count !== 1 ? 's' : ''}` : 'Explorar'}
-                        className="h-full"
-                        to={genrePath(genre)}
-                      />
-                    </div>
-                  )
-                })}
+                {(genresByPopQuery.data ?? []).map((genre) => (
+                  <div
+                    key={genre.slug}
+                    style={{
+                      width: 'clamp(170px, 42vw, 210px)',
+                      height: 172,
+                      flexShrink: 0,
+                      scrollSnapAlign: 'start',
+                    }}
+                  >
+                    <ColorBlockCard
+                      color={genreToColor(genre.name)}
+                      title={genre.name}
+                      meta={`${genre.count} cancion${genre.count !== 1 ? 'es' : ''}`}
+                      className="h-full"
+                      to={genrePath(genre.name)}
+                    />
+                  </div>
+                ))}
               </HScroll>
             </section>
           )}

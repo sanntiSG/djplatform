@@ -3,6 +3,14 @@ import { catalogService } from '../services/catalogService.js'
 
 const STALE_TIME = 1000 * 60 * 5 // 5 min — allows admin-added genres to propagate faster
 
+export function useGenresByPopularity() {
+  return useQuery({
+    queryKey: ['catalogs', 'genres-by-popularity'],
+    queryFn: catalogService.getGenresByPopularity,
+    staleTime: STALE_TIME,
+  })
+}
+
 export function useCatalogs() {
   const genres = useQuery({
     queryKey: ['catalogs', 'genres'],
