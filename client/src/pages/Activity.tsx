@@ -5,7 +5,7 @@ import type { ActivityEvent } from '../services/activityService.js'
 const PILL: Record<string, { label: string; bg: string; text: string }> = {
   profile_created: { label: 'Nuevo artista', bg: 'rgba(52,211,153,0.12)', text: '#34d399' },
   event_published: { label: 'Evento', bg: 'rgba(96,165,250,0.12)', text: '#60a5fa' },
-  media_added: { label: 'Nueva track', bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
+  media_added: { label: 'Nueva musica', bg: 'var(--c-pink-muted)', text: 'var(--c-pink)' },
   photo_added: { label: 'Nueva foto', bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
   profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
   trending_track: { label: 'En tendencia', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },

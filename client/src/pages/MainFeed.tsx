@@ -312,7 +312,7 @@ function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
 const ACTIVITY_PILL: Record<string, { label: string; bg: string; text: string }> = {
   profile_created:  { label: 'Nuevo artista',    bg: 'rgba(52,211,153,0.12)',  text: '#34d399' },
   event_published:  { label: 'Evento',            bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa' },
-  media_added:      { label: 'Nueva track',       bg: 'rgba(167,139,250,0.12)', text: '#a78bfa' },
+  media_added:      { label: 'Nueva musica',      bg: 'var(--c-pink-muted)',    text: 'var(--c-pink)' },
   photo_added:      { label: 'Nueva foto',        bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
   profile_updated:  { label: 'Actualizo perfil',  bg: 'rgba(212,255,0,0.1)',   text: 'var(--accent)' },
   trending_track:   { label: 'En tendencia',      bg: 'rgba(239,68,68,0.12)',  text: '#f87171' },
@@ -348,17 +348,38 @@ function ActivityCard({ event }: { event: ActivityEvent }) {
   const href = event.targetUrl ?? (event.actorSlug ? `/p/${event.actorSlug}` : '/feed')
   const isExternal = event.isExternal || event.type === 'trending_track' || event.type === 'news_article'
 
+  // For media_added, prefer track thumbnail; otherwise use actor avatar
+  const thumbSrc = event.type === 'media_added'
+    ? (event.targetImage ?? event.actorAvatar)
+    : event.actorAvatar
+
   const inner = (
     <>
       {/* Thumbnail / Avatar */}
-      <div className="w-9 h-9 rounded-[8px] overflow-hidden flex-shrink-0 bg-[var(--surface)]">
-        {event.actorAvatar ? (
-          <img src={event.actorAvatar} alt={event.actorName} className="w-full h-full object-cover" />
+      <div className="w-9 h-9 rounded-[8px] overflow-hidden flex-shrink-0 bg-[var(--surface)] relative">
+        {thumbSrc ? (
+          <img src={thumbSrc} alt={event.actorName} className="w-full h-full object-cover" />
+        ) : event.type === 'media_added' ? (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--c-pink-muted)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--c-pink)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="font-display font-semibold text-sm text-[var(--text-muted)]">
               {event.actorName.charAt(0).toUpperCase()}
             </span>
+          </div>
+        )}
+        {/* Music note badge over avatar for media_added */}
+        {event.type === 'media_added' && thumbSrc === event.actorAvatar && (
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: 'var(--c-pink)' }}>
+            <svg width="7" height="7" viewBox="0 0 24 24" fill="white" stroke="none">
+              <path d="M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+            </svg>
           </div>
         )}
       </div>

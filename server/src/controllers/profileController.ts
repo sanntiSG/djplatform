@@ -53,13 +53,14 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
   try {
     const data = UpdateProfileSchema.parse(req.body)
 
-    // Capture previous counts only when media/photos are being updated
+    // Capture previous state only when media/photos are being updated
     const needsCheck = Boolean(data.media || data.photos)
-    let prevMedia = 0
+    let prevMediaUrls = new Set<string>()
     let prevPhotos = 0
     if (needsCheck) {
       const prev = await Profile.findOne({ userId: req.user!.id }).select('media photos').lean()
-      prevMedia = (prev?.media as unknown[])?.length ?? 0
+      const prevMediaItems = (prev?.media ?? []) as { url: string }[]
+      prevMediaUrls = new Set(prevMediaItems.map(m => m.url))
       prevPhotos = (prev?.photos as unknown[])?.length ?? 0
     }
 
@@ -77,17 +78,20 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
       const avatar = serialized.avatar
       const url = `/p/${serialized.slug}-${serialized.id}`
 
-      if (data.media && profile.media.length > prevMedia) {
-        const newest = profile.media[profile.media.length - 1]
-        createActivity({
-          type: 'media_added',
-          actorProfileId: pid,
-          actorName: name,
-          actorAvatar: avatar,
-          targetTitle: newest.title ?? undefined,
-          targetUrl: url,
-          targetImage: newest.thumbnailUrl,
-        }).catch(() => { })
+      if (data.media) {
+        // Detect truly new tracks by comparing URLs, not array length
+        const newTracks = profile.media.filter(m => !prevMediaUrls.has(m.url))
+        for (const track of newTracks) {
+          createActivity({
+            type: 'media_added',
+            actorProfileId: pid,
+            actorName: name,
+            actorAvatar: avatar,
+            targetTitle: track.title ?? undefined,
+            targetUrl: url,
+            targetImage: track.thumbnailUrl,
+          }).catch(() => { })
+        }
       }
       if (data.photos && (profile.photos?.length ?? 0) > prevPhotos) {
         const newestPhoto = profile.photos[profile.photos.length - 1]
