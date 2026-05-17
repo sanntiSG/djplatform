@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { collaborationsService, type RequestCollabInput, type CollaborationItem } from '../../services/collaborationsService.js'
 import { useAuthStore } from '../../store/useAuthStore.js'
@@ -9,6 +10,7 @@ const TYPE_LABEL: Record<string, string> = {
   event: 'Evento',
   visual: 'Visual',
   other: 'Otro',
+  opportunity: 'Oportunidad',
 }
 
 function CollabCard({ collab, myProfileId }: {
@@ -49,13 +51,22 @@ function CollabCard({ collab, myProfileId }: {
           {collab.title}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
-          {collab.type && (
+          {collab.type && collab.type !== 'opportunity' && (
             <span
               className="font-sans text-[10px] font-medium px-2 py-0.5 rounded-full"
               style={{ background: 'rgba(212,255,0,0.08)', color: 'var(--accent)' }}
             >
               {TYPE_LABEL[collab.type] ?? collab.type}
             </span>
+          )}
+          {collab.type === 'opportunity' && collab.opportunityId && (
+            <Link
+              to={`/oportunidades/${collab.opportunityId}`}
+              className="font-sans text-[10px] font-medium px-2 py-0.5 rounded-full transition-opacity hover:opacity-70"
+              style={{ background: 'rgba(212,255,0,0.08)', color: 'var(--accent)' }}
+            >
+              via Oportunidad
+            </Link>
           )}
           {collab.year && (
             <span className="font-sans text-[11px] text-[var(--text-muted)]">{collab.year}</span>

@@ -166,6 +166,7 @@ export async function listForProfile(req: Request, res: Response, next: NextFunc
       title: c.title,
       year: c.year,
       type: c.type,
+      opportunityId: c.opportunityId?.toString(),
       confirmedByA: c.confirmedByA,
       confirmedByB: c.confirmedByB,
       isConfirmed: c.confirmedByA && c.confirmedByB,

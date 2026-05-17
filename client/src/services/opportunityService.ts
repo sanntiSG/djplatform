@@ -1,5 +1,12 @@
 import { apiClient } from './apiClient.js'
 
+export interface OpportunityApplicant {
+  id: string
+  artistName: string
+  avatar?: string
+  slug: string
+}
+
 export interface OpportunityResponse {
   id: string
   profileId: string
@@ -17,6 +24,7 @@ export interface OpportunityResponse {
   status: 'open' | 'closed' | 'filled'
   applicantCount: number
   isApplied: boolean
+  applicants?: OpportunityApplicant[]
   createdAt: string
 }
 
@@ -58,4 +66,10 @@ export const opportunityService = {
 
   apply: (id: string) =>
     apiClient.post<{ conversationId: string }>(`/opportunities/${id}/apply`, {}),
+
+  acceptCollab: (opportunityId: string, params: { collaboratorProfileId?: string; collaboratorUserId?: string }) =>
+    apiClient.post<{ ok: boolean; collaborationId: string }>(
+      `/opportunities/${opportunityId}/accept-collab`,
+      params,
+    ),
 }

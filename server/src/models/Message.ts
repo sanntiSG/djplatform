@@ -1,6 +1,14 @@
 import mongoose, { type Document, type Types } from 'mongoose'
 import DOMPurify from 'isomorphic-dompurify'
 
+export interface IMessageAttachment {
+  type: 'opportunity'
+  opportunityId: string
+  title: string
+  cover?: string
+  status: 'open' | 'closed' | 'filled'
+}
+
 export interface IMessage extends Document {
   _id: Types.ObjectId
   conversationId: Types.ObjectId
@@ -8,6 +16,7 @@ export interface IMessage extends Document {
   body: string
   replyTo?: Types.ObjectId
   readBy: Types.ObjectId[]
+  attachment?: IMessageAttachment
   createdAt: Date
 }
 
@@ -23,6 +32,16 @@ const messageSchema = new mongoose.Schema<IMessage>(
     },
     replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
     readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    attachment: {
+      type: {
+        type: String,
+        enum: ['opportunity'],
+      },
+      opportunityId: String,
+      title: String,
+      cover: String,
+      status: { type: String, enum: ['open', 'closed', 'filled'] },
+    },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 )

@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { opportunityService } from '../services/opportunityService.js'
+import { opportunityService, type OpportunityApplicant } from '../services/opportunityService.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { Button } from '../components/ui/Button.js'
 
@@ -41,6 +41,14 @@ export default function OpportunityDetail() {
   const deleteMutation = useMutation({
     mutationFn: () => opportunityService.remove(id!),
     onSuccess: () => navigate('/oportunidades'),
+  })
+
+  const acceptCollabMutation = useMutation({
+    mutationFn: (collaboratorProfileId: string) =>
+      opportunityService.acceptCollab(id!, { collaboratorProfileId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunity', id] })
+    },
   })
 
   if (isLoading) {
@@ -132,11 +140,48 @@ export default function OpportunityDetail() {
           </div>
         )}
 
-        {/* Stats */}
-        {opp.applicantCount > 0 && (
-          <p className="font-sans text-xs text-[var(--text-muted)] mb-6">
-            {opp.applicantCount} {opp.applicantCount === 1 ? 'persona interesada' : 'personas interesadas'}
-          </p>
+        {/* Stats / Applicants */}
+        {isOwner && opp.applicants && opp.applicants.length > 0 ? (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 mb-8">
+            <p className="font-sans text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-3">
+              Interesados ({opp.applicants.length})
+            </p>
+            <div className="flex flex-col gap-3">
+              {opp.applicants.map((a: OpportunityApplicant) => (
+                <div key={a.id} className="flex items-center justify-between gap-3">
+                  <Link
+                    to={`/p/${a.slug}-${a.id}`}
+                    className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
+                  >
+                    {a.avatar ? (
+                      <img src={a.avatar} alt={a.artistName} className="w-8 h-8 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[var(--surface)] flex items-center justify-center ring-1 ring-white/10 flex-shrink-0">
+                        <span className="font-display text-xs font-semibold text-[var(--text-muted)]">{a.artistName.charAt(0)}</span>
+                      </div>
+                    )}
+                    <span className="font-sans text-sm text-[var(--text)] truncate">{a.artistName}</span>
+                  </Link>
+                  {opp.status === 'open' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      loading={acceptCollabMutation.isPending}
+                      onClick={() => acceptCollabMutation.mutate(a.id)}
+                    >
+                      Aceptar collab
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          opp.applicantCount > 0 && !isOwner && (
+            <p className="font-sans text-xs text-[var(--text-muted)] mb-6">
+              {opp.applicantCount} {opp.applicantCount === 1 ? 'persona interesada' : 'personas interesadas'}
+            </p>
+          )
         )}
 
         {/* Actions */}

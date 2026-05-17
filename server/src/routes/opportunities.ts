@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { optionalAuth } from '../middleware/optionalAuth.js'
-import { list, getById, create, update, remove, apply } from '../controllers/opportunityController.js'
+import { list, getById, create, update, remove, apply, acceptCollab } from '../controllers/opportunityController.js'
 
 const createLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
@@ -22,5 +22,6 @@ router.post('/', requireAuth, createLimiter, create)
 router.patch('/:id', requireAuth, update)
 router.delete('/:id', requireAuth, remove)
 router.post('/:id/apply', requireAuth, apply)
+router.post('/:id/accept-collab', requireAuth, acceptCollab)
 
 export default router

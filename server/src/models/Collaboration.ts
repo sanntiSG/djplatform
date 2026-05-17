@@ -8,8 +8,9 @@ export interface ICollaboration extends Document {
   toUserId: Types.ObjectId
   title: string
   year?: number
-  type?: 'track' | 'event' | 'visual' | 'other'
+  type?: 'track' | 'event' | 'visual' | 'other' | 'opportunity'
   eventId?: Types.ObjectId
+  opportunityId?: Types.ObjectId
   confirmedByA: boolean
   confirmedByB: boolean
   confirmedAt?: Date
@@ -25,8 +26,9 @@ const collaborationSchema = new mongoose.Schema<ICollaboration>(
     toUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, maxlength: 120, trim: true },
     year: { type: Number, min: 1990, max: 2100 },
-    type: { type: String, enum: ['track', 'event', 'visual', 'other'] },
+    type: { type: String, enum: ['track', 'event', 'visual', 'other', 'opportunity'] },
     eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
+    opportunityId: { type: mongoose.Schema.Types.ObjectId, ref: 'Opportunity' },
     confirmedByA: { type: Boolean, default: true },
     confirmedByB: { type: Boolean, default: false },
     confirmedAt: { type: Date },

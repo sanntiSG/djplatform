@@ -19,10 +19,12 @@ export function OpportunityCard({ opportunity: o }: Props) {
     ? new Date(o.eventDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
     : null
 
+  const isClosed = o.status === 'filled' || o.status === 'closed'
+
   return (
     <Link
       to={`/oportunidades/${o.id}`}
-      className="block rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 hover:border-white/15 transition-all duration-200 group active:scale-[0.99]"
+      className={`block rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 hover:border-white/15 transition-all duration-200 group active:scale-[0.99] relative overflow-hidden${isClosed ? ' opacity-60 grayscale' : ''}`}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
@@ -84,6 +86,23 @@ export function OpportunityCard({ opportunity: o }: Props) {
 
       {/* Badges */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* Status */}
+        {o.status === 'open' ? (
+          <span
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-medium"
+            style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+            Disponible
+          </span>
+        ) : (
+          <span
+            className="rounded-full px-2.5 py-0.5 font-sans text-xs font-medium"
+            style={{ background: 'var(--surface)', color: 'var(--text-muted)' }}
+          >
+            Cubierta
+          </span>
+        )}
         {o.isPaid && (
           <span className="rounded-full px-2.5 py-0.5 font-sans text-xs font-medium bg-[var(--c-teal-muted)] text-[var(--c-teal)]">
             Pago

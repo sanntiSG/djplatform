@@ -15,6 +15,14 @@ export interface ConversationItem {
   unreadCount: number
 }
 
+export interface MessageAttachment {
+  type: 'opportunity'
+  opportunityId: string
+  title: string
+  cover?: string
+  status: 'open' | 'closed' | 'filled'
+}
+
 export interface MessageItem {
   _id: string
   conversationId: string
@@ -22,6 +30,7 @@ export interface MessageItem {
   body: string
   replyTo?: string | null
   readBy: string[]
+  attachment?: MessageAttachment
   createdAt: string
 }
 

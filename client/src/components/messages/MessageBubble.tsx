@@ -1,8 +1,11 @@
 import { useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import gsap from 'gsap'
 import { cn } from '../../utils/cn.js'
 import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion.js'
 import type { MessageItem } from '../../services/conversationsService.js'
+import { opportunityService } from '../../services/opportunityService.js'
 
 interface Props {
   message: MessageItem
@@ -10,6 +13,63 @@ interface Props {
   isRead: boolean
   onReply?: (msg: MessageItem) => void
   replyMessage?: MessageItem | null
+}
+
+function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: {
+  opportunityId: string
+  title: string
+  status: 'open' | 'closed' | 'filled'
+  senderUserId: string
+  isOwn: boolean
+}) {
+  const acceptMutation = useMutation({
+    mutationFn: () => opportunityService.acceptCollab(opportunityId, { collaboratorUserId: senderUserId }),
+  })
+
+  return (
+    <div
+      className="rounded-xl border border-white/10 overflow-hidden mb-2"
+      style={{ background: 'var(--surface)' }}
+    >
+      <Link
+        to={`/oportunidades/${opportunityId}`}
+        className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-muted)' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-sans text-xs font-medium text-[var(--text)] truncate">{title}</p>
+          <p className="font-sans text-[10px] text-[var(--text-muted)]">
+            {status === 'open' ? 'Disponible' : 'Cubierta'}
+          </p>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </Link>
+      {!isOwn && status === 'open' && (
+        <div className="px-3 pb-3">
+          <button
+            type="button"
+            disabled={acceptMutation.isPending || acceptMutation.isSuccess}
+            onClick={() => acceptMutation.mutate()}
+            className="w-full py-1.5 rounded-lg font-sans text-xs font-medium transition-colors disabled:opacity-50"
+            style={{
+              background: acceptMutation.isSuccess ? 'var(--accent-muted)' : 'var(--accent)',
+              color: acceptMutation.isSuccess ? 'var(--accent)' : 'var(--bg)',
+            }}
+          >
+            {acceptMutation.isSuccess ? 'Colaboracion aceptada' : acceptMutation.isPending ? '...' : 'Aceptar colaboracion'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function ReadTicks({ isOwn, isRead }: { isOwn: boolean; isRead: boolean }) {
@@ -66,6 +126,15 @@ export function MessageBubble({ message, isOwn, isRead, onReply, replyMessage }:
         )}>
           <span className="opacity-60">↩</span> {replyMessage.body}
         </div>
+      )}
+      {message.attachment?.type === 'opportunity' && (
+        <OpportunityCard
+          opportunityId={message.attachment.opportunityId}
+          title={message.attachment.title}
+          status={message.attachment.status}
+          senderUserId={message.senderId}
+          isOwn={isOwn}
+        />
       )}
       <div
         ref={bubbleRef}

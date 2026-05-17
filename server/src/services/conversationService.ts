@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import { Conversation } from '../models/Conversation.js'
-import { Message } from '../models/Message.js'
+import { Message, type IMessageAttachment } from '../models/Message.js'
 import { Profile } from '../models/Profile.js'
 import { User } from '../models/User.js'
 
@@ -77,6 +77,7 @@ export async function sendMessage(
   senderId: string,
   body: string,
   replyTo?: string,
+  attachment?: IMessageAttachment,
 ) {
   const conv = await Conversation.findById(conversationId)
   if (!conv) throw new Error('Conversacion no encontrada')
@@ -90,6 +91,7 @@ export async function sendMessage(
     body,
     replyTo: replyTo ? new mongoose.Types.ObjectId(replyTo) : undefined,
     readBy: [new mongoose.Types.ObjectId(senderId)],
+    attachment,
   })
 
   const recipientId = conv.participants.find(p => p.toString() !== senderId)?.toString()
