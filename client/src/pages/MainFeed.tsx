@@ -523,7 +523,7 @@ export default function MainFeed() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFloatingCTA, setShowFloatingCTA] = useState(false)
 
-  const artistsQuery = useProfiles({ availability: 'available' })
+  const artistsQuery = useProfiles({})
   const topProfilesQuery = useTopProfiles(10)
   const eventsQuery = useEventsFeed()
   const activityQuery = useActivityFeed(16)
@@ -905,7 +905,7 @@ export default function MainFeed() {
           {/* Artistas en escena — todos los tipos mezclados */}
           {allAvailable.length > 0 && (
             <section ref={djsRef}>
-              <SectionHead kicker="En escena ahora" title="Artistas en escena" href="/profiles?availability=available" />
+              <SectionHead kicker="En escena ahora" title="Artistas en escena" href="/profiles" />
               {sceneMix.length > 0 ? (
                 <HScroll className="mt-5">
                   {sceneMix.map((profile) => (
@@ -914,7 +914,7 @@ export default function MainFeed() {
                 </HScroll>
               ) : (
                 <p className="px-4 md:px-6 mt-4 font-sans text-sm text-[var(--text-muted)]">
-                  No hay artistas con ese genero disponibles ahora.
+                  No hay artistas con ese genero.
                 </p>
               )}
             </section>

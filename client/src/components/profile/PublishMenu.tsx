@@ -111,7 +111,7 @@ export function PublishMenu({ profileSlug, profileId }: PublishMenuProps) {
           </p>
 
           <MenuItem icon={musicIcon} label="Cancion o video" onClick={() => nav('/profile/edit#musica')} />
-          <MenuItem icon={photoIcon} label="Foto" onClick={() => nav('/profile/edit#visual')} />
+          <MenuItem icon={photoIcon} label="Foto" onClick={() => nav('/profile/edit#media')} />
           <MenuItem icon={calendarIcon} label="Evento" onClick={() => nav('/events/new')} />
           <MenuItem icon={briefcaseIcon} label="Oportunidad" onClick={() => nav('/oportunidades/nueva')} />
 
