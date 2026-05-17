@@ -15,10 +15,6 @@ interface Props {
 }
 
 export function OpportunityCard({ opportunity: o }: Props) {
-  const date = o.eventDate
-    ? new Date(o.eventDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-    : null
-
   const isClosed = o.status === 'filled' || o.status === 'closed'
 
   return (
@@ -47,9 +43,6 @@ export function OpportunityCard({ opportunity: o }: Props) {
             <p className="font-sans text-xs text-[var(--text-muted)] opacity-60 truncate">{o.location}</p>
           )}
         </div>
-        {date && (
-          <span className="flex-shrink-0 font-sans text-xs text-[var(--text-muted)]">{date}</span>
-        )}
       </div>
 
       {/* Title */}

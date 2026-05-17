@@ -7,6 +7,7 @@ export type ActivityEventType =
   | 'photo_added'
   | 'profile_updated'
   | 'collab_verified'
+  | 'opportunity_posted'
   | 'trending_track'
   | 'trending_artist'
   | 'news_article'
@@ -23,6 +24,9 @@ export interface ActivityEvent {
   targetTitle?: string
   targetUrl?: string
   targetImage?: string
+  partnerName?: string
+  partnerAvatar?: string
+  partnerSlug?: string
   createdAt: string
   isExternal?: boolean
 }

@@ -8,6 +8,7 @@ export type ActivityEventType =
   | 'profile_updated'
   | 'profile_followed'
   | 'collab_verified'
+  | 'opportunity_posted'
 
 export interface IActivityEvent extends Document {
   _id: Types.ObjectId
@@ -19,6 +20,9 @@ export interface IActivityEvent extends Document {
   targetTitle?: string
   targetUrl?: string
   targetImage?: string
+  partnerName?: string
+  partnerAvatar?: string
+  partnerSlug?: string
   createdAt: Date
 }
 
@@ -26,7 +30,7 @@ const schema = new mongoose.Schema<IActivityEvent>(
   {
     type: {
       type: String,
-      enum: ['profile_created', 'event_published', 'media_added', 'photo_added', 'profile_updated', 'profile_followed', 'collab_verified'],
+      enum: ['profile_created', 'event_published', 'media_added', 'photo_added', 'profile_updated', 'profile_followed', 'collab_verified', 'opportunity_posted'],
       required: true,
     },
     actorProfileId: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
@@ -36,6 +40,9 @@ const schema = new mongoose.Schema<IActivityEvent>(
     targetTitle: { type: String },
     targetUrl: { type: String },
     targetImage: { type: String },
+    partnerName: { type: String },
+    partnerAvatar: { type: String },
+    partnerSlug: { type: String },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

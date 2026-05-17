@@ -18,7 +18,6 @@ export interface OpportunityResponse {
   lookingForRoles: string[]
   genres: string[]
   location?: string
-  eventDate?: string
   isPaid: boolean
   isRemote: boolean
   status: 'open' | 'closed' | 'filled'
@@ -34,7 +33,6 @@ export interface CreateOpportunityInput {
   lookingForRoles: string[]
   genres?: string[]
   location?: string
-  eventDate?: string
   isPaid: boolean
   isRemote: boolean
 }

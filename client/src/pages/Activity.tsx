@@ -8,6 +8,8 @@ const PILL: Record<string, { label: string; bg: string; text: string }> = {
   media_added: { label: 'Nueva musica', bg: 'var(--c-pink-muted)', text: 'var(--c-pink)' },
   photo_added: { label: 'Nueva foto', bg: 'rgba(251,191,36,0.12)', text: '#fbbf24' },
   profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
+  collab_verified: { label: 'Colaboración', bg: 'rgba(212,255,0,0.12)', text: 'var(--accent)' },
+  opportunity_posted: { label: 'Nueva oportunidad', bg: 'rgba(212,255,0,0.12)', text: 'var(--accent)' },
   trending_track: { label: 'En tendencia', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
   trending_artist: { label: 'Artista popular', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
   news_article: { label: 'Noticias', bg: 'rgba(148,163,184,0.12)', text: '#94a3b8' },
@@ -19,6 +21,10 @@ const DESC: Record<string, (a: ActivityEvent) => string> = {
   media_added: (a) => `${a.actorName} subio nueva musica`,
   photo_added: (a) => `${a.actorName} agrego fotos`,
   profile_updated: (a) => `${a.actorName} actualizo su perfil`,
+  collab_verified: (a) => a.partnerName
+    ? `${a.actorName} colaboró con ${a.partnerName}${a.targetTitle ? ` en ${a.targetTitle}` : ''}`
+    : `${a.actorName} confirmó una colaboración`,
+  opportunity_posted: (a) => `${a.actorName} publicó una oportunidad`,
   trending_track: (a) => a.actorName,
   trending_artist: (a) => a.actorName,
   news_article: (a) => a.actorName,

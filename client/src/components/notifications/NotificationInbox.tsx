@@ -16,6 +16,10 @@ const TYPE_ICONS: Record<string, () => JSX.Element> = {
   event_new_genre_match: () => <MusicIcon />,
   chat_message_new: () => <MessageIcon />,
   chat_message_reply: () => <MessageIcon />,
+  opportunity_new_application: () => <BriefcaseIcon />,
+  opportunity_closed: () => <CloseIcon />,
+  collab_confirmed: () => <HandshakeIcon />,
+  collab_request: () => <HandshakeIcon />,
 }
 
 function relativeTime(iso: string): string {
@@ -188,6 +192,10 @@ function getTypeDescription(type: string): string {
     event_new_genre_match: 'Nuevo evento de tu genero',
     chat_message_new: 'te envio un mensaje',
     chat_message_reply: 'respondio tu mensaje',
+    opportunity_new_application: 'se postuló a tu oportunidad',
+    collab_confirmed: 'aceptó colaborar con vos',
+    opportunity_closed: 'oportunidad cerrada',
+    collab_request: 'te propuso una colaboración',
   }
   return map[type] ?? 'nueva actividad'
 }
@@ -290,6 +298,24 @@ function CloseIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+function BriefcaseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </svg>
+  )
+}
+function HandshakeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m11 17 2 2a1 1 0 1 0 3-3" />
+      <path d="m14 14 2.5 2.5a2.12 2.12 0 1 0 3-3L14.5 8.5a2.12 2.12 0 1 0-3 3l2.5 2.5" />
+      <path d="m7 17-2 2a1 1 0 1 1-3-3" />
+      <path d="m10 14-2.5 2.5a2.12 2.12 0 1 1-3-3L9.5 8.5a2.12 2.12 0 1 1 3 3l-2.5 2.5" />
     </svg>
   )
 }

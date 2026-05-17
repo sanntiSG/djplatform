@@ -11,6 +11,9 @@ export interface CreateActivityInput {
   targetTitle?: string
   targetUrl?: string
   targetImage?: string
+  partnerName?: string
+  partnerAvatar?: string
+  partnerSlug?: string
 }
 
 export async function createActivity(input: CreateActivityInput): Promise<void> {
@@ -29,6 +32,9 @@ export async function createActivity(input: CreateActivityInput): Promise<void> 
       targetTitle: doc.targetTitle,
       targetUrl: doc.targetUrl,
       targetImage: doc.targetImage,
+      partnerName: doc.partnerName,
+      partnerAvatar: doc.partnerAvatar,
+      partnerSlug: doc.partnerSlug,
       createdAt: doc.createdAt.toISOString(),
       isExternal: false,
     }
@@ -54,6 +60,9 @@ export async function getRecentActivity(limit = 20) {
     targetTitle: e.targetTitle,
     targetUrl: e.targetUrl,
     targetImage: e.targetImage,
+    partnerName: e.partnerName,
+    partnerAvatar: e.partnerAvatar,
+    partnerSlug: e.partnerSlug,
     createdAt: e.createdAt.toISOString(),
   }))
 }

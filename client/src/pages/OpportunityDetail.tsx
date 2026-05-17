@@ -69,9 +69,6 @@ export default function OpportunityDetail() {
   }
 
   const isOwner = user && opp.userId === user.id
-  const date = opp.eventDate
-    ? new Date(opp.eventDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
-    : null
 
   return (
     <div className="min-h-screen bg-[var(--bg)] md:pt-16 px-5 sm:px-8 py-14">
@@ -125,9 +122,6 @@ export default function OpportunityDetail() {
           )}
           {opp.isRemote && (
             <span className="rounded-full px-3 py-1 font-sans text-xs font-medium bg-[var(--c-purple-muted)] text-[var(--c-purple)]">Remoto</span>
-          )}
-          {date && (
-            <span className="rounded-full px-3 py-1 font-sans text-xs font-medium bg-[var(--surface-elevated)] border border-[var(--border)] text-[var(--text-muted)]">{date}</span>
           )}
         </div>
 

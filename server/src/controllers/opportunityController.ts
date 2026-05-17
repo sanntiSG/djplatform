@@ -14,7 +14,6 @@ const CreateOpportunitySchema = z.object({
   lookingForRoles: z.array(z.string().max(40)).max(6).default([]),
   genres: z.array(z.string()).max(10).default([]),
   location: z.string().max(100).optional(),
-  eventDate: z.string().datetime().optional(),
   isPaid: z.boolean().default(false),
   isRemote: z.boolean().default(false),
 })
@@ -46,7 +45,6 @@ function serialize(
     lookingForRoles: o.lookingForRoles,
     genres: o.genres,
     location: o.location,
-    eventDate: o.eventDate?.toISOString(),
     isPaid: o.isPaid,
     isRemote: o.isRemote,
     status: o.status,
@@ -133,11 +131,10 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       userId: req.user!.id,
       artistName: profile.artistName,
       avatar: profile.avatar,
-      eventDate: data.eventDate ? new Date(data.eventDate) : undefined,
     })
 
     createActivity({
-      type: 'opportunity_posted' as any,
+      type: 'opportunity_posted',
       actorProfileId: profile._id.toString(),
       actorName: profile.artistName,
       actorAvatar: profile.avatar,
@@ -165,7 +162,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     }
 
     const wasOpen = opp.status === 'open'
-    Object.assign(opp, { ...data, eventDate: data.eventDate ? new Date(data.eventDate) : opp.eventDate })
+    Object.assign(opp, data)
     await opp.save()
 
     if (wasOpen && (data.status === 'closed' || data.status === 'filled') && opp.applicantIds.length > 0) {
@@ -345,6 +342,9 @@ export async function acceptCollab(req: Request, res: Response, next: NextFuncti
       actorAvatar: publisherProfile.avatar,
       targetTitle: opp.title,
       targetUrl: `/oportunidades/${opp._id}`,
+      partnerName: collaboratorProfile.artistName,
+      partnerAvatar: collaboratorProfile.avatar,
+      partnerSlug: collaboratorProfile.artistName.toLowerCase().replace(/\s+/g, '-'),
     }).catch(() => {})
 
     res.json({ ok: true, collaborationId: collab._id.toString() })

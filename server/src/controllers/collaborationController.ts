@@ -101,6 +101,9 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
         actorAvatar: myProfile.avatar,
         targetTitle: collab.title,
         targetUrl: `/p/${fromProfile._id}`,
+        partnerName: fromProfile.artistName,
+        partnerAvatar: fromProfile.avatar,
+        partnerSlug: fromProfile.artistName.toLowerCase().replace(/\s+/g, '-'),
       }).catch(() => {})
 
       createNotification(collab.fromUserId.toString(), 'collab_confirmed', {
