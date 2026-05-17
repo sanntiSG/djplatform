@@ -1,6 +1,13 @@
 import { apiClient } from './apiClient.js'
 import type { EventResponse, CreateEventInput, UpdateEventInput } from '../types/index.js'
 
+export interface EventAttendee {
+  id: string
+  artistName: string
+  avatar?: string
+  slug: string
+}
+
 export const eventService = {
   create: (data: CreateEventInput) => apiClient.post<EventResponse>('/events', data),
   update: (id: string, data: UpdateEventInput) =>
@@ -14,4 +21,6 @@ export const eventService = {
   },
   listByProfile: (profileId: string) =>
     apiClient.get<EventResponse[]>(`/profiles/${profileId}/events`),
+  listAttendees: (eventId: string) =>
+    apiClient.get<EventAttendee[]>(`/events/${eventId}/attendees`),
 }

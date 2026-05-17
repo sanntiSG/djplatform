@@ -9,6 +9,7 @@ import { ThemeSelector } from '../components/profile/ThemeSelector.js'
 import { ProfilePhotoGrid } from '../components/profile/ProfilePhotoGrid.js'
 import { MediaInput } from '../components/media/MediaInput.js'
 import { MediaList } from '../components/media/MediaList.js'
+import { EventsTab } from '../components/events/EventsTab.js'
 import { Button } from '../components/ui/Button.js'
 import { Tabs } from '../components/ui/Tabs.js'
 import { Toast } from '../components/ui/Toast.js'
@@ -26,8 +27,9 @@ const TABS = [
   { id: 'info', label: 'Informacion' },
   { id: 'red', label: 'Red' },
   { id: 'media', label: 'Media' },
-  { id: 'visual', label: 'Visual' },
   { id: 'musica', label: 'Musica' },
+  { id: 'eventos', label: 'Eventos' },
+  { id: 'visual', label: 'Visual' },
 ]
 
 const ROLE_OPTIONS = [
@@ -802,6 +804,11 @@ export default function ProfileEdit() {
               {visualSaved ? 'Guardado' : 'Guardar visual'}
             </Button>
           </div>
+        )}
+
+        {/* ─── EVENTOS ─── */}
+        {tab === 'eventos' && (
+          <EventsTab profileId={profile.id} />
         )}
 
         {/* ─── MUSICA ─── */}

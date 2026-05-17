@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { optionalAuth } from '../middleware/optionalAuth.js'
-import { create, update, remove, getById, feed } from '../controllers/eventController.js'
+import { create, update, remove, getById, feed, listAttendees } from '../controllers/eventController.js'
 import {
   getStats,
   like,
@@ -21,6 +21,7 @@ router.get('/:id', getById)
 router.patch('/:id', requireAuth, update)
 router.delete('/:id', requireAuth, remove)
 
+router.get('/:id/attendees', requireAuth, listAttendees)
 router.get('/:id/social', optionalAuth, getStats)
 router.post('/:id/like', requireAuth, like)
 router.post('/:id/attend', requireAuth, attend)

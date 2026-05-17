@@ -12,6 +12,8 @@ import {
 import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
 import { Profile } from '../models/Profile.js'
+import { EventAttendance } from '../models/EventAttendance.js'
+import { User } from '../models/User.js'
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -92,6 +94,43 @@ export async function listByProfile(req: Request, res: Response, next: NextFunct
   try {
     const events = await listEventsByProfile(parseObjectId(req.params.id))
     res.json(events.map(serializeEvent))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function listAttendees(req: Request, res: Response, next: NextFunction) {
+  try {
+    const eventId = parseObjectId(req.params.id)
+
+    // Verify the requesting user owns this event
+    const event = await getEventById(eventId)
+    if (!event) { res.status(404).json({ error: 'Evento no encontrado' }); return }
+
+    const ownerProfile = await Profile.findById(event.profileId).lean()
+    if (!ownerProfile || ownerProfile.userId.toString() !== req.user!.id) {
+      res.status(403).json({ error: 'No autorizado' }); return
+    }
+
+    const attendances = await EventAttendance.find({ eventId }).lean()
+    const userIds = attendances.map((a) => a.userId)
+
+    // Join users → profiles
+    const users = await User.find({ _id: { $in: userIds } }).select('_id').lean()
+    const userIdSet = new Set(users.map((u) => u._id.toString()))
+
+    const profiles = await Profile.find({ userId: { $in: Array.from(userIdSet) } })
+      .select('artistName avatar userId')
+      .lean()
+
+    const result = profiles.map((p) => ({
+      id: p._id.toString(),
+      artistName: p.artistName,
+      avatar: p.avatar,
+      slug: p.artistName.toLowerCase().replace(/\s+/g, '-'),
+    }))
+
+    res.json(result)
   } catch (err) {
     next(err)
   }
