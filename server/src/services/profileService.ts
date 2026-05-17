@@ -1,10 +1,18 @@
 import { Profile, type IProfile } from '../models/Profile.js'
+import { ProfileType } from '../models/ProfileType.js'
 import { ProfileFollow } from '../models/ProfileFollow.js'
 import { User } from '../models/User.js'
 import { normalizeWhatsApp } from '../utils/whatsapp.js'
 import { toSlug } from '../utils/slug.js'
 import type { CreateProfileInput, UpdateProfileInput } from '@dj/shared'
 import type { FilterQuery, Types } from 'mongoose'
+
+async function assertValidProfileType(type: string): Promise<void> {
+  const exists = await ProfileType.findOne({ slug: type, isActive: true }).lean()
+  if (!exists) {
+    throw Object.assign(new Error(`Tipo de artista no valido: ${type}`), { status: 400 })
+  }
+}
 
 export async function getProfileByUserId(userId: string): Promise<IProfile | null> {
   return Profile.findOne({ userId })
@@ -22,6 +30,8 @@ export async function createProfile(
   if (existing) {
     throw Object.assign(new Error('Ya tenés un perfil creado'), { status: 409 })
   }
+
+  await assertValidProfileType(data.type)
 
   const whatsapp = data.whatsapp ? normalizeWhatsApp(data.whatsapp) : undefined
 
@@ -41,6 +51,10 @@ export async function updateProfile(
   userId: string,
   data: UpdateProfileInput,
 ): Promise<IProfile | null> {
+  if (data.type) {
+    await assertValidProfileType(data.type)
+  }
+
   const update: Partial<UpdateProfileInput & { whatsapp: string }> = { ...data }
   if (data.whatsapp) {
     update.whatsapp = normalizeWhatsApp(data.whatsapp)

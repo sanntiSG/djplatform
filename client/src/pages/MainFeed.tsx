@@ -39,7 +39,11 @@ function hashInt(str: string): number {
   return Math.abs(h)
 }
 
-const TYPE_LABEL: Record<string, string> = { dj: 'DJ', producer: 'Prod', other: 'Art' }
+const TYPE_LABEL: Record<string, string> = {
+  dj: 'DJ', producer: 'Prod', vocalist: 'Voc', guitarist: 'Git',
+  bassist: 'Bajo', drummer: 'Bat', visuals: 'VJ', designer: 'Dis',
+  organizer: 'Org', other: 'Art',
+}
 const TYPE_SECTION_LABEL: Record<string, { kicker: string; title: string }> = {
   dj: { kicker: 'Disponibles ahora', title: 'DJs en escena' },
   producer: { kicker: 'Disponibles ahora', title: 'Productores' },

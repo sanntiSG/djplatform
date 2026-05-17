@@ -23,7 +23,7 @@ interface IPhoto {
 export interface IProfile extends Document {
   _id: Types.ObjectId
   userId: Types.ObjectId
-  type: 'dj' | 'producer' | 'other'
+  type: string
   artistName: string
   bio?: string
   avatar?: string
@@ -83,7 +83,7 @@ const photoSchema = new mongoose.Schema<IPhoto>(
 const profileSchema = new mongoose.Schema<IProfile>(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    type: { type: String, enum: ['dj', 'producer', 'other'], required: true },
+    type: { type: String, required: true },
     artistName: { type: String, required: true, trim: true, maxlength: 60 },
     bio: { type: String, maxlength: 1000 },
     avatar: { type: String },
