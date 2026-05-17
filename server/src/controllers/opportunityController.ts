@@ -119,6 +119,14 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       return
     }
 
+    if (req.user!.role !== 'admin') {
+      const activeCount = await Opportunity.countDocuments({ userId: req.user!.id, status: 'open' })
+      if (activeCount >= 3) {
+        res.status(429).json({ error: 'Tenes 3 oportunidades activas. Cerra o elimina alguna para publicar otra.' })
+        return
+      }
+    }
+
     const opp = await Opportunity.create({
       ...data,
       profileId: profile._id,
@@ -155,8 +163,21 @@ export async function update(req: Request, res: Response, next: NextFunction) {
       res.status(403).json({ error: 'Sin permiso' })
       return
     }
+
+    const wasOpen = opp.status === 'open'
     Object.assign(opp, { ...data, eventDate: data.eventDate ? new Date(data.eventDate) : opp.eventDate })
     await opp.save()
+
+    if (wasOpen && (data.status === 'closed' || data.status === 'filled') && opp.applicantIds.length > 0) {
+      opp.applicantIds.forEach((uid) => {
+        createNotification(uid.toString(), 'opportunity_closed', {
+          actorId: req.user!.id,
+          payload: { title: opp.title },
+          url: `/oportunidades/${opp._id}`,
+        }).catch(() => {})
+      })
+    }
+
     res.json(serialize(opp, req.user!.id))
   } catch (err) {
     next(err)
@@ -174,6 +195,16 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
       res.status(403).json({ error: 'Sin permiso' })
       return
     }
+
+    if (opp.applicantIds.length > 0) {
+      opp.applicantIds.forEach((uid) => {
+        createNotification(uid.toString(), 'opportunity_closed', {
+          actorId: req.user!.id,
+          payload: { title: opp.title },
+        }).catch(() => {})
+      })
+    }
+
     await opp.deleteOne()
     res.json({ ok: true })
   } catch (err) {
@@ -197,9 +228,7 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
     const conv = await findOrCreateConversation(req.user!.id, opp.userId.toString())
     const convId = (conv._id as any).toString()
 
-    const clientUrl = process.env.CLIENT_URL ?? 'https://resonar.ar'
-    const oppUrl = `${clientUrl}/oportunidades/${opp._id}`
-    const message = `Hola ${opp.artistName}, vi tu oportunidad "${opp.title}" en REsonar y me gustaria conectarme para hablar mas. Me podes contar mas detalles?\n\n${oppUrl}`
+    const message = `Hola ${opp.artistName}, vi tu oportunidad "${opp.title}" en REsonar y me gustaria conectarme para hablar mas. Me podes contar mas detalles?`
 
     await sendMessage(convId, req.user!.id, message, undefined, {
       type: 'opportunity',
@@ -209,9 +238,16 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
       status: opp.status,
     })
 
-    if (!opp.applicantIds.some((id) => id.toString() === req.user!.id)) {
+    const alreadyApplied = opp.applicantIds.some((id) => id.toString() === req.user!.id)
+    if (!alreadyApplied) {
       opp.applicantIds.push(req.user!.id as any)
       await opp.save()
+
+      createNotification(opp.userId.toString(), 'opportunity_new_application', {
+        actorId: req.user!.id,
+        payload: { title: opp.title },
+        url: `/oportunidades/${opp._id}`,
+      }).catch(() => {})
     }
 
     res.json({ conversationId: convId })
@@ -275,7 +311,8 @@ export async function acceptCollab(req: Request, res: Response, next: NextFuncti
       confirmedAt: new Date(),
     })
 
-    if (opp.status === 'open') {
+    const wasOpen = opp.status === 'open'
+    if (wasOpen) {
       opp.status = 'filled'
       await opp.save()
     }
@@ -289,6 +326,26 @@ export async function acceptCollab(req: Request, res: Response, next: NextFuncti
         url: `/p/${collaboratorProfile.artistName.toLowerCase().replace(/\s+/g, '-')}-${collaboratorProfile._id}`,
       },
     ).catch(() => { })
+
+    if (wasOpen) {
+      const losers = opp.applicantIds.map(String).filter((uid) => uid !== collaboratorProfile.userId.toString())
+      losers.forEach((uid) => {
+        createNotification(uid, 'opportunity_closed', {
+          actorId: req.user!.id,
+          payload: { title: opp.title },
+          url: `/oportunidades/${opp._id}`,
+        }).catch(() => {})
+      })
+    }
+
+    createActivity({
+      type: 'collab_verified',
+      actorProfileId: publisherProfile._id.toString(),
+      actorName: publisherProfile.artistName,
+      actorAvatar: publisherProfile.avatar,
+      targetTitle: opp.title,
+      targetUrl: `/oportunidades/${opp._id}`,
+    }).catch(() => {})
 
     res.json({ ok: true, collaborationId: collab._id.toString() })
   } catch (err) {

@@ -95,7 +95,7 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
     const fromProfile = await Profile.findById(collab.fromProfileId).lean()
     if (fromProfile) {
       createActivity({
-        type: 'collab_verified' as any,
+        type: 'collab_verified',
         actorProfileId: myProfile._id.toString(),
         actorName: myProfile.artistName,
         actorAvatar: myProfile.avatar,
@@ -123,11 +123,27 @@ export async function reject(req: Request, res: Response, next: NextFunction) {
     const myProfile = await Profile.findOne({ userId: req.user!.id }).lean()
     if (!myProfile) { res.status(403).json({ error: 'No tienes perfil' }); return }
 
-    const isRecipient = collab.toProfileId.toString() === myProfile._id.toString()
-    const isSender = collab.fromProfileId.toString() === myProfile._id.toString()
-    if (!isRecipient && !isSender) { res.status(403).json({ error: 'No autorizado' }); return }
+    const isFrom = collab.fromProfileId.toString() === myProfile._id.toString()
+    const isTo = collab.toProfileId.toString() === myProfile._id.toString()
+    if (!isFrom && !isTo) { res.status(403).json({ error: 'No autorizado' }); return }
 
-    await collab.deleteOne()
+    // Pending request: delete immediately
+    if (!collab.confirmedByB) {
+      await collab.deleteOne()
+      res.json({ ok: true })
+      return
+    }
+
+    // Confirmed collaboration: per-side hide
+    if (isFrom) collab.hiddenForFrom = true
+    if (isTo) collab.hiddenForTo = true
+
+    if (collab.hiddenForFrom && collab.hiddenForTo) {
+      await collab.deleteOne()
+    } else {
+      await collab.save()
+    }
+
     res.json({ ok: true })
   } catch (err) {
     next(err)
@@ -141,9 +157,15 @@ export async function listForProfile(req: Request, res: Response, next: NextFunc
       ? (await Profile.findOne({ userId: req.user.id }).lean())?._id.toString() === profileId.toString()
       : false
 
+    const visibleForProfile = {
+      $or: [
+        { fromProfileId: profileId, hiddenForFrom: { $ne: true } },
+        { toProfileId: profileId, hiddenForTo: { $ne: true } },
+      ],
+    }
     const filter = isOwner
-      ? { $or: [{ fromProfileId: profileId }, { toProfileId: profileId }] }
-      : { $or: [{ fromProfileId: profileId }, { toProfileId: profileId }], confirmedByA: true, confirmedByB: true }
+      ? visibleForProfile
+      : { ...visibleForProfile, confirmedByA: true, confirmedByB: true }
 
     const collabs = await Collaboration.find(filter)
       .sort({ confirmedAt: -1, createdAt: -1 })

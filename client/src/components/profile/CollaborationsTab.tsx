@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { collaborationsService, type RequestCollabInput, type CollaborationItem } from '../../services/collaborationsService.js'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { Button } from '../ui/Button.js'
+import { cn } from '../../utils/cn.js'
 
 const TYPE_LABEL: Record<string, string> = {
   track: 'Track',
@@ -13,10 +14,13 @@ const TYPE_LABEL: Record<string, string> = {
   opportunity: 'Oportunidad',
 }
 
-function CollabCard({ collab, myProfileId }: {
+function CollabCard({ collab, myProfileId, onRemove, removing }: {
   collab: CollaborationItem
   myProfileId?: string
+  onRemove?: (id: string) => void
+  removing?: boolean
 }) {
+  const [confirmingRemove, setConfirmingRemove] = useState(false)
   const isMine = myProfileId === collab.fromProfileId || myProfileId === collab.toProfileId
   const partnerName = myProfileId === collab.fromProfileId ? collab.toArtistName : collab.fromArtistName
   const partnerAvatar = myProfileId === collab.fromProfileId ? collab.toAvatar : collab.fromAvatar
@@ -84,6 +88,38 @@ function CollabCard({ collab, myProfileId }: {
           )}
         </div>
       </div>
+
+      {isMine && onRemove && (
+        <div className="flex-shrink-0 flex items-center">
+          {confirmingRemove ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => { onRemove(collab.id); setConfirmingRemove(false) }}
+                disabled={removing}
+                className="font-sans text-[11px] font-medium text-[var(--c-red)] hover:opacity-75 transition-opacity disabled:opacity-40"
+              >
+                Confirmar
+              </button>
+              <button
+                onClick={() => setConfirmingRemove(false)}
+                className="font-sans text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingRemove(true)}
+              className={cn(
+                'font-sans text-[11px] text-[var(--text-muted)] hover:text-[var(--c-red)] transition-colors',
+                removing && 'opacity-40 pointer-events-none',
+              )}
+            >
+              Quitar
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -167,10 +203,16 @@ function RequestForm({ profileId, onSuccess }: { profileId: string; onSuccess: (
 export function CollaborationsTab({ profileId, isOwner }: { profileId: string; isOwner: boolean }) {
   const { user } = useAuthStore()
   const [showForm, setShowForm] = useState(false)
+  const queryClient = useQueryClient()
 
   const { data: collabs, isLoading } = useQuery({
     queryKey: ['collaborations', profileId],
     queryFn: () => collaborationsService.listForProfile(profileId),
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => collaborationsService.reject(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collaborations', profileId] }),
   })
 
   const confirmed = collabs?.filter((c) => c.isConfirmed) ?? []
@@ -206,7 +248,13 @@ export function CollaborationsTab({ profileId, isOwner }: { profileId: string; i
             Colaboraciones verificadas
           </p>
           {confirmed.map((c) => (
-            <CollabCard key={c.id} collab={c} myProfileId={undefined} />
+            <CollabCard
+              key={c.id}
+              collab={c}
+              myProfileId={isOwner ? profileId : undefined}
+              onRemove={isOwner ? (id) => removeMutation.mutate(id) : undefined}
+              removing={removeMutation.isPending && removeMutation.variables === c.id}
+            />
           ))}
         </div>
       )}
@@ -218,7 +266,13 @@ export function CollaborationsTab({ profileId, isOwner }: { profileId: string; i
             Pendientes de confirmacion
           </p>
           {pending.map((c) => (
-            <CollabCard key={c.id} collab={c} myProfileId={profileId} />
+            <CollabCard
+              key={c.id}
+              collab={c}
+              myProfileId={profileId}
+              onRemove={(id) => removeMutation.mutate(id)}
+              removing={removeMutation.isPending && removeMutation.variables === c.id}
+            />
           ))}
         </div>
       )}

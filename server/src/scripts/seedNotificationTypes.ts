@@ -22,6 +22,8 @@ const TYPES: Array<{
   { key: 'chat_message_reply',          label: 'Respuesta a mensaje',        description: 'Alguien respondio tu mensaje',                         category: 'profile' },
   { key: 'collab_request',              label: 'Propuesta de colaboracion',  description: 'Alguien te propuso una colaboracion',                  category: 'profile' },
   { key: 'collab_confirmed',            label: 'Colaboracion confirmada',    description: 'Una colaboracion que propusiste fue confirmada',        category: 'profile' },
+  { key: 'opportunity_new_application', label: 'Nueva postulacion',          description: 'Alguien se postulo a tu oportunidad',                  category: 'profile' },
+  { key: 'opportunity_closed',          label: 'Oportunidad cerrada',        description: 'Una oportunidad a la que te postulaste se cerro',       category: 'profile' },
 ]
 
 async function seed() {

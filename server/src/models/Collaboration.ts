@@ -14,6 +14,8 @@ export interface ICollaboration extends Document {
   confirmedByA: boolean
   confirmedByB: boolean
   confirmedAt?: Date
+  hiddenForFrom: boolean
+  hiddenForTo: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -32,6 +34,8 @@ const collaborationSchema = new mongoose.Schema<ICollaboration>(
     confirmedByA: { type: Boolean, default: true },
     confirmedByB: { type: Boolean, default: false },
     confirmedAt: { type: Date },
+    hiddenForFrom: { type: Boolean, default: false },
+    hiddenForTo: { type: Boolean, default: false },
   },
   { timestamps: true },
 )

@@ -218,7 +218,7 @@ export default function OpportunityDetail() {
               size="sm"
               loading={deleteMutation.isPending}
               onClick={() => {
-                if (confirm('Eliminar esta oportunidad?')) deleteMutation.mutate()
+                if (confirm('Eliminar esta oportunidad? Se notificara a los postulantes.')) deleteMutation.mutate()
               }}
               className="text-[var(--c-red)] hover:text-[var(--c-red)]"
             >

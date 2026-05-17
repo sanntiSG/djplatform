@@ -6,6 +6,7 @@ export type ActivityEventType =
   | 'media_added'
   | 'photo_added'
   | 'profile_updated'
+  | 'collab_verified'
   | 'trending_track'
   | 'trending_artist'
   | 'news_article'

@@ -140,13 +140,30 @@ export default function OpportunityNew() {
               <label className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)]">
                 Fecha (opcional)
               </label>
-              <input
-                type="date"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-                className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 font-sans text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-                style={{ colorScheme: 'dark' }}
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 font-sans text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  style={{ colorScheme: 'dark' }}
+                />
+                {eventDate && (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Limpiar fecha"
+                    onClick={() => setEventDate('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full transition-opacity hover:opacity-75"
+                    style={{ background: 'rgba(255,255,255,0.12)' }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
