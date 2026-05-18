@@ -316,7 +316,7 @@ export default function ProfileEdit() {
           </h1>
         </div>
 
-        <Tabs tabs={TABS} active={tab} onChange={setTab} className="mb-8" />
+        <Tabs tabs={TABS} active={tab} onChange={setTab} variant="pill-ios" className="mb-8" />
 
         {/* ─── INFO ─── */}
         {tab === 'info' && (
