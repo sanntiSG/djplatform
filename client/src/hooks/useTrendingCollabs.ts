@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { collaborationsService } from '../services/collaborationsService.js'
 
-export function useTrendingCollabs(days = 7) {
+export function useTrendingCollabs() {
   return useQuery({
-    queryKey: ['collaborations', 'trending', days],
-    queryFn: () => collaborationsService.listTrending(days),
+    queryKey: ['collaborations', 'trending'],
+    queryFn: () => collaborationsService.listTrending(),
     staleTime: 5 * 60_000,
     select: (data) => data.items,
   })

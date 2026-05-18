@@ -65,6 +65,6 @@ export const collaborationsService = {
   listPending: () =>
     apiClient.get<PendingCollaboration[]>('/collaborations/pending'),
 
-  listTrending: (days = 7) =>
-    apiClient.get<{ items: TrendingCollabItem[] }>(`/collaborations/trending?days=${days}`),
+  listTrending: () =>
+    apiClient.get<{ items: TrendingCollabItem[] }>('/collaborations/trending'),
 }

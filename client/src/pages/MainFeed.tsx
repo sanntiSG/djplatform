@@ -523,6 +523,7 @@ export default function MainFeed() {
   const djsRef = useRef<HTMLElement>(null)
   const forYouRef = useRef<HTMLElement>(null)
   const trendingRef = useRef<HTMLElement>(null)
+  const collabsRef = useRef<HTMLElement>(null)
   const topDJsRef = useRef<HTMLElement>(null)
   const editorialRef = useRef<HTMLElement>(null)
   const genreCardsRef = useRef<HTMLElement>(null)
@@ -565,20 +566,12 @@ export default function MainFeed() {
     return ha - hb
   }).slice(0, 28)
 
-  const trendingEvents = featuredEvents.slice(0, 4)
+  const trendingEvents = featuredEvents.slice(0, 8)
   const newsEvents = featuredEvents.slice(1, 5)
   const forYouQuery = useOpportunitiesForYou(6)
   const forYouItems = forYouQuery.data ?? []
-  const trendingCollabsQuery = useTrendingCollabs(7)
-  const trendingCollabs = trendingCollabsQuery.data ?? []
-
-  // Unified trending stream: events + collabs sorted by date desc, top 8
-  const mixedTrending = [
-    ...trendingEvents.map((e) => ({ kind: 'event' as const, date: e.date ?? e.createdAt ?? '', data: e })),
-    ...trendingCollabs.map((c) => ({ kind: 'collab' as const, date: c.confirmedAt, data: c })),
-  ]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 8)
+  const trendingCollabsQuery = useTrendingCollabs()
+  const trendingCollabs = (trendingCollabsQuery.data ?? []).slice(0, 8)
 
   const activityItems = activityQuery.data ?? []
   const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
@@ -705,10 +698,10 @@ export default function MainFeed() {
         )
       }
 
-      /* Trending grid — eventos y collabs */
+      /* Trending grid — solo eventos */
       if (trendingRef.current && !reduced) {
         gsap.fromTo(
-          '.trending-card, .collab-poster',
+          '.trending-card',
           { opacity: 0, scale: 0.92, y: 22 },
           {
             opacity: 1,
@@ -718,6 +711,23 @@ export default function MainFeed() {
             ease: 'expo.out',
             stagger: 0.07,
             scrollTrigger: { trigger: trendingRef.current, start: 'top 83%', once: true },
+          },
+        )
+      }
+
+      /* Collabs section */
+      if (collabsRef.current && !reduced) {
+        gsap.fromTo(
+          '.collab-poster',
+          { opacity: 0, scale: 0.92, y: 22 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'expo.out',
+            stagger: 0.07,
+            scrollTrigger: { trigger: collabsRef.current, start: 'top 83%', once: true },
           },
         )
       }
@@ -994,18 +1004,26 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Trending Today — eventos + collabs mezclados por fecha */}
-          {mixedTrending.length > 0 && (
+          {/* Trending — solo eventos */}
+          {trendingEvents.length > 0 && (
             <section ref={trendingRef}>
               <SectionHead kicker="Esta semana" title="Trending" href="/events" />
               <div className="mt-5 px-4 md:px-6 grid grid-cols-2 gap-3">
-                {mixedTrending.map((item, i) =>
-                  item.kind === 'event' ? (
-                    <TrendingCard key={`event-${item.data.id}`} event={item.data as EventResponse} rank={i + 1} />
-                  ) : (
-                    <CollabPoster key={`collab-${item.data.id}`} collab={item.data as any} />
-                  )
-                )}
+                {trendingEvents.map((event, i) => (
+                  <TrendingCard key={event.id} event={event} rank={i + 1} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Collabs — confirmadas recientes (TTL configurable desde admin) */}
+          {trendingCollabs.length > 0 && (
+            <section ref={collabsRef}>
+              <SectionHead kicker="Recien confirmadas" title="Collabs" />
+              <div className="mt-5 px-4 md:px-6 grid grid-cols-2 gap-3">
+                {trendingCollabs.map((collab) => (
+                  <CollabPoster key={collab.id} collab={collab} />
+                ))}
               </div>
             </section>
           )}
