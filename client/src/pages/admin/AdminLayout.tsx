@@ -27,7 +27,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <nav className="flex gap-1 border-b border-[var(--border)] pb-0">
+        <nav className="no-scrollbar flex gap-1 overflow-x-auto whitespace-nowrap border-b border-[var(--border)] pb-0">
           {NAV.map(({ to, label, end }) => (
             <NavLink
               key={to}
@@ -35,7 +35,7 @@ export default function AdminLayout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'px-4 py-2.5 font-sans text-sm font-medium border-b-2 -mb-px transition-colors duration-150',
+                  'flex-shrink-0 px-4 py-2.5 font-sans text-sm font-medium border-b-2 -mb-px transition-colors duration-150',
                   isActive
                     ? 'border-[var(--accent)] text-[var(--accent)]'
                     : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]',
