@@ -70,4 +70,7 @@ export const opportunityService = {
       `/opportunities/${opportunityId}/accept-collab`,
       params,
     ),
+
+  forYou: (limit = 6) =>
+    apiClient.get<OpportunityResponse[]>(`/opportunities/for-you?limit=${limit}`),
 }

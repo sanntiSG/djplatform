@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { optionalAuth } from '../middleware/optionalAuth.js'
-import { list, getById, create, update, remove, apply, acceptCollab } from '../controllers/opportunityController.js'
+import { list, forYou, getById, create, update, remove, apply, acceptCollab } from '../controllers/opportunityController.js'
 
 const router = Router()
 
+router.get('/for-you', requireAuth, forYou)
 router.get('/', optionalAuth, list)
 router.get('/:id', optionalAuth, getById)
 router.post('/', requireAuth, create)

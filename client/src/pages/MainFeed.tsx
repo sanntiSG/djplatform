@@ -17,6 +17,8 @@ import { NumberedListItem } from '../components/ui/NumberedListItem.js'
 import { ColorBlockCard } from '../components/ui/ColorBlockCard.js'
 import { CommentCard } from '../components/ui/CommentCard.js'
 import { SuggestionsRail } from '../components/social/SuggestionsRail.js'
+import { OpportunityMatchCard } from '../components/opportunities/OpportunityMatchCard.js'
+import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import type { ReactNode } from 'react'
 import type { ProfileResponse, EventResponse } from '../types/index.js'
@@ -517,6 +519,7 @@ export default function MainFeed() {
   const pageRef = useRef<HTMLDivElement>(null)
   const musicLibRef = useRef<HTMLElement>(null)
   const djsRef = useRef<HTMLElement>(null)
+  const forYouRef = useRef<HTMLElement>(null)
   const trendingRef = useRef<HTMLElement>(null)
   const topDJsRef = useRef<HTMLElement>(null)
   const editorialRef = useRef<HTMLElement>(null)
@@ -562,6 +565,9 @@ export default function MainFeed() {
 
   const trendingEvents = featuredEvents.slice(0, 4)
   const newsEvents = featuredEvents.slice(1, 5)
+  const forYouQuery = useOpportunitiesForYou(6)
+  const forYouItems = forYouQuery.data ?? []
+
   const activityItems = activityQuery.data ?? []
   const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
     ?? allAvailable.find((p) => p.bio && p.bio.length > 40)
@@ -596,6 +602,31 @@ export default function MainFeed() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  /* For-you cards — separate effect so it fires when data arrives */
+  useEffect(() => {
+    if (!forYouRef.current || forYouItems.length === 0) return
+    const reduced = prefersReducedMotion()
+    const ctx = gsap.context(() => {
+      if (!reduced) {
+        gsap.fromTo(
+          '.for-you-card',
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: 'power3.out',
+            stagger: 0.08,
+            scrollTrigger: { trigger: forYouRef.current!, start: 'top 85%', once: true },
+          },
+        )
+      } else {
+        gsap.fromTo('.for-you-card', { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.05 })
+      }
+    }, forYouRef)
+    return () => ctx.revert()
+  }, [forYouItems.length])
 
   /* Main GSAP animations */
   useEffect(() => {
@@ -928,6 +959,28 @@ export default function MainFeed() {
 
           {/* Sugerencias de colaboracion — solo para usuarios con sesion */}
           {user && <SuggestionsRail />}
+
+          {/* Podria interesarte — oportunidades que coinciden con los roles del usuario */}
+          {user && forYouItems.length > 0 && (
+            <section ref={forYouRef}>
+              <SectionHead kicker="Para vos" title="Podria interesarte" href="/oportunidades" />
+              <div className="mt-5 px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {forYouItems.map((opp) => {
+                  const matchedRoles = opp.lookingForRoles.filter(
+                    (r) => myProfile?.roles?.includes(r) ?? false,
+                  )
+                  return (
+                    <div key={opp.id} className="for-you-card">
+                      <OpportunityMatchCard
+                        opportunity={opp}
+                        matchedRoles={matchedRoles}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Trending Today */}
           {trendingEvents.length > 0 && (

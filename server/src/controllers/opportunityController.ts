@@ -57,6 +57,44 @@ function serialize(
   }
 }
 
+export async function forYou(req: Request, res: Response, next: NextFunction) {
+  try {
+    const limit = Math.min(Number(req.query.limit ?? 6), 20)
+    const userProfile = await Profile.findOne({ userId: req.user!.id }).select('roles').lean()
+    const userRoles: string[] = userProfile?.roles ?? []
+
+    if (userRoles.length === 0) {
+      res.json([])
+      return
+    }
+
+    const items = await Opportunity.aggregate([
+      {
+        $match: {
+          isVisible: true,
+          status: 'open',
+          userId: { $ne: req.user!.id },
+          applicantIds: { $ne: req.user!.id },
+        },
+      },
+      {
+        $addFields: {
+          matchScore: {
+            $size: { $setIntersection: ['$lookingForRoles', userRoles] },
+          },
+        },
+      },
+      { $match: { matchScore: { $gte: 1 } } },
+      { $sort: { matchScore: -1, createdAt: -1 } },
+      { $limit: limit },
+    ])
+
+    res.json(items.map((o) => serialize(o as any, req.user!.id)))
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const { role, genre, location, isRemote, isPaid, status = 'open', limit = '20', cursor } = req.query as Record<string, string>
