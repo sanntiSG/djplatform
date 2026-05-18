@@ -24,7 +24,7 @@ export function CollabPoster({ collab }: Props) {
 
   return (
     <Link
-      to={`/p/${collab.fromProfileId}`}
+      to="/oportunidades"
       className="collab-poster group relative overflow-hidden rounded-[var(--radius-md)] block"
       style={{ height: 148 }}
     >
