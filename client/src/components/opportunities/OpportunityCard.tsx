@@ -1,14 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { OpportunityResponse } from '../../services/opportunityService.js'
-
-const ROLE_LABEL: Record<string, string> = {
-  dj: 'DJ',
-  producer: 'Productor',
-  vocalist: 'Vocalista',
-  designer: 'Disenador',
-  organizer: 'Organizador',
-  visuals: 'Visuales',
-}
+import { roleLabel } from '@dj/shared'
 
 interface Props {
   opportunity: OpportunityResponse
@@ -71,7 +63,7 @@ export function OpportunityCard({ opportunity: o }: Props) {
               className="rounded-full px-2.5 py-0.5 font-sans text-xs font-medium"
               style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}
             >
-              {ROLE_LABEL[r] ?? r}
+              {roleLabel(r)}
             </span>
           ))}
         </div>

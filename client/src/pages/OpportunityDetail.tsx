@@ -3,15 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { opportunityService, type OpportunityApplicant } from '../services/opportunityService.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { Button } from '../components/ui/Button.js'
-
-const ROLE_LABEL: Record<string, string> = {
-  dj: 'DJ',
-  producer: 'Productor',
-  vocalist: 'Vocalista',
-  designer: 'Disenador',
-  organizer: 'Organizador',
-  visuals: 'Visuales',
-}
+import { roleLabel } from '@dj/shared'
 
 export default function OpportunityDetail() {
   const { id } = useParams<{ id: string }>()
@@ -114,7 +106,7 @@ export default function OpportunityDetail() {
         <div className="flex flex-wrap gap-2 mb-6">
           {opp.lookingForRoles.map((r) => (
             <span key={r} className="rounded-full px-3 py-1 font-sans text-xs font-medium" style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}>
-              {ROLE_LABEL[r] ?? r}
+              {roleLabel(r)}
             </span>
           ))}
           {opp.isPaid && (

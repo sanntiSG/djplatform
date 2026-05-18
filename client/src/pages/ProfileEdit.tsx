@@ -22,6 +22,7 @@ import { Toggle } from '../components/ui/Toggle.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion } from '../utils/motion.js'
 import type { CreateProfileInput, MediaItem, Photo, ProfileTheme } from '../types/index.js'
+import { ROLE_OPTIONS } from '@dj/shared'
 
 const TABS = [
   { id: 'info', label: 'Informacion' },
@@ -32,14 +33,6 @@ const TABS = [
   { id: 'visual', label: 'Visual' },
 ]
 
-const ROLE_OPTIONS = [
-  { id: 'dj', label: 'DJ' },
-  { id: 'producer', label: 'Productor' },
-  { id: 'vocalist', label: 'Vocalista' },
-  { id: 'designer', label: 'Disenador' },
-  { id: 'organizer', label: 'Organizador' },
-  { id: 'visuals', label: 'Visuales' },
-]
 
 const INTENT_OPTIONS = [
   { id: 'collab', label: 'Colaboraciones' },

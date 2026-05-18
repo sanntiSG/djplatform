@@ -9,17 +9,13 @@ import { useAuthStore } from '../store/useAuthStore.js'
 import { Button } from '../components/ui/Button.js'
 import { prefersReducedMotion } from '../utils/motion.js'
 import { cn } from '../utils/cn.js'
+import { ROLE_OPTIONS } from '@dj/shared'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const ROLE_FILTERS = [
   { id: '', label: 'Todos' },
-  { id: 'dj', label: 'DJ' },
-  { id: 'producer', label: 'Productor' },
-  { id: 'vocalist', label: 'Vocalista' },
-  { id: 'designer', label: 'Disenador' },
-  { id: 'organizer', label: 'Organizador' },
-  { id: 'visuals', label: 'Visuales' },
+  ...ROLE_OPTIONS.map((r) => ({ id: r.id, label: r.label })),
 ]
 
 export default function Opportunities() {

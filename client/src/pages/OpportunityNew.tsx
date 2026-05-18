@@ -5,15 +5,7 @@ import { Button } from '../components/ui/Button.js'
 import { Toggle } from '../components/ui/Toggle.js'
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
 import { cn } from '../utils/cn.js'
-
-const ROLE_OPTIONS = [
-  { id: 'dj', label: 'DJ' },
-  { id: 'producer', label: 'Productor' },
-  { id: 'vocalist', label: 'Vocalista' },
-  { id: 'designer', label: 'Disenador' },
-  { id: 'organizer', label: 'Organizador' },
-  { id: 'visuals', label: 'Visuales' },
-]
+import { ROLE_OPTIONS } from '@dj/shared'
 
 export default function OpportunityNew() {
   const navigate = useNavigate()

@@ -6,15 +6,7 @@ import { profileService, type SuggestionResult } from '../../services/profileSer
 import { conversationsService } from '../../services/conversationsService.js'
 import { profilePath } from '../../utils/slug.js'
 import { prefersReducedMotion } from '../../utils/motion.js'
-
-const ROLE_LABEL: Record<string, string> = {
-  dj: 'DJ',
-  producer: 'Prod',
-  vocalist: 'Voc',
-  designer: 'Dis',
-  organizer: 'Org',
-  visuals: 'VJ',
-}
+import { roleLabel } from '@dj/shared'
 
 function SuggestionCard({ suggestion, onSaludar }: {
   suggestion: SuggestionResult
@@ -81,7 +73,7 @@ function SuggestionCard({ suggestion, onSaludar }: {
                 className="font-sans text-[9px] font-medium px-1.5 py-0.5 rounded-full"
                 style={{ background: 'rgba(212,255,0,0.08)', color: 'var(--accent)' }}
               >
-                {ROLE_LABEL[r] ?? r}
+                {roleLabel(r)}
               </span>
             ))}
           </div>
