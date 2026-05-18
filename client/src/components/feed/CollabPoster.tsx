@@ -1,33 +1,12 @@
 import { Link } from 'react-router-dom'
 import type { TrendingCollabItem } from '../../services/collaborationsService.js'
 
-const TYPE_CONFIG: Record<string, { label: string; color: string; muted: string }> = {
-  track:       { label: 'Track',    color: 'var(--accent)',   muted: 'var(--accent-muted)' },
-  event:       { label: 'Evento',   color: 'var(--c-pink)',   muted: 'var(--c-pink-muted)' },
-  visual:      { label: 'Visual',   color: 'var(--c-purple)', muted: 'var(--c-purple-muted)' },
-  opportunity: { label: 'Proyecto', color: 'var(--c-teal)',   muted: 'var(--c-teal-muted)' },
-  other:       { label: 'Collab',   color: 'var(--c-orange)', muted: 'var(--c-orange-muted)' },
-}
-
-function AvatarCircle({ src, name, size }: { src?: string; name: string; size: number }) {
-  const initials = name.charAt(0).toUpperCase()
-  return src ? (
-    <img
-      src={src}
-      alt={name}
-      width={size}
-      height={size}
-      className="rounded-full object-cover flex-shrink-0"
-      style={{ width: size, height: size, boxShadow: '0 0 0 2px var(--surface-elevated)' }}
-    />
-  ) : (
-    <div
-      className="rounded-full bg-[var(--surface)] flex items-center justify-center flex-shrink-0"
-      style={{ width: size, height: size, boxShadow: '0 0 0 2px var(--surface-elevated)' }}
-    >
-      <span className="font-display text-xs font-bold text-[var(--text-muted)]">{initials}</span>
-    </div>
-  )
+const TYPE_CONFIG: Record<string, { label: string; color: string; fallbackGradient: string }> = {
+  track:       { label: 'Track',    color: 'var(--accent)',   fallbackGradient: 'linear-gradient(135deg, #d4ff00 0%, #08080a 100%)' },
+  event:       { label: 'Evento',   color: 'var(--c-pink)',   fallbackGradient: 'linear-gradient(135deg, var(--c-pink) 0%, #08080a 100%)' },
+  visual:      { label: 'Visual',   color: 'var(--c-purple)', fallbackGradient: 'linear-gradient(135deg, var(--c-purple) 0%, #08080a 100%)' },
+  opportunity: { label: 'Proyecto', color: 'var(--c-teal)',   fallbackGradient: 'linear-gradient(135deg, var(--c-teal) 0%, #08080a 100%)' },
+  other:       { label: 'Collab',   color: 'var(--c-orange)', fallbackGradient: 'linear-gradient(135deg, var(--c-orange) 0%, #08080a 100%)' },
 }
 
 interface Props {
@@ -38,6 +17,10 @@ export function CollabPoster({ collab }: Props) {
   const cfg = TYPE_CONFIG[collab.type ?? 'other'] ?? TYPE_CONFIG.other
   const nameA = collab.fromArtistName
   const nameB = collab.toArtistName
+  const hasA = Boolean(collab.fromAvatar)
+  const hasB = Boolean(collab.toAvatar)
+  const hasBoth = hasA && hasB
+  const hasAny = hasA || hasB
 
   return (
     <Link
@@ -45,82 +28,100 @@ export function CollabPoster({ collab }: Props) {
       className="collab-poster group relative overflow-hidden rounded-[var(--radius-md)] block"
       style={{ height: 148 }}
     >
-      {/* Tinted background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundColor: 'var(--surface-elevated)',
-          background: `radial-gradient(ellipse at 10% 50%, ${cfg.muted} 0%, transparent 65%), var(--surface-elevated)`,
-        }}
-      />
-
-      {/* Hover ring */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[var(--radius-md)]"
-        style={{ boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${cfg.color} 30%, transparent)` }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex gap-3 p-3">
-
-        {/* Left — avatars */}
-        <div className="flex flex-col justify-center items-center flex-shrink-0">
-          <div className="relative" style={{ width: 52 }}>
-            <AvatarCircle src={collab.fromAvatar} name={nameA} size={34} />
-            <div className="absolute" style={{ top: 18, left: 18 }}>
-              <AvatarCircle src={collab.toAvatar} name={nameB} size={34} />
-            </div>
+      {/* Background layer — image-first */}
+      {hasBoth ? (
+        <div className="absolute inset-0 flex">
+          <div className="relative w-1/2 h-full overflow-hidden">
+            <img
+              src={collab.fromAvatar}
+              alt={nameA}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+              style={{ filter: 'brightness(0.55) contrast(1.12)' }}
+            />
           </div>
-        </div>
-
-        {/* Right — editorial text */}
-        <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
-
-          {/* Top: badge + type label */}
-          <div className="flex items-start justify-between gap-1">
-            <span
-              className="font-sans text-[8px] uppercase tracking-[0.2em] font-semibold px-1.5 py-0.5 rounded"
-              style={{ color: cfg.color, background: cfg.muted, lineHeight: 1.8 }}
-            >
-              Collab
-            </span>
-            <span
-              className="font-display font-bold uppercase leading-none tracking-tight flex-shrink-0"
-              style={{ fontSize: 'clamp(1.05rem, 3vw, 1.35rem)', color: cfg.color }}
-            >
-              {cfg.label}
-            </span>
-          </div>
-
-          {/* Middle: artist names */}
-          <div className="flex-1 flex items-center">
-            <p
-              className="font-sans font-semibold leading-tight text-[var(--text)] group-hover:text-[var(--text)] transition-colors duration-200 w-full"
-              style={{ fontSize: '0.7rem' }}
-            >
-              <span className="truncate block">
-                {nameA}
-                <span style={{ color: cfg.color }}> x </span>
-                {nameB}
-              </span>
-            </p>
-          </div>
-
-          {/* Bottom: collab title + accent line */}
-          <div>
-            <p
-              className="font-sans text-[var(--text-muted)] leading-tight truncate"
-              style={{ fontSize: '0.62rem' }}
-            >
-              {collab.title}
-            </p>
-            <div
-              className="mt-2 h-px w-0 group-hover:w-full transition-all duration-500 ease-out"
-              style={{ background: cfg.color }}
+          {/* Hairline divider */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-px z-10" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <div className="relative w-1/2 h-full overflow-hidden">
+            <img
+              src={collab.toAvatar}
+              alt={nameB}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+              style={{ filter: 'brightness(0.55) contrast(1.12)' }}
             />
           </div>
         </div>
+      ) : hasAny ? (
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={hasA ? collab.fromAvatar : collab.toAvatar}
+            alt={hasA ? nameA : nameB}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+            style={{ filter: 'brightness(0.55) contrast(1.12)' }}
+          />
+        </div>
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{ background: cfg.fallbackGradient, opacity: 0.55 }}
+        />
+      )}
+
+      {/* Dark gradient overlay */}
+      <div
+        className="absolute inset-0 z-[1]"
+        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.18), rgba(0,0,0,0.78))' }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col justify-between p-3">
+
+        {/* Top — kicker + live dot */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="font-sans uppercase tracking-widest text-white/70 leading-none"
+            style={{ fontSize: '10px' }}
+          >
+            COLLAB
+            <span style={{ color: cfg.color }}> · </span>
+            {cfg.label.toUpperCase()}
+          </span>
+          <span
+            className="flex-shrink-0 rounded-full collab-live-dot"
+            style={{
+              width: 6,
+              height: 6,
+              background: cfg.color,
+              animation: 'collab-pulse 2.4s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Bottom — names + title */}
+        <div>
+          <p className="font-display font-semibold text-white text-sm leading-tight tracking-tight line-clamp-2">
+            {nameA} &times; {nameB}
+          </p>
+          {collab.title && (
+            <p
+              className="font-sans text-white/55 mt-0.5 truncate"
+              style={{ fontSize: '11px' }}
+            >
+              {collab.title}
+            </p>
+          )}
+        </div>
       </div>
+
+      <style>{`
+        @keyframes collab-pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .collab-live-dot { animation: none !important; }
+          .collab-poster img { transition: none !important; }
+        }
+      `}</style>
     </Link>
   )
 }
