@@ -203,7 +203,10 @@ export async function cleanupInactive(req: Request, res: Response, next: NextFun
 export async function getSystem(req: Request, res: Response, next: NextFunction) {
   try {
     const settings = await getSettings()
-    res.json({ trendingRefreshMinutes: settings.trendingRefreshMinutes })
+    res.json({
+      trendingRefreshMinutes: settings.trendingRefreshMinutes,
+      collabsFeedTtlHours: settings.collabsFeedTtlHours ?? 8,
+    })
   } catch (err) {
     next(err)
   }
@@ -211,12 +214,18 @@ export async function getSystem(req: Request, res: Response, next: NextFunction)
 
 export async function updateSystem(req: Request, res: Response, next: NextFunction) {
   try {
-    const { trendingRefreshMinutes } = z
-      .object({ trendingRefreshMinutes: z.number().int().min(1).max(1440) })
+    const { trendingRefreshMinutes, collabsFeedTtlHours } = z
+      .object({
+        trendingRefreshMinutes: z.number().int().min(1).max(1440),
+        collabsFeedTtlHours: z.number().int().min(1).max(168).optional(),
+      })
       .parse(req.body)
-    const settings = await updateSettings({ trendingRefreshMinutes })
+    const settings = await updateSettings({ trendingRefreshMinutes, collabsFeedTtlHours })
     restartTrendingCron(trendingRefreshMinutes)
-    res.json({ trendingRefreshMinutes: settings.trendingRefreshMinutes })
+    res.json({
+      trendingRefreshMinutes: settings.trendingRefreshMinutes,
+      collabsFeedTtlHours: settings.collabsFeedTtlHours ?? 8,
+    })
   } catch (err) {
     next(err)
   }

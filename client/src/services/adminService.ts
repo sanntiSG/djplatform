@@ -97,6 +97,7 @@ export const adminService = {
 
 export interface SystemSettings {
   trendingRefreshMinutes: number
+  collabsFeedTtlHours: number
 }
 
 export interface AdminNotificationType {

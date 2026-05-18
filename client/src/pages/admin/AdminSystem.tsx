@@ -8,15 +8,23 @@ export default function AdminSystem() {
   const { mutate, isPending, isSuccess, isError } = useUpdateSystemSettings()
 
   const [minutes, setMinutes] = useState<number | ''>(1)
+  const [hours, setHours] = useState<number | ''>(8)
 
   useEffect(() => {
-    if (settings) setMinutes(settings.trendingRefreshMinutes)
+    if (settings) {
+      setMinutes(settings.trendingRefreshMinutes)
+      setHours(settings.collabsFeedTtlHours ?? 8)
+    }
   }, [settings])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!minutes || Number(minutes) < 1 || Number(minutes) > 1440) return
-    mutate({ trendingRefreshMinutes: Number(minutes) })
+    if (!hours || Number(hours) < 1 || Number(hours) > 168) return
+    mutate({
+      trendingRefreshMinutes: Number(minutes),
+      collabsFeedTtlHours: Number(hours),
+    })
   }
 
   return (
@@ -54,19 +62,44 @@ export default function AdminSystem() {
           </p>
         </div>
 
+        <div className="h-px bg-[var(--border)]" />
+
+        <div className="flex flex-col gap-2">
+          <label className="font-sans text-xs uppercase tracking-widest text-[var(--text-muted)]">
+            Vigencia de collabs en el feed
+          </label>
+          <div className="flex items-center gap-3">
+            <div className="w-32">
+              <Input
+                type="number"
+                min={1}
+                max={168}
+                value={hours}
+                onChange={e => setHours(e.target.value === '' ? '' : Number(e.target.value))}
+                disabled={isLoading || isPending}
+              />
+            </div>
+            <span className="font-sans text-sm text-[var(--text-muted)]">horas</span>
+          </div>
+          <p className="font-sans text-xs text-[var(--text-muted)]">
+            Cuanto tiempo permanecen visibles las colaboraciones recientes en la seccion "Collabs" del feed principal.
+            Default 8h, maximo 168h (1 semana). Las colaboraciones no se borran — solo dejan de aparecer en el feed.
+          </p>
+        </div>
+
         <div className="flex items-center gap-4 pt-2 border-t border-[var(--border)]">
           <Button
             type="submit"
             variant="primary"
             size="sm"
             loading={isPending}
-            disabled={isLoading || !minutes}
+            disabled={isLoading || !minutes || !hours}
           >
             Guardar
           </Button>
           {isSuccess && (
             <span className="font-sans text-xs text-green-400">
-              Intervalo actualizado
+              Configuracion actualizada
             </span>
           )}
           {isError && (

@@ -5,6 +5,7 @@ import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
 import { create as createNotification } from '../services/notificationService.js'
+import { getSettings } from '../services/systemSettingsService.js'
 
 const RequestSchema = z.object({
   toProfileId: z.string().min(1),
@@ -206,8 +207,9 @@ export async function listForProfile(req: Request, res: Response, next: NextFunc
 
 export async function listTrending(req: Request, res: Response, next: NextFunction) {
   try {
-    const days = Math.min(Number(req.query.days ?? 7), 30)
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    const settings = await getSettings()
+    const hours = settings.collabsFeedTtlHours ?? 8
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000)
 
     const collabs = await Collaboration.find({
       confirmedByA: true,
