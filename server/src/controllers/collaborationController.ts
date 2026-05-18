@@ -204,6 +204,45 @@ export async function listForProfile(req: Request, res: Response, next: NextFunc
   }
 }
 
+export async function listTrending(req: Request, res: Response, next: NextFunction) {
+  try {
+    const days = Math.min(Number(req.query.days ?? 7), 30)
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+    const collabs = await Collaboration.find({
+      confirmedByA: true,
+      confirmedByB: true,
+      confirmedAt: { $gte: since },
+    })
+      .sort({ confirmedAt: -1 })
+      .limit(20)
+      .lean()
+
+    if (collabs.length === 0) { res.json({ items: [] }); return }
+
+    const profileIds = [...new Set(collabs.flatMap((c) => [c.fromProfileId.toString(), c.toProfileId.toString()]))]
+    const profiles = await Profile.find({ _id: { $in: profileIds } }).select('artistName avatar').lean()
+    const profileMap = Object.fromEntries(profiles.map((p) => [p._id.toString(), p]))
+
+    res.json({
+      items: collabs.map((c) => ({
+        id: c._id.toString(),
+        fromArtistName: profileMap[c.fromProfileId.toString()]?.artistName ?? '?',
+        fromAvatar: profileMap[c.fromProfileId.toString()]?.avatar,
+        toArtistName: profileMap[c.toProfileId.toString()]?.artistName ?? '?',
+        toAvatar: profileMap[c.toProfileId.toString()]?.avatar,
+        title: c.title,
+        type: c.type,
+        confirmedAt: c.confirmedAt ? new Date(c.confirmedAt).toISOString() : new Date().toISOString(),
+        fromProfileId: c.fromProfileId.toString(),
+        toProfileId: c.toProfileId.toString(),
+      })),
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function listPending(req: Request, res: Response, next: NextFunction) {
   try {
     const myProfile = await Profile.findOne({ userId: req.user!.id }).lean()

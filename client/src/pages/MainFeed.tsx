@@ -18,7 +18,9 @@ import { ColorBlockCard } from '../components/ui/ColorBlockCard.js'
 import { CommentCard } from '../components/ui/CommentCard.js'
 import { SuggestionsRail } from '../components/social/SuggestionsRail.js'
 import { OpportunityMatchCard } from '../components/opportunities/OpportunityMatchCard.js'
+import { CollabPoster } from '../components/feed/CollabPoster.js'
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
+import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import type { ReactNode } from 'react'
 import type { ProfileResponse, EventResponse } from '../types/index.js'
@@ -567,6 +569,16 @@ export default function MainFeed() {
   const newsEvents = featuredEvents.slice(1, 5)
   const forYouQuery = useOpportunitiesForYou(6)
   const forYouItems = forYouQuery.data ?? []
+  const trendingCollabsQuery = useTrendingCollabs(7)
+  const trendingCollabs = trendingCollabsQuery.data ?? []
+
+  // Unified trending stream: events + collabs sorted by date desc, top 8
+  const mixedTrending = [
+    ...trendingEvents.map((e) => ({ kind: 'event' as const, date: e.date ?? e.createdAt ?? '', data: e })),
+    ...trendingCollabs.map((c) => ({ kind: 'collab' as const, date: c.confirmedAt, data: c })),
+  ]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 8)
 
   const activityItems = activityQuery.data ?? []
   const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
@@ -693,10 +705,10 @@ export default function MainFeed() {
         )
       }
 
-      /* Trending grid */
+      /* Trending grid — eventos y collabs */
       if (trendingRef.current && !reduced) {
         gsap.fromTo(
-          '.trending-card',
+          '.trending-card, .collab-poster',
           { opacity: 0, scale: 0.92, y: 22 },
           {
             opacity: 1,
@@ -982,14 +994,18 @@ export default function MainFeed() {
             </section>
           )}
 
-          {/* Trending Today */}
-          {trendingEvents.length > 0 && (
+          {/* Trending Today — eventos + collabs mezclados por fecha */}
+          {mixedTrending.length > 0 && (
             <section ref={trendingRef}>
               <SectionHead kicker="Esta semana" title="Trending" href="/events" />
               <div className="mt-5 px-4 md:px-6 grid grid-cols-2 gap-3">
-                {trendingEvents.map((event, i) => (
-                  <TrendingCard key={event.id} event={event} rank={i + 1} />
-                ))}
+                {mixedTrending.map((item, i) =>
+                  item.kind === 'event' ? (
+                    <TrendingCard key={`event-${item.data.id}`} event={item.data as EventResponse} rank={i + 1} />
+                  ) : (
+                    <CollabPoster key={`collab-${item.data.id}`} collab={item.data as any} />
+                  )
+                )}
               </div>
             </section>
           )}

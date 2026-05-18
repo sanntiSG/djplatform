@@ -29,6 +29,19 @@ export interface PendingCollaboration {
   createdAt: string
 }
 
+export interface TrendingCollabItem {
+  id: string
+  fromArtistName: string
+  fromAvatar?: string
+  toArtistName: string
+  toAvatar?: string
+  fromProfileId: string
+  toProfileId: string
+  title: string
+  type?: 'track' | 'event' | 'visual' | 'other' | 'opportunity'
+  confirmedAt: string
+}
+
 export interface RequestCollabInput {
   toProfileId: string
   title: string
@@ -51,4 +64,7 @@ export const collaborationsService = {
 
   listPending: () =>
     apiClient.get<PendingCollaboration[]>('/collaborations/pending'),
+
+  listTrending: (days = 7) =>
+    apiClient.get<{ items: TrendingCollabItem[] }>(`/collaborations/trending?days=${days}`),
 }
