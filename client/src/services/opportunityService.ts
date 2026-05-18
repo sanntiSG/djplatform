@@ -62,8 +62,8 @@ export const opportunityService = {
   remove: (id: string) =>
     apiClient.delete<{ ok: boolean }>(`/opportunities/${id}`),
 
-  apply: (id: string) =>
-    apiClient.post<{ conversationId: string }>(`/opportunities/${id}/apply`, {}),
+  apply: (id: string, message?: string) =>
+    apiClient.post<{ conversationId: string }>(`/opportunities/${id}/apply`, { message }),
 
   acceptCollab: (opportunityId: string, params: { collaboratorProfileId?: string; collaboratorUserId?: string }) =>
     apiClient.post<{ ok: boolean; collaborationId: string }>(

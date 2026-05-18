@@ -247,8 +247,13 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+const ApplySchema = z.object({
+  message: z.string().max(280).optional(),
+})
+
 export async function apply(req: Request, res: Response, next: NextFunction) {
   try {
+    const { message: customMessage } = ApplySchema.parse(req.body)
     const opp = await Opportunity.findById(parseObjectId(req.params.id))
     if (!opp || !opp.isVisible || opp.status !== 'open') {
       res.status(404).json({ error: 'Oportunidad no disponible' })
@@ -263,7 +268,8 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
     const conv = await findOrCreateConversation(req.user!.id, opp.userId.toString())
     const convId = (conv._id as any).toString()
 
-    const message = `Hola ${opp.artistName}, vi tu oportunidad "${opp.title}" en REsonar y me gustaria conectarme para hablar mas. Me podes contar mas detalles?`
+    const message = customMessage?.trim()
+      || `Hola ${opp.artistName}, vi tu oportunidad "${opp.title}" en REsonar y me gustaria conectarme para hablar mas. Me podes contar mas detalles?`
 
     await sendMessage(convId, req.user!.id, message, undefined, {
       type: 'opportunity',
@@ -281,7 +287,7 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
       createNotification(opp.userId.toString(), 'opportunity_new_application', {
         actorId: req.user!.id,
         payload: { title: opp.title },
-        url: `/oportunidades/${opp._id}`,
+        url: `/oportunidades/${opp._id}?focus=applicants`,
       }).catch(() => {})
     }
 
