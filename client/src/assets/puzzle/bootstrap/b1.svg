@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <radialGradient id="g1" cx="30%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#d4ff00" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#08080a"/>
+      <stop offset="100%" stop-color="#0a0a0e"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="80%" cy="75%" r="55%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="600" fill="#08080a"/>
+  <rect width="600" height="600" fill="url(#g1)"/>
+  <rect width="600" height="600" fill="url(#g2)"/>
+  <circle cx="300" cy="300" r="160" fill="none" stroke="#d4ff00" stroke-width="1.5" stroke-opacity="0.25"/>
+  <circle cx="300" cy="300" r="220" fill="none" stroke="#d4ff00" stroke-width="0.8" stroke-opacity="0.1"/>
+  <text x="300" y="290" text-anchor="middle" font-family="'Clash Display', sans-serif" font-size="96" font-weight="700" fill="#d4ff00" letter-spacing="-4">RE</text>
+  <text x="300" y="370" text-anchor="middle" font-family="'Clash Display', sans-serif" font-size="28" font-weight="500" fill="#f2f2f7" letter-spacing="12" opacity="0.6">SONAR</text>
+</svg>

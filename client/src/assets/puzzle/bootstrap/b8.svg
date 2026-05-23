@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="g1" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1f"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <radialGradient id="g2" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#d4ff00" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#d4ff00" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#g1)"/>
+  <rect width="600" height="600" fill="url(#g2)"/>
+  <text x="300" y="260" text-anchor="middle" font-family="'Clash Display', sans-serif" font-size="140" font-weight="700" fill="#d4ff00" letter-spacing="-6" opacity="0.95">DJ</text>
+  <text x="300" y="360" text-anchor="middle" font-family="'Clash Display', sans-serif" font-size="32" font-weight="500" fill="#f2f2f7" letter-spacing="18" opacity="0.5">PLATFORM</text>
+  <rect x="100" y="390" width="400" height="1.5" fill="#d4ff00" opacity="0.35"/>
+</svg>
