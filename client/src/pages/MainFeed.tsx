@@ -13,6 +13,7 @@ import { prefersReducedMotion, magneticHover, tiltCard } from '../utils/motion.j
 import { genreToColor, stringToColor, COLOR_VAR } from '../utils/colors.js'
 import SplashScreen from '../components/ui/SplashScreen.js'
 import { PuzzleLoader } from '../components/loading/PuzzleLoader.js'
+import { PuzzleSection } from '../components/feed/PuzzleSection.js'
 import { useDelayedPending } from '../hooks/useDelayedPending.js'
 import { RainbowPill } from '../components/ui/RainbowPill.js'
 import { NumberedListItem } from '../components/ui/NumberedListItem.js'
@@ -1012,6 +1013,9 @@ export default function MainFeed() {
               </div>
             </section>
           )}
+
+          {/* Puzzle interactivo */}
+          <PuzzleSection />
 
           {/* Trending — solo eventos */}
           {trendingEvents.length > 0 && (
