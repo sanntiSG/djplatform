@@ -7,6 +7,8 @@ import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
 import { findOrCreateConversation, sendMessage } from '../services/conversationService.js'
 import { create as createNotification } from '../services/notificationService.js'
+import { io, isUserViewingConversation } from '../realtime/io.js'
+import { logger } from '../utils/logger.js'
 
 const CreateOpportunitySchema = z.object({
   title: z.string().min(3).max(100),
@@ -265,13 +267,14 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
       return
     }
 
-    const conv = await findOrCreateConversation(req.user!.id, opp.userId.toString())
+    const senderId = req.user!.id
+    const conv = await findOrCreateConversation(senderId, opp.userId.toString())
     const convId = (conv._id as any).toString()
 
-    const message = customMessage?.trim()
+    const messageBody = customMessage?.trim()
       || `Hola ${opp.artistName}, vi tu oportunidad "${opp.title}" en REsonar y me gustaria conectarme para hablar mas. Me podes contar mas detalles?`
 
-    await sendMessage(convId, req.user!.id, message, undefined, {
+    const { message: sentMessage, recipientId } = await sendMessage(convId, senderId, messageBody, undefined, {
       type: 'opportunity',
       opportunityId: opp._id.toString(),
       title: opp.title,
@@ -279,13 +282,26 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
       status: opp.status,
     })
 
-    const alreadyApplied = opp.applicantIds.some((id) => id.toString() === req.user!.id)
+    // Emit real-time message to both participants
+    io.to(`user:${senderId}`).emit('message:new', { conversationId: convId, message: sentMessage })
+    if (recipientId) {
+      io.to(`user:${recipientId}`).emit('message:new', { conversationId: convId, message: sentMessage })
+      if (!isUserViewingConversation(recipientId, convId)) {
+        createNotification(recipientId, 'chat_message_new', {
+          actorId: senderId,
+          payload: { conversationId: convId, preview: messageBody.slice(0, 80) },
+          url: `/me/mensajes/${convId}`,
+        }).catch((err: unknown) => logger.error('Error creando notif de chat en apply', err))
+      }
+    }
+
+    const alreadyApplied = opp.applicantIds.some((id) => id.toString() === senderId)
     if (!alreadyApplied) {
-      opp.applicantIds.push(req.user!.id as any)
+      opp.applicantIds.push(senderId as any)
       await opp.save()
 
       createNotification(opp.userId.toString(), 'opportunity_new_application', {
-        actorId: req.user!.id,
+        actorId: senderId,
         payload: { title: opp.title },
         url: `/oportunidades/${opp._id}?focus=applicants`,
       }).catch(() => {})
