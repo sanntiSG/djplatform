@@ -29,8 +29,17 @@ export function usePuzzleImages() {
     const cached = getPool()
     return cached && cached.length >= 9 ? shuffle(cached) : shuffle(BOOTSTRAP_IMAGES)
   })
-  const indexRef = useRef(0)
+
+  // Tracks recently served image URLs to avoid immediate repetition
+  const recentRef = useRef<string[]>([])
   const fetchedRef = useRef(false)
+
+  // Seed the first pool image into recent on mount / pool change
+  useEffect(() => {
+    if (pool.length > 0 && recentRef.current.length === 0) {
+      recentRef.current = [pool[0].imageUrl]
+    }
+  }, [pool])
 
   // Background fetch — non-blocking, updates pool when server responds
   useEffect(() => {
@@ -46,7 +55,6 @@ export function usePuzzleImages() {
         if (images.length >= 9) {
           savePool(images, ttlSeconds * 1000)
           setPool(shuffle(images))
-          indexRef.current = 0
         }
       })
       .catch(() => {
@@ -54,12 +62,24 @@ export function usePuzzleImages() {
       })
   }, [])
 
-  const currentImage = pool[indexRef.current % pool.length]
-
   const nextImage = useCallback(() => {
-    indexRef.current = (indexRef.current + 1) % pool.length
-    return pool[indexRef.current]
+    const recent = new Set(recentRef.current)
+    const candidates = pool.filter(p => !recent.has(p.imageUrl))
+    const last = recentRef.current[recentRef.current.length - 1] ?? ''
+    // If the whole pool is in recent (small pool), pick anything except the last shown
+    const fromList = candidates.length > 0
+      ? candidates
+      : pool.filter(p => p.imageUrl !== last)
+    const next = fromList.length > 0
+      ? fromList[Math.floor(Math.random() * fromList.length)]
+      : pool[0]
+
+    recentRef.current.push(next.imageUrl)
+    const maxRecent = Math.max(2, Math.floor(pool.length / 3))
+    if (recentRef.current.length > maxRecent) recentRef.current.shift()
+
+    return next
   }, [pool])
 
-  return { currentImage, nextImage, pool }
+  return { currentImage: pool[0], nextImage, pool }
 }
