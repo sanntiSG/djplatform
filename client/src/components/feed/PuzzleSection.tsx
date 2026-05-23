@@ -8,15 +8,18 @@ import { PuzzleBoard } from '../loading/PuzzleBoard'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const DISMISS_KEY = 'puzzle-section-dismissed-v1'
 const VIDEO_SRC = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_115655_b4d9cd77-feed-43cd-a198-af78ebdf1f7a.mp4'
 const TITLE_WORDS = ['Resoná.', 'Reordená.', 'Repetí.']
+const LEGACY_DISMISS_KEY = 'puzzle-section-dismissed-v1'
 
-function isDismissed(): boolean {
-  try { return localStorage.getItem(DISMISS_KEY) === '1' } catch { return false }
-}
-function persist(): void {
-  try { localStorage.setItem(DISMISS_KEY, '1') } catch { /* noop */ }
+function calcPieceSize(): number {
+  if (typeof window === 'undefined') return 104
+  const w = window.innerWidth
+  if (w < 380) return 78
+  if (w < 640) return 88
+  if (w < 1024) return 104
+  if (w < 1440) return 120
+  return 132
 }
 
 function XIcon() {
@@ -31,8 +34,8 @@ function XIcon() {
 type Mode = 'trailer' | 'playing'
 
 export function PuzzleSection() {
-  const [isHidden, setIsHidden] = useState(isDismissed)
   const [mode, setMode] = useState<Mode>('trailer')
+  const [pieceSize, setPieceSize] = useState(calcPieceSize)
   const { currentImage, nextImage } = usePuzzleImages()
   const [image, setImage] = useState(currentImage)
   const pointerKind = usePointerKind()
@@ -47,15 +50,26 @@ export function PuzzleSection() {
   const backBtnRef = useRef<HTMLButtonElement>(null)
   const charRefs = useRef<HTMLSpanElement[]>([])
 
-  const pieceSize = typeof window !== 'undefined'
-    ? window.innerWidth < 640 ? 88 : window.innerWidth < 1024 ? 108 : 124
-    : 108
-
   const isPlaying = mode === 'playing'
+
+  // Migrate users who previously dismissed the section permanently
+  useEffect(() => {
+    try { localStorage.removeItem(LEGACY_DISMISS_KEY) } catch { /* noop */ }
+  }, [])
+
+  // Reactive pieceSize on viewport resize (rAF-throttled)
+  useEffect(() => {
+    let raf: number
+    const handler = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => setPieceSize(calcPieceSize()))
+    }
+    window.addEventListener('resize', handler, { passive: true })
+    return () => { window.removeEventListener('resize', handler); cancelAnimationFrame(raf) }
+  }, [])
 
   // ── Scroll-triggered text animations (fire once, independent of mode)
   useEffect(() => {
-    if (isHidden) return
     const ctx = gsap.context(() => {
       if (kickerRef.current) {
         gsap.fromTo(
@@ -94,21 +108,21 @@ export function PuzzleSection() {
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [isHidden, reduced])
+  }, [reduced])
 
   // ── CTA entrance when mode is trailer
   useEffect(() => {
-    if (isHidden || mode !== 'trailer' || !ctaRef.current) return
+    if (mode !== 'trailer' || !ctaRef.current) return
     if (reduced) { gsap.set(ctaRef.current, { opacity: 1 }); return }
     gsap.fromTo(ctaRef.current,
       { opacity: 0, y: 12 },
       { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out', delay: 0.18 },
     )
-  }, [isHidden, mode, reduced])
+  }, [mode, reduced])
 
   // ── Board + back button entrance when mode is playing
   useEffect(() => {
-    if (isHidden || mode !== 'playing') return
+    if (mode !== 'playing') return
 
     if (boardWrapRef.current) {
       if (reduced) {
@@ -131,7 +145,7 @@ export function PuzzleSection() {
         )
       }
     }
-  }, [isHidden, mode, reduced])
+  }, [mode, reduced])
 
   // ── Enter playing mode
   const handlePlay = useCallback(() => {
@@ -142,7 +156,7 @@ export function PuzzleSection() {
     })
   }, [reduced])
 
-  // ── Return to trailer mode
+  // ── Return to trailer (X button and back button both call this)
   const handleBack = useCallback(() => {
     if (reduced || !boardWrapRef.current) { setMode('trailer'); return }
     gsap.to(boardWrapRef.current, {
@@ -151,19 +165,8 @@ export function PuzzleSection() {
     })
   }, [reduced])
 
-  // ── Dismiss section permanently
-  const handleClose = useCallback(() => {
-    if (!sectionRef.current) { persist(); setIsHidden(true); return }
-    gsap.to(sectionRef.current, {
-      opacity: 0, y: -14, duration: 0.28, ease: 'power3.in',
-      onComplete: () => { persist(); setIsHidden(true) },
-    })
-  }, [])
-
   // ── Puzzle solved: advance to next non-recent image
   const handleSolved = useCallback(() => setImage(nextImage()), [nextImage])
-
-  if (isHidden) return null
 
   // Reset char ref collection on each render
   charRefs.current = []
@@ -172,14 +175,7 @@ export function PuzzleSection() {
     <section
       ref={sectionRef}
       aria-label="Puzzle interactivo"
-      style={{
-        margin: '0 16px',
-        borderRadius: 28,
-        overflow: 'hidden',
-        position: 'relative',
-        minHeight: 480,
-      }}
-      className="md:mx-6"
+      className="mx-4 md:mx-6 rounded-[28px] overflow-hidden relative min-h-[420px] sm:min-h-[460px] md:min-h-[500px]"
     >
       {/* ── Video background ─────────────────────────── */}
       <video
@@ -193,8 +189,8 @@ export function PuzzleSection() {
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover',
-          filter: 'blur(3px) brightness(0.5) saturate(0.7)',
-          opacity: 0.55,
+          filter: 'blur(3px) brightness(0.5) saturate(0.85)',
+          opacity: 0.45,
           pointerEvents: 'none',
         }}
       />
@@ -212,70 +208,71 @@ export function PuzzleSection() {
         }}
       />
 
-      {/* ── Close button ─────────────────────────────── */}
-      <button
-        onClick={handleClose}
-        aria-label="Cerrar"
-        style={{
-          position: 'absolute', top: 16, right: 16, zIndex: 10,
-          width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(8,8,10,0.55)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          backdropFilter: 'blur(8px)',
-          color: 'rgba(242,242,247,0.65)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'background 0.18s, color 0.18s, border-color 0.18s',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-          e.currentTarget.style.color = '#f2f2f7'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
-          e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-        }}
-      >
-        <XIcon />
-      </button>
-
-      {/* ── Back button (playing mode) ────────────────── */}
+      {/* ── Playing mode controls: X (top-right) + Back (top-left) ── */}
       {isPlaying && (
-        <button
-          ref={backBtnRef}
-          onClick={handleBack}
-          aria-label="Volver"
-          style={{
-            position: 'absolute', top: 16, left: 16, zIndex: 10,
-            height: 34, borderRadius: 999,
-            padding: '0 14px',
-            background: 'rgba(8,8,10,0.55)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(8px)',
-            color: 'rgba(242,242,247,0.65)',
-            display: 'flex', alignItems: 'center', gap: 6,
-            cursor: 'pointer',
-            fontFamily: 'Satoshi, sans-serif',
-            fontSize: 12, fontWeight: 500, letterSpacing: '0.01em',
-            opacity: 0,
-            transition: 'background 0.18s, color 0.18s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
-            e.currentTarget.style.color = '#f2f2f7'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
-            e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M8 10L4 6l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Volver
-        </button>
+        <>
+          <button
+            onClick={handleBack}
+            aria-label="Cerrar puzzle"
+            style={{
+              position: 'absolute', top: 16, right: 16, zIndex: 10,
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'rgba(8,8,10,0.55)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(8px)',
+              color: 'rgba(242,242,247,0.65)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background 0.18s, color 0.18s, border-color 0.18s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+              e.currentTarget.style.color = '#f2f2f7'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
+              e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+            }}
+          >
+            <XIcon />
+          </button>
+
+          <button
+            ref={backBtnRef}
+            onClick={handleBack}
+            aria-label="Volver"
+            style={{
+              position: 'absolute', top: 16, left: 16, zIndex: 10,
+              height: 34, borderRadius: 999,
+              padding: '0 14px',
+              background: 'rgba(8,8,10,0.55)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(8px)',
+              color: 'rgba(242,242,247,0.65)',
+              display: 'flex', alignItems: 'center', gap: 6,
+              cursor: 'pointer',
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: 12, fontWeight: 500, letterSpacing: '0.01em',
+              opacity: 0,
+              transition: 'background 0.18s, color 0.18s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
+              e.currentTarget.style.color = '#f2f2f7'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
+              e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M8 10L4 6l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Volver
+          </button>
+        </>
       )}
 
       {/* ── Content ──────────────────────────────────── */}
@@ -319,7 +316,7 @@ export function PuzzleSection() {
             Momento lúdico
           </p>
 
-          {/* Title — split per character for stagger animation */}
+          {/* Title — char-by-char for stagger animation */}
           <h2
             style={{
               fontFamily: "'Clash Display', sans-serif", fontWeight: 700,
@@ -362,7 +359,7 @@ export function PuzzleSection() {
             Ordená la grilla mientras escuchás.
           </p>
 
-          {/* CTA — trailer mode */}
+          {/* CTA — trailer only */}
           {!isPlaying && (
             <button
               ref={ctaRef}
@@ -400,7 +397,7 @@ export function PuzzleSection() {
             </button>
           )}
 
-          {/* Mode hint — playing mode */}
+          {/* Mode hint — playing only */}
           {isPlaying && (
             <p style={{
               fontFamily: 'Satoshi, sans-serif', fontSize: 10,
@@ -412,10 +409,11 @@ export function PuzzleSection() {
           )}
         </div>
 
-        {/* ── Puzzle board (playing mode only) ───────── */}
+        {/* ── Puzzle board (playing only) ──────────────── */}
         {isPlaying && (
           <div
             ref={boardWrapRef}
+            className="mx-auto md:mx-0"
             style={{ flexShrink: 0, opacity: 0 }}
           >
             <PuzzleBoard
