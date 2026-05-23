@@ -9,7 +9,7 @@ import { PuzzleBoard } from '../loading/PuzzleBoard'
 gsap.registerPlugin(ScrollTrigger)
 
 const VIDEO_SRC = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_115655_b4d9cd77-feed-43cd-a198-af78ebdf1f7a.mp4'
-const TITLE_WORDS = ['Resoná.', 'Reordená.', 'Repetí.']
+const TITLE_WORDS = ['Resoná.', 'Reordená.', 'Reconocé.']
 const LEGACY_DISMISS_KEY = 'puzzle-section-dismissed-v1'
 
 function calcPieceSize(): number {
@@ -48,6 +48,7 @@ export function PuzzleSection() {
   const boardWrapRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLButtonElement>(null)
   const charRefs = useRef<HTMLSpanElement[]>([])
+  const hasPlayedOnce = useRef(false)
 
   const isPlaying = mode === 'playing'
 
@@ -67,25 +68,46 @@ export function PuzzleSection() {
     return () => { window.removeEventListener('resize', handler); cancelAnimationFrame(raf) }
   }, [])
 
-  // ── Scroll-triggered text animations (fire once, independent of mode)
+  // Mark that we've entered playing mode at least once
   useEffect(() => {
+    if (mode === 'playing') hasPlayedOnce.current = true
+  }, [mode])
+
+  // ── Text animations: scroll-triggered on first load, instant on return from playing
+  useEffect(() => {
+    if (mode !== 'trailer') return
+
+    const returning = hasPlayedOnce.current
+
     const ctx = gsap.context(() => {
       if (kickerRef.current) {
-        gsap.fromTo(
-          kickerRef.current,
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out,
-            scrollTrigger: { trigger: kickerRef.current, start: 'top 88%', once: true } },
-        )
+        if (returning) {
+          gsap.fromTo(kickerRef.current,
+            { opacity: 0, y: 8 },
+            { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
+          )
+        } else {
+          gsap.fromTo(kickerRef.current,
+            { opacity: 0, y: 10 },
+            {
+              opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out,
+              scrollTrigger: { trigger: kickerRef.current, start: 'top 88%', once: true }
+            },
+          )
+        }
       }
 
       const chars = charRefs.current.filter(Boolean)
       if (chars.length) {
         if (reduced) {
           gsap.set(chars, { opacity: 1, y: 0 })
+        } else if (returning) {
+          gsap.fromTo(chars,
+            { y: 20, opacity: 0, rotateX: -15, transformOrigin: '50% 100%' },
+            { y: 0, opacity: 1, rotateX: 0, duration: 0.45, ease: 'back.out(1.4)', stagger: 0.02 },
+          )
         } else {
-          gsap.fromTo(
-            chars,
+          gsap.fromTo(chars,
             { y: 56, opacity: 0, rotateX: -42, transformOrigin: '50% 100%' },
             {
               y: 0, opacity: 1, rotateX: 0,
@@ -97,17 +119,25 @@ export function PuzzleSection() {
       }
 
       if (subRef.current) {
-        gsap.fromTo(
-          subRef.current,
-          { opacity: 0, y: 14 },
-          { opacity: 0.55, y: 0, duration: DURATION.slow, ease: EASE.out, delay: 0.38,
-            scrollTrigger: { trigger: subRef.current, start: 'top 90%', once: true } },
-        )
+        if (returning) {
+          gsap.fromTo(subRef.current,
+            { opacity: 0, y: 8 },
+            { opacity: 0.55, y: 0, duration: 0.35, ease: 'power2.out', delay: 0.12 },
+          )
+        } else {
+          gsap.fromTo(subRef.current,
+            { opacity: 0, y: 14 },
+            {
+              opacity: 0.55, y: 0, duration: DURATION.slow, ease: EASE.out, delay: 0.38,
+              scrollTrigger: { trigger: subRef.current, start: 'top 90%', once: true }
+            },
+          )
+        }
       }
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [reduced])
+  }, [mode, reduced])
 
   // ── CTA entrance when mode is trailer
   useEffect(() => {
@@ -115,7 +145,7 @@ export function PuzzleSection() {
     if (reduced) { gsap.set(ctaRef.current, { opacity: 1 }); return }
     gsap.fromTo(ctaRef.current,
       { opacity: 0, y: 12 },
-      { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out', delay: 0.18 },
+      { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out', delay: hasPlayedOnce.current ? 0.2 : 0.18 },
     )
   }, [mode, reduced])
 
@@ -232,88 +262,89 @@ export function PuzzleSection() {
       <div
         style={{
           position: 'relative', zIndex: 2,
-          padding: 'clamp(48px, 7vw, 72px) clamp(24px, 5vw, 48px)',
+          padding: isPlaying
+            ? 'clamp(28px, 5vw, 48px) clamp(16px, 4vw, 40px)'
+            : 'clamp(48px, 7vw, 72px) clamp(24px, 5vw, 48px)',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: isPlaying ? undefined : 'center',
-          gap: isPlaying ? 40 : 32,
+          alignItems: 'center',
+          gap: isPlaying ? 20 : 32,
         }}
-        className={isPlaying ? 'md:flex-row md:items-center md:justify-between md:gap-16' : ''}
       >
-        {/* ── Text block ─────────────────────────── */}
-        <div style={{ flex: isPlaying ? 1 : undefined, textAlign: isPlaying ? undefined : 'center' }}>
+        {/* ── Trailer text block (hidden when playing) ── */}
+        {!isPlaying && (
+          <div style={{ textAlign: 'center' }}>
 
-          {/* Kicker */}
-          <p
-            ref={kickerRef}
-            style={{
-              fontFamily: 'Satoshi, sans-serif', fontWeight: 700,
-              fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase',
-              color: 'var(--accent, #d4ff00)',
-              margin: '0 0 18px',
-              display: 'flex', alignItems: 'center',
-              justifyContent: isPlaying ? 'flex-start' : 'center',
-              gap: 8,
-              opacity: 0,
-            }}
-          >
-            <span
-              aria-hidden="true"
+            {/* Kicker */}
+            <p
+              ref={kickerRef}
               style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: 'var(--accent, #d4ff00)', display: 'inline-block',
-                flexShrink: 0,
+                fontFamily: 'Satoshi, sans-serif', fontWeight: 700,
+                fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase',
+                color: 'var(--accent, #d4ff00)',
+                margin: '0 0 18px',
+                display: 'flex', alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                opacity: 0,
               }}
-              className="pulse-ring"
-            />
-            Momento lúdico
-          </p>
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: 'var(--accent, #d4ff00)', display: 'inline-block',
+                  flexShrink: 0,
+                }}
+                className="pulse-ring"
+              />
+              Revelá tu ritmo.
+            </p>
 
-          {/* Title — char-by-char for stagger animation */}
-          <h2
-            style={{
-              fontFamily: "'Clash Display', sans-serif", fontWeight: 700,
-              fontSize: 'clamp(2.4rem, 7vw, 4.5rem)',
-              lineHeight: 0.93, letterSpacing: '-0.025em',
-              color: 'var(--text, #f2f2f7)',
-              margin: '0 0 24px',
-              perspective: '600px',
-              textAlign: isPlaying ? 'left' : 'center',
-            }}
-          >
-            {TITLE_WORDS.map((word, wi) => (
-              <span key={wi} style={{ display: 'block' }}>
-                {word.split('').map((char, ci) => (
-                  <span
-                    key={ci}
-                    ref={el => { if (el) charRefs.current.push(el) }}
-                    style={{ display: 'inline-block', opacity: 0 }}
-                  >
-                    {char}
-                  </span>
-                ))}
-              </span>
-            ))}
-          </h2>
+            {/* Title — char-by-char for stagger animation */}
+            <h2
+              style={{
+                fontFamily: "'Clash Display', sans-serif", fontWeight: 700,
+                fontSize: 'clamp(2.4rem, 7vw, 4.5rem)',
+                lineHeight: 0.93, letterSpacing: '-0.025em',
+                color: 'var(--text, #f2f2f7)',
+                margin: '0 0 24px',
+                perspective: '600px',
+                textAlign: 'center',
+              }}
+            >
+              {TITLE_WORDS.map((word, wi) => (
+                <span key={wi} style={{ display: 'block' }}>
+                  {word.split('').map((char, ci) => (
+                    <span
+                      key={ci}
+                      ref={el => { if (el) charRefs.current.push(el) }}
+                      style={{ display: 'inline-block', opacity: 0 }}
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </h2>
 
-          {/* Subtitle */}
-          <p
-            ref={subRef}
-            style={{
-              fontFamily: 'Satoshi, sans-serif', fontWeight: 400,
-              fontSize: 'clamp(0.9rem, 1.8vw, 1.05rem)',
-              color: 'rgba(242,242,247,0.55)',
-              margin: isPlaying ? '0 0 8px' : '0 auto 28px',
-              maxWidth: '30ch', lineHeight: 1.55,
-              textAlign: isPlaying ? 'left' : 'center',
-              opacity: 0,
-            }}
-          >
-            Ordená la grilla mientras escuchás.
-          </p>
+            {/* Subtitle */}
+            <p
+              ref={subRef}
+              style={{
+                fontFamily: 'Satoshi, sans-serif', fontWeight: 400,
+                fontSize: 'clamp(0.9rem, 1.8vw, 1.05rem)',
+                color: 'rgba(242,242,247,0.55)',
+                margin: '0 auto 28px',
+                maxWidth: '30ch', lineHeight: 1.55,
+                textAlign: 'center',
+                opacity: 0,
+              }}
+            >
+              Ordená la grilla mientras escuchás.
+            </p>
 
-          {/* CTA — trailer only */}
-          {!isPlaying && (
+            {/* CTA */}
             <button
               ref={ctaRef}
               onClick={handlePlay}
@@ -349,37 +380,51 @@ export function PuzzleSection() {
                 <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-          )}
-
-          {/* Mode hint — playing only */}
-          {isPlaying && (
-            <p style={{
-              fontFamily: 'Satoshi, sans-serif', fontSize: 10,
-              letterSpacing: '0.1em', textTransform: 'uppercase',
-              color: 'rgba(242,242,247,0.22)', margin: 0,
-            }}>
-              {inputMode === 'tap' ? 'Tap dos piezas para intercambiar' : 'Arrastrá las piezas para ordenar'}
-            </p>
-          )}
-        </div>
-
-        {/* ── Puzzle board (playing only) ──────────────── */}
-        {isPlaying && (
-          <div
-            ref={boardWrapRef}
-            className="mx-auto md:mx-0"
-            style={{ flexShrink: 0, opacity: 0 }}
-          >
-            <PuzzleBoard
-              image={image}
-              mode={inputMode}
-              pieceSize={pieceSize}
-              onSolved={handleSolved}
-              showMiniPreview={false}
-              showCounter={false}
-              animateEntrance
-            />
           </div>
+        )}
+
+        {/* ── Playing mode: compact header + board ── */}
+        {isPlaying && (
+          <>
+            {/* Short centered label */}
+            <div style={{ textAlign: 'center' }}>
+              <p
+                style={{
+                  fontFamily: "'Clash Display', sans-serif", fontWeight: 700,
+                  fontSize: 'clamp(1.3rem, 4vw, 1.8rem)',
+                  letterSpacing: '-0.02em',
+                  color: 'var(--text, #f2f2f7)',
+                  margin: '0 0 6px',
+                  lineHeight: 1.15,
+                }}
+              >
+                Ordená el rompecabezas
+              </p>
+              <p style={{
+                fontFamily: 'Satoshi, sans-serif', fontSize: 'clamp(9px, 1.6vw, 11px)',
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: 'rgba(242,242,247,0.30)', margin: 0,
+              }}>
+                {inputMode === 'tap' ? 'Tocá dos piezas para intercambiar' : 'Arrastrá las piezas para ordenar'}
+              </p>
+            </div>
+
+            {/* Board */}
+            <div
+              ref={boardWrapRef}
+              style={{ flexShrink: 0, opacity: 0 }}
+            >
+              <PuzzleBoard
+                image={image}
+                mode={inputMode}
+                pieceSize={pieceSize}
+                onSolved={handleSolved}
+                showMiniPreview={false}
+                showCounter={false}
+                animateEntrance
+              />
+            </div>
+          </>
         )}
       </div>
     </section>
