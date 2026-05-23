@@ -19,7 +19,6 @@ function persist(): void {
   try { localStorage.setItem(DISMISS_KEY, '1') } catch { /* noop */ }
 }
 
-// ── Close icon ───────────────────────────────────────────────
 function XIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -29,27 +28,32 @@ function XIcon() {
   )
 }
 
-// ── PuzzleSection ────────────────────────────────────────────
+type Mode = 'trailer' | 'playing'
 
 export function PuzzleSection() {
   const [isHidden, setIsHidden] = useState(isDismissed)
+  const [mode, setMode] = useState<Mode>('trailer')
   const { currentImage, nextImage } = usePuzzleImages()
   const [image, setImage] = useState(currentImage)
   const pointerKind = usePointerKind()
-  const mode = pointerKind === 'coarse' ? 'tap' : 'drag'
+  const inputMode = pointerKind === 'coarse' ? 'tap' : 'drag'
   const reduced = prefersReducedMotion()
 
   const sectionRef = useRef<HTMLElement>(null)
   const kickerRef = useRef<HTMLParagraphElement>(null)
   const subRef = useRef<HTMLParagraphElement>(null)
   const boardWrapRef = useRef<HTMLDivElement>(null)
+  const ctaRef = useRef<HTMLButtonElement>(null)
+  const backBtnRef = useRef<HTMLButtonElement>(null)
   const charRefs = useRef<HTMLSpanElement[]>([])
 
   const pieceSize = typeof window !== 'undefined'
     ? window.innerWidth < 640 ? 88 : window.innerWidth < 1024 ? 108 : 124
     : 108
 
-  // ── GSAP scroll-triggered text animations
+  const isPlaying = mode === 'playing'
+
+  // ── Scroll-triggered text animations (fire once, independent of mode)
   useEffect(() => {
     if (isHidden) return
     const ctx = gsap.context(() => {
@@ -87,21 +91,67 @@ export function PuzzleSection() {
             scrollTrigger: { trigger: subRef.current, start: 'top 90%', once: true } },
         )
       }
-
-      if (boardWrapRef.current) {
-        gsap.fromTo(
-          boardWrapRef.current,
-          { opacity: 0, scale: 0.93 },
-          { opacity: 1, scale: 1, duration: DURATION.slow, ease: EASE.out, delay: reduced ? 0 : 0.48,
-            scrollTrigger: { trigger: boardWrapRef.current, start: 'top 90%', once: true } },
-        )
-      }
     }, sectionRef)
 
     return () => ctx.revert()
   }, [isHidden, reduced])
 
-  // ── Close
+  // ── CTA entrance when mode is trailer
+  useEffect(() => {
+    if (isHidden || mode !== 'trailer' || !ctaRef.current) return
+    if (reduced) { gsap.set(ctaRef.current, { opacity: 1 }); return }
+    gsap.fromTo(ctaRef.current,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out', delay: 0.18 },
+    )
+  }, [isHidden, mode, reduced])
+
+  // ── Board + back button entrance when mode is playing
+  useEffect(() => {
+    if (isHidden || mode !== 'playing') return
+
+    if (boardWrapRef.current) {
+      if (reduced) {
+        gsap.set(boardWrapRef.current, { opacity: 1, scale: 1 })
+      } else {
+        gsap.fromTo(boardWrapRef.current,
+          { opacity: 0, scale: 0.92 },
+          { opacity: 1, scale: 1, duration: 0.55, ease: 'power3.out' },
+        )
+      }
+    }
+
+    if (backBtnRef.current) {
+      if (reduced) {
+        gsap.set(backBtnRef.current, { opacity: 0.65 })
+      } else {
+        gsap.fromTo(backBtnRef.current,
+          { opacity: 0, x: -8 },
+          { opacity: 0.65, x: 0, duration: 0.4, delay: 0.22, ease: 'power2.out' },
+        )
+      }
+    }
+  }, [isHidden, mode, reduced])
+
+  // ── Enter playing mode
+  const handlePlay = useCallback(() => {
+    if (reduced || !ctaRef.current) { setMode('playing'); return }
+    gsap.to(ctaRef.current, {
+      opacity: 0, y: -10, duration: 0.22, ease: 'power2.in',
+      onComplete: () => setMode('playing'),
+    })
+  }, [reduced])
+
+  // ── Return to trailer mode
+  const handleBack = useCallback(() => {
+    if (reduced || !boardWrapRef.current) { setMode('trailer'); return }
+    gsap.to(boardWrapRef.current, {
+      opacity: 0, scale: 0.95, duration: 0.28, ease: 'power2.in',
+      onComplete: () => setMode('trailer'),
+    })
+  }, [reduced])
+
+  // ── Dismiss section permanently
   const handleClose = useCallback(() => {
     if (!sectionRef.current) { persist(); setIsHidden(true); return }
     gsap.to(sectionRef.current, {
@@ -110,7 +160,7 @@ export function PuzzleSection() {
     })
   }, [])
 
-  // ── Puzzle solved → next image
+  // ── Puzzle solved: advance to next non-recent image
   const handleSolved = useCallback(() => setImage(nextImage()), [nextImage])
 
   if (isHidden) return null
@@ -149,14 +199,14 @@ export function PuzzleSection() {
         }}
       />
 
-      {/* ── Overlay: vignette + bottom fade ──────────── */}
+      {/* ── Overlay ──────────────────────────────────── */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
           background: [
-            'radial-gradient(ellipse 80% 120% at 0% 50%, rgba(8,8,10,0.72) 0%, transparent 55%)',
-            'linear-gradient(to bottom, rgba(8,8,10,0.6) 0%, rgba(8,8,10,0.1) 40%, rgba(8,8,10,0.75) 100%)',
+            'radial-gradient(ellipse 80% 120% at 50% 50%, rgba(8,8,10,0.6) 0%, transparent 55%)',
+            'linear-gradient(to bottom, rgba(8,8,10,0.65) 0%, rgba(8,8,10,0.08) 45%, rgba(8,8,10,0.78) 100%)',
           ].join(', '),
           pointerEvents: 'none',
         }}
@@ -165,7 +215,7 @@ export function PuzzleSection() {
       {/* ── Close button ─────────────────────────────── */}
       <button
         onClick={handleClose}
-        aria-label="Cerrar juego"
+        aria-label="Cerrar"
         style={{
           position: 'absolute', top: 16, right: 16, zIndex: 10,
           width: 36, height: 36, borderRadius: '50%',
@@ -178,35 +228,70 @@ export function PuzzleSection() {
           transition: 'background 0.18s, color 0.18s, border-color 0.18s',
         }}
         onMouseEnter={e => {
-          const b = e.currentTarget
-          b.style.background = 'rgba(255,255,255,0.12)'
-          b.style.color = '#f2f2f7'
-          b.style.borderColor = 'rgba(255,255,255,0.25)'
+          e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+          e.currentTarget.style.color = '#f2f2f7'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
         }}
         onMouseLeave={e => {
-          const b = e.currentTarget
-          b.style.background = 'rgba(8,8,10,0.55)'
-          b.style.color = 'rgba(242,242,247,0.65)'
-          b.style.borderColor = 'rgba(255,255,255,0.12)'
+          e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
+          e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
         }}
       >
         <XIcon />
       </button>
 
+      {/* ── Back button (playing mode) ────────────────── */}
+      {isPlaying && (
+        <button
+          ref={backBtnRef}
+          onClick={handleBack}
+          aria-label="Volver"
+          style={{
+            position: 'absolute', top: 16, left: 16, zIndex: 10,
+            height: 34, borderRadius: 999,
+            padding: '0 14px',
+            background: 'rgba(8,8,10,0.55)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(8px)',
+            color: 'rgba(242,242,247,0.65)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            cursor: 'pointer',
+            fontFamily: 'Satoshi, sans-serif',
+            fontSize: 12, fontWeight: 500, letterSpacing: '0.01em',
+            opacity: 0,
+            transition: 'background 0.18s, color 0.18s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
+            e.currentTarget.style.color = '#f2f2f7'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
+            e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M8 10L4 6l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Volver
+        </button>
+      )}
+
       {/* ── Content ──────────────────────────────────── */}
       <div
         style={{
           position: 'relative', zIndex: 2,
-          padding: 'clamp(36px, 6vw, 56px) clamp(24px, 5vw, 48px)',
+          padding: 'clamp(48px, 7vw, 72px) clamp(24px, 5vw, 48px)',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          gap: 40,
+          alignItems: isPlaying ? undefined : 'center',
+          gap: isPlaying ? 40 : 32,
         }}
-        className="md:flex-row md:items-center md:justify-between md:gap-16"
+        className={isPlaying ? 'md:flex-row md:items-center md:justify-between md:gap-16' : ''}
       >
         {/* ── Text block ─────────────────────────── */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: isPlaying ? 1 : undefined }}>
 
           {/* Kicker */}
           <p
@@ -216,7 +301,9 @@ export function PuzzleSection() {
               fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase',
               color: 'var(--accent, #d4ff00)',
               margin: '0 0 18px',
-              display: 'flex', alignItems: 'center', gap: 8,
+              display: 'flex', alignItems: 'center',
+              justifyContent: isPlaying ? 'flex-start' : 'center',
+              gap: 8,
               opacity: 0,
             }}
           >
@@ -241,6 +328,7 @@ export function PuzzleSection() {
               color: 'var(--text, #f2f2f7)',
               margin: '0 0 24px',
               perspective: '600px',
+              textAlign: isPlaying ? 'left' : 'center',
             }}
           >
             {TITLE_WORDS.map((word, wi) => (
@@ -265,39 +353,82 @@ export function PuzzleSection() {
               fontFamily: 'Satoshi, sans-serif', fontWeight: 400,
               fontSize: 'clamp(0.9rem, 1.8vw, 1.05rem)',
               color: 'rgba(242,242,247,0.55)',
-              margin: '0 0 8px',
+              margin: isPlaying ? '0 0 8px' : '0 auto 28px',
               maxWidth: '30ch', lineHeight: 1.55,
+              textAlign: isPlaying ? 'left' : 'center',
               opacity: 0,
             }}
           >
             Ordená la grilla mientras escuchás.
           </p>
 
-          {/* Mode hint */}
-          <p style={{
-            fontFamily: 'Satoshi, sans-serif', fontSize: 10,
-            letterSpacing: '0.1em', textTransform: 'uppercase',
-            color: 'rgba(242,242,247,0.22)', margin: 0,
-          }}>
-            {mode === 'tap' ? 'Tap dos piezas para intercambiar' : 'Arrastrá las piezas para ordenar'}
-          </p>
+          {/* CTA — trailer mode */}
+          {!isPlaying && (
+            <button
+              ref={ctaRef}
+              onClick={handlePlay}
+              aria-label="Empezar el puzzle"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                padding: '14px 30px',
+                borderRadius: 999,
+                background: 'var(--accent, #d4ff00)',
+                color: '#0a0a0a',
+                border: 'none',
+                fontFamily: 'Satoshi, sans-serif', fontWeight: 700,
+                fontSize: '0.95rem', letterSpacing: '0.01em',
+                cursor: 'pointer',
+                opacity: 0,
+                boxShadow: '0 0 32px rgba(212,255,0,0.2), 0 4px 16px rgba(0,0,0,0.3)',
+                transition: 'box-shadow 0.22s',
+              }}
+              onMouseEnter={e => {
+                if (!reduced) gsap.to(e.currentTarget, { scale: 1.04, duration: 0.2, ease: 'power2.out' })
+                e.currentTarget.style.boxShadow = '0 0 52px rgba(212,255,0,0.38), 0 4px 20px rgba(0,0,0,0.35)'
+              }}
+              onMouseLeave={e => {
+                if (!reduced) gsap.to(e.currentTarget, { scale: 1, duration: 0.22, ease: 'power2.out' })
+                e.currentTarget.style.boxShadow = '0 0 32px rgba(212,255,0,0.2), 0 4px 16px rgba(0,0,0,0.3)'
+              }}
+              onMouseDown={e => { if (!reduced) gsap.to(e.currentTarget, { scale: 0.97, duration: 0.1 }) }}
+              onMouseUp={e => { if (!reduced) gsap.to(e.currentTarget, { scale: 1.04, duration: 0.15 }) }}
+            >
+              Jugá ahora
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+
+          {/* Mode hint — playing mode */}
+          {isPlaying && (
+            <p style={{
+              fontFamily: 'Satoshi, sans-serif', fontSize: 10,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: 'rgba(242,242,247,0.22)', margin: 0,
+            }}>
+              {inputMode === 'tap' ? 'Tap dos piezas para intercambiar' : 'Arrastrá las piezas para ordenar'}
+            </p>
+          )}
         </div>
 
-        {/* ── Puzzle board ───────────────────────── */}
-        <div
-          ref={boardWrapRef}
-          style={{ flexShrink: 0, paddingRight: 56, opacity: 0 }}
-        >
-          <PuzzleBoard
-            image={image}
-            mode={mode}
-            pieceSize={pieceSize}
-            onSolved={handleSolved}
-            showMiniPreview={false}
-            showCounter
-            animateEntrance
-          />
-        </div>
+        {/* ── Puzzle board (playing mode only) ───────── */}
+        {isPlaying && (
+          <div
+            ref={boardWrapRef}
+            style={{ flexShrink: 0, opacity: 0 }}
+          >
+            <PuzzleBoard
+              image={image}
+              mode={inputMode}
+              pieceSize={pieceSize}
+              onSolved={handleSolved}
+              showMiniPreview={false}
+              showCounter={false}
+              animateEntrance
+            />
+          </div>
+        )}
       </div>
     </section>
   )
