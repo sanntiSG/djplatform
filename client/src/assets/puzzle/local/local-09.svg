@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1a1a00" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#08080f" stop-opacity="1"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <!-- Large "01" covering most of the canvas -->
+  <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle"
+    font-family="Impact, Arial Black, sans-serif" font-size="520" font-weight="900"
+    fill="#d4ff00" opacity="0.88" letter-spacing="-20">01</text>
+  <!-- Subtle frame lines -->
+  <line x1="40" y1="40" x2="200" y2="40" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="40" y1="40" x2="40" y2="200" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="760" y1="40" x2="600" y2="40" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="760" y1="40" x2="760" y2="200" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="40" y1="760" x2="200" y2="760" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="40" y1="760" x2="40" y2="600" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="760" y1="760" x2="600" y2="760" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+  <line x1="760" y1="760" x2="760" y2="600" stroke="#d4ff00" stroke-opacity="0.25" stroke-width="2"/>
+</svg>

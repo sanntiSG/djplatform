@@ -12,7 +12,7 @@ router.get('/', async (_req, res) => {
     res.json({ images, ttlSeconds: 604800 })
   } catch (err) {
     logger.error('Error fetching artist image pool', err)
-    res.json({ images: [], ttlSeconds: 604800 })
+    res.status(503).json({ error: 'image-pool-unavailable' })
   }
 })
 

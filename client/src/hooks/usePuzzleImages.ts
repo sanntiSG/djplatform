@@ -15,6 +15,25 @@ const BOOTSTRAP_IMAGES: PoolImage[] = [
   { name: 'Scene', imageUrl: new URL('../assets/puzzle/bootstrap/b9.svg', import.meta.url).href, source: 'deezer' },
 ]
 
+// Extended local placeholders — used when Spotify/Deezer cache is unavailable
+const LOCAL_IMAGES: PoolImage[] = [
+  { name: 'Night Gradient 1', imageUrl: new URL('../assets/puzzle/local/local-01.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Night Gradient 2', imageUrl: new URL('../assets/puzzle/local/local-02.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Night Gradient 3', imageUrl: new URL('../assets/puzzle/local/local-03.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Night Gradient 4', imageUrl: new URL('../assets/puzzle/local/local-04.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Waveform Art', imageUrl: new URL('../assets/puzzle/local/local-05.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Resonance', imageUrl: new URL('../assets/puzzle/local/local-06.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Dot Grid', imageUrl: new URL('../assets/puzzle/local/local-07.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Cross Pattern', imageUrl: new URL('../assets/puzzle/local/local-08.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Track 01', imageUrl: new URL('../assets/puzzle/local/local-09.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Track 02', imageUrl: new URL('../assets/puzzle/local/local-10.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Track 03', imageUrl: new URL('../assets/puzzle/local/local-11.svg', import.meta.url).href, source: 'deezer' },
+  { name: 'Track 04', imageUrl: new URL('../assets/puzzle/local/local-12.svg', import.meta.url).href, source: 'deezer' },
+]
+
+// Full offline pool: 9 bootstrap + 12 local = 21 images
+const FALLBACK_POOL: PoolImage[] = [...BOOTSTRAP_IMAGES, ...LOCAL_IMAGES]
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -27,7 +46,7 @@ function shuffle<T>(arr: T[]): T[] {
 export function usePuzzleImages() {
   const [pool, setPool] = useState<PoolImage[]>(() => {
     const cached = getPool()
-    return cached && cached.length >= 9 ? shuffle(cached) : shuffle(BOOTSTRAP_IMAGES)
+    return cached && cached.length >= 9 ? shuffle(cached) : shuffle(FALLBACK_POOL)
   })
 
   // Tracks recently served image URLs to avoid immediate repetition
@@ -58,7 +77,7 @@ export function usePuzzleImages() {
         }
       })
       .catch(() => {
-        // Silently fall back to bootstrap — already in state
+        setPool(shuffle(FALLBACK_POOL))
       })
   }, [])
 
