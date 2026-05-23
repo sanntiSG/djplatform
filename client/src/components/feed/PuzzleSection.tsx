@@ -47,7 +47,6 @@ export function PuzzleSection() {
   const subRef = useRef<HTMLParagraphElement>(null)
   const boardWrapRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLButtonElement>(null)
-  const backBtnRef = useRef<HTMLButtonElement>(null)
   const charRefs = useRef<HTMLSpanElement[]>([])
 
   const isPlaying = mode === 'playing'
@@ -120,28 +119,17 @@ export function PuzzleSection() {
     )
   }, [mode, reduced])
 
-  // ── Board + back button entrance when mode is playing
+  // ── Board entrance when mode is playing
   useEffect(() => {
     if (mode !== 'playing') return
 
     if (boardWrapRef.current) {
       if (reduced) {
-        gsap.set(boardWrapRef.current, { opacity: 1, scale: 1 })
+        gsap.set(boardWrapRef.current, { opacity: 1, scale: 1, y: 0 })
       } else {
         gsap.fromTo(boardWrapRef.current,
-          { opacity: 0, scale: 0.92 },
-          { opacity: 1, scale: 1, duration: 0.55, ease: 'power3.out' },
-        )
-      }
-    }
-
-    if (backBtnRef.current) {
-      if (reduced) {
-        gsap.set(backBtnRef.current, { opacity: 0.65 })
-      } else {
-        gsap.fromTo(backBtnRef.current,
-          { opacity: 0, x: -8 },
-          { opacity: 0.65, x: 0, duration: 0.4, delay: 0.22, ease: 'power2.out' },
+          { opacity: 0, scale: 0.86, y: 18 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.65, ease: 'elastic.out(1, 0.55)' },
         )
       }
     }
@@ -151,7 +139,7 @@ export function PuzzleSection() {
   const handlePlay = useCallback(() => {
     if (reduced || !ctaRef.current) { setMode('playing'); return }
     gsap.to(ctaRef.current, {
-      opacity: 0, y: -10, duration: 0.22, ease: 'power2.in',
+      opacity: 0, scale: 0.94, y: -8, duration: 0.16, ease: 'power2.in',
       onComplete: () => setMode('playing'),
     })
   }, [reduced])
@@ -208,71 +196,36 @@ export function PuzzleSection() {
         }}
       />
 
-      {/* ── Playing mode controls: X (top-right) + Back (top-left) ── */}
+      {/* ── Playing mode controls: X (top-right) ── */}
       {isPlaying && (
-        <>
-          <button
-            onClick={handleBack}
-            aria-label="Cerrar puzzle"
-            style={{
-              position: 'absolute', top: 16, right: 16, zIndex: 10,
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'rgba(8,8,10,0.55)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(8px)',
-              color: 'rgba(242,242,247,0.65)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background 0.18s, color 0.18s, border-color 0.18s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-              e.currentTarget.style.color = '#f2f2f7'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
-              e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-            }}
-          >
-            <XIcon />
-          </button>
-
-          <button
-            ref={backBtnRef}
-            onClick={handleBack}
-            aria-label="Volver"
-            style={{
-              position: 'absolute', top: 16, left: 16, zIndex: 10,
-              height: 34, borderRadius: 999,
-              padding: '0 14px',
-              background: 'rgba(8,8,10,0.55)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(8px)',
-              color: 'rgba(242,242,247,0.65)',
-              display: 'flex', alignItems: 'center', gap: 6,
-              cursor: 'pointer',
-              fontFamily: 'Satoshi, sans-serif',
-              fontSize: 12, fontWeight: 500, letterSpacing: '0.01em',
-              opacity: 0,
-              transition: 'background 0.18s, color 0.18s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
-              e.currentTarget.style.color = '#f2f2f7'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
-              e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M8 10L4 6l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Volver
-          </button>
-        </>
+        <button
+          onClick={handleBack}
+          aria-label="Cerrar puzzle"
+          className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d4ff00]"
+          style={{
+            position: 'absolute', top: 16, right: 16, zIndex: 10,
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(8,8,10,0.55)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(8px)',
+            color: 'rgba(242,242,247,0.65)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'background 0.18s, color 0.18s, border-color 0.18s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+            e.currentTarget.style.color = '#f2f2f7'
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(8,8,10,0.55)'
+            e.currentTarget.style.color = 'rgba(242,242,247,0.65)'
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+          }}
+        >
+          <XIcon />
+        </button>
       )}
 
       {/* ── Content ──────────────────────────────────── */}
@@ -288,7 +241,7 @@ export function PuzzleSection() {
         className={isPlaying ? 'md:flex-row md:items-center md:justify-between md:gap-16' : ''}
       >
         {/* ── Text block ─────────────────────────── */}
-        <div style={{ flex: isPlaying ? 1 : undefined }}>
+        <div style={{ flex: isPlaying ? 1 : undefined, textAlign: isPlaying ? undefined : 'center' }}>
 
           {/* Kicker */}
           <p
@@ -365,6 +318,7 @@ export function PuzzleSection() {
               ref={ctaRef}
               onClick={handlePlay}
               aria-label="Empezar el puzzle"
+              className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d4ff00]"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 10,
                 padding: '14px 30px',

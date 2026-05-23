@@ -268,8 +268,15 @@ body {
   animation: badge-pop 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+.pulse-ring {
+  animation: pulse-ring 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .unread-badge {
+    animation: none;
+  }
+  .pulse-ring {
     animation: none;
   }
 }
