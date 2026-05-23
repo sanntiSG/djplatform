@@ -15,6 +15,7 @@ import conversationsRouter from './conversations.js'
 import activityRouter from './activity.js'
 import opportunitiesRouter from './opportunities.js'
 import collaborationsRouter from './collaborations.js'
+import artistImagesRouter from './artistImages.js'
 
 const router = Router()
 
@@ -37,6 +38,7 @@ router.use('/conversations', conversationsRouter)
 router.use('/activity', activityRouter)
 router.use('/opportunities', opportunitiesRouter)
 router.use('/collaborations', collaborationsRouter)
+router.use('/artist-images', artistImagesRouter)
 router.use('/', sitemapRouter)
 
 export default router

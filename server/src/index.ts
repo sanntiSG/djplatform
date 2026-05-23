@@ -35,7 +35,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://i.scdn.co', 'https://i1.sndcdn.com', 'https://i2.sndcdn.com', 'https://i3.sndcdn.com'],
+        imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://i.scdn.co', 'https://i1.sndcdn.com', 'https://i2.sndcdn.com', 'https://i3.sndcdn.com', 'https://e-cdns-images.dzcdn.net', 'https://cdns-images.dzcdn.net'],
         mediaSrc: ["'self'"],
         frameSrc: [
           'https://open.spotify.com',
