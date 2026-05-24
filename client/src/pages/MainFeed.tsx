@@ -585,10 +585,17 @@ export default function MainFeed() {
   const hasContent =
     allAvailable.length > 0 || featuredEvents.length > 0 || topArtists.length > 0
 
-  // Skip splash when data is already cached (isReady true on first render)
-  const [splashDone, setSplashDone] = useState(() => isReady)
-  // Show puzzle loader only if backend is still pending after 5s (cold start)
+  // State machine: splash → puzzle (if cold start >5s) → app
+  const [splashExited, setSplashExited] = useState(() => isReady)
+  const [puzzleExited, setPuzzleExited] = useState(false)
   const showPuzzle = useDelayedPending(!isReady, 5000)
+  // Tell splash to exit early when puzzle threshold is reached (or when data arrives)
+  const splashShouldExit = isReady || showPuzzle
+
+  const loadingPhase: 'splash' | 'puzzle' | 'done' =
+    !splashExited ? 'splash'
+    : showPuzzle && (!isReady || !puzzleExited) ? 'puzzle'
+    : 'done'
 
   /* Floating CTA scroll trigger */
   useEffect(() => {
@@ -851,13 +858,11 @@ export default function MainFeed() {
     setSearchQuery('')
   }, [])
 
-  if (!splashDone) {
-    return (
-      <>
-        <SplashScreen ready={isReady} onExited={() => setSplashDone(true)} />
-        {showPuzzle && <PuzzleLoader isReady={isReady} />}
-      </>
-    )
+  if (loadingPhase === 'splash') {
+    return <SplashScreen ready={splashShouldExit} onExited={() => setSplashExited(true)} />
+  }
+  if (loadingPhase === 'puzzle') {
+    return <PuzzleLoader isReady={isReady} onDismiss={() => setPuzzleExited(true)} />
   }
 
   return (

@@ -9,10 +9,22 @@ const ROTATE_TEXTS = [
   'Sintonizando frecuencias…',
   'Encendiendo la consola…',
   'Subiendo los faders…',
-  'Tu sesión está casi lista',
-  'Cerrando el loop…',
+  'Calentando los platos…',
   'Sincronizando BPM…',
+  'Cerrando el loop…',
+  'Levantando la noche…',
+  'Tu sesión está casi lista',
+  'Cerrando el último set…',
 ]
+
+function computePieceSize(): number {
+  if (typeof window === 'undefined') return 116
+  const w = window.innerWidth
+  if (w < 380) return 80
+  if (w < 640) return 96
+  if (w < 1024) return 120
+  return 144
+}
 
 interface PuzzleLoaderProps {
   onDismiss?: () => void
@@ -30,9 +42,17 @@ export function PuzzleLoader({ onDismiss, isReady }: PuzzleLoaderProps) {
   const textRef = useRef<HTMLParagraphElement>(null)
   const reduced = prefersReducedMotion()
 
-  const pieceSize = typeof window !== 'undefined'
-    ? window.innerWidth < 640 ? 88 : window.innerWidth < 1024 ? 116 : 144
-    : 116
+  const [pieceSize, setPieceSize] = useState(() => computePieceSize())
+
+  useEffect(() => {
+    let rafId = 0
+    const onResize = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => setPieceSize(computePieceSize()))
+    }
+    window.addEventListener('resize', onResize)
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(rafId) }
+  }, [])
 
   // Text rotation
   useEffect(() => {
@@ -65,13 +85,13 @@ export function PuzzleLoader({ onDismiss, isReady }: PuzzleLoaderProps) {
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'var(--bg, #08080a)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 24, padding: '0 16px',
+        gap: 'clamp(16px, 4vh, 32px)', padding: '0 16px',
         paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
       <p style={{
         fontFamily: "'Clash Display', sans-serif", fontSize: 13, fontWeight: 600,
-        letterSpacing: '0.18em', color: 'rgba(242,242,247,0.35)', textTransform: 'uppercase', margin: 0,
+        letterSpacing: '0.18em', color: 'rgba(242,242,247,0.5)', textTransform: 'uppercase', margin: 0,
       }}>
         REsonar
       </p>
