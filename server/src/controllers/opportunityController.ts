@@ -206,12 +206,18 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     await opp.save()
 
     if (wasOpen && (data.status === 'closed' || data.status === 'filled') && opp.applicantIds.length > 0) {
+      const oppIdStr = opp._id.toString()
       opp.applicantIds.forEach((uid) => {
-        createNotification(uid.toString(), 'opportunity_closed', {
+        const uidStr = uid.toString()
+        createNotification(uidStr, 'opportunity_cancelled', {
           actorId: req.user!.id,
           payload: { title: opp.title },
-          url: `/oportunidades/${opp._id}`,
+          url: `/oportunidades/${oppIdStr}`,
         }).catch(() => {})
+        io.to(`user:${uidStr}`).emit('opportunity:closed', {
+          opportunityId: oppIdStr,
+          reason: 'cancelled',
+        })
       })
     }
 
@@ -234,11 +240,17 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     }
 
     if (opp.applicantIds.length > 0) {
+      const oppIdStr = opp._id.toString()
       opp.applicantIds.forEach((uid) => {
-        createNotification(uid.toString(), 'opportunity_closed', {
+        const uidStr = uid.toString()
+        createNotification(uidStr, 'opportunity_cancelled', {
           actorId: req.user!.id,
           payload: { title: opp.title },
         }).catch(() => {})
+        io.to(`user:${uidStr}`).emit('opportunity:closed', {
+          opportunityId: oppIdStr,
+          reason: 'cancelled',
+        })
       })
     }
 
