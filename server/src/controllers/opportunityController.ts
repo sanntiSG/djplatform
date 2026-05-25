@@ -317,6 +317,11 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
         payload: { title: opp.title },
         url: `/oportunidades/${opp._id}?focus=applicants`,
       }).catch(() => {})
+
+      io.to(`user:${opp.userId.toString()}`).emit('opportunity:applicant_added', {
+        opportunityId: opp._id.toString(),
+        applicantUserId: senderId,
+      })
     }
 
     res.json({ conversationId: convId })
@@ -441,6 +446,93 @@ export async function acceptCollab(req: Request, res: Response, next: NextFuncti
     }).catch(() => {})
 
     res.json({ ok: true, collaborationId: collab._id.toString() })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function cancelApply(req: Request, res: Response, next: NextFunction) {
+  try {
+    const opp = await Opportunity.findById(parseObjectId(req.params.id))
+    if (!opp || !opp.isVisible) {
+      res.status(404).json({ error: 'Oportunidad no encontrada' }); return
+    }
+
+    const userId = req.user!.id
+    const isApplied = opp.applicantIds.some((id) => id.toString() === userId)
+    if (!isApplied) {
+      res.status(400).json({ error: 'No estas postulado a esta oportunidad' }); return
+    }
+
+    opp.applicantIds = opp.applicantIds.filter((id) => id.toString() !== userId) as typeof opp.applicantIds
+    await opp.save()
+
+    // Delete the application message from the chat
+    const { Message } = await import('../models/Message.js')
+    const { Conversation } = await import('../models/Conversation.js')
+    const appMessage = await Message.findOneAndDelete({
+      senderId: userId,
+      'attachment.opportunityId': opp._id.toString(),
+    })
+
+    if (appMessage) {
+      const convId = appMessage.conversationId.toString()
+      const conv = await Conversation.findById(convId).lean()
+      if (conv) {
+        conv.participants.forEach((pId) => {
+          io.to(`user:${pId.toString()}`).emit('message:deleted', {
+            conversationId: convId,
+            messageId: appMessage._id.toString(),
+          })
+        })
+      }
+    }
+
+    // Notify and emit to owner
+    const ownerIdStr = opp.userId.toString()
+    createNotification(ownerIdStr, 'opportunity_application_cancelled', {
+      actorId: userId,
+      payload: { title: opp.title },
+      url: `/oportunidades/${opp._id.toString()}?focus=applicants`,
+    }).catch(() => {})
+    io.to(`user:${ownerIdStr}`).emit('opportunity:applicant_removed', {
+      opportunityId: opp._id.toString(),
+      applicantUserId: userId,
+    })
+
+    res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function myApplications(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id
+    const opps = await Opportunity.find({ applicantIds: userId, isVisible: true })
+      .sort({ _id: -1 })
+      .lean()
+
+    const { Collaboration } = await import('../models/Collaboration.js')
+    const collabs = await Collaboration.find({
+      $or: [{ fromUserId: userId }, { toUserId: userId }],
+      opportunityId: { $in: opps.map((o) => o._id) },
+    }).select('opportunityId').lean()
+    const acceptedOppIds = new Set(collabs.map((c) => (c.opportunityId as any)?.toString()))
+
+    const result = opps.map((o) => {
+      let myApplicationStatus: 'accepted' | 'pending' | 'closed'
+      if (acceptedOppIds.has(o._id.toString())) {
+        myApplicationStatus = 'accepted'
+      } else if (o.status !== 'open') {
+        myApplicationStatus = 'closed'
+      } else {
+        myApplicationStatus = 'pending'
+      }
+      return { ...serialize(o as any, userId), myApplicationStatus }
+    })
+
+    res.json(result)
   } catch (err) {
     next(err)
   }

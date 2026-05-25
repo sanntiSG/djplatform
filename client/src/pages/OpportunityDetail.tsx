@@ -1,12 +1,95 @@
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, type RefObject } from 'react'
 import gsap from 'gsap'
 import { opportunityService, type OpportunityApplicant } from '../services/opportunityService.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { Button } from '../components/ui/Button.js'
 import { roleLabel } from '@dj/shared'
-import { prefersReducedMotion } from '../utils/motion.js'
+import { prefersReducedMotion, EASE, DURATION, STAGGER } from '../utils/motion.js'
+import { useOpportunityRealtime } from '../hooks/useOpportunityRealtime.js'
+
+function ApplicantsList({
+  applicants,
+  oppStatus,
+  onAccept,
+  accepting,
+  containerRef,
+}: {
+  applicants: OpportunityApplicant[]
+  oppStatus: 'open' | 'closed' | 'filled'
+  onAccept: (profileId: string) => void
+  accepting: boolean
+  containerRef: RefObject<HTMLDivElement>
+}) {
+  const listRef = useRef<HTMLDivElement>(null)
+  const reduced = prefersReducedMotion()
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el || reduced) return
+    const cards = el.querySelectorAll('.applicant-card')
+    gsap.fromTo(
+      cards,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut, stagger: STAGGER.base, clearProps: 'transform' },
+    )
+  }, [applicants.length, reduced])
+
+  return (
+    <div
+      ref={containerRef}
+      className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 mb-8 transition-shadow duration-300"
+    >
+      <p className="font-sans text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-4">
+        Interesados ({applicants.length})
+      </p>
+      <div ref={listRef} className="flex flex-col gap-3">
+        {applicants.map((a) => (
+          <div
+            key={a.id}
+            className="applicant-card flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-white/[0.03] transition-colors"
+          >
+            <Link
+              to={`/p/${a.slug}-${a.id}`}
+              className="flex items-center gap-3 min-w-0 group"
+            >
+              {a.avatar ? (
+                <img
+                  src={a.avatar}
+                  alt={a.artistName}
+                  className="w-9 h-9 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0 group-hover:ring-[var(--accent)] transition-all"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[var(--surface)] flex items-center justify-center ring-1 ring-white/10 flex-shrink-0 group-hover:ring-[var(--accent)] transition-all">
+                  <span className="font-display text-xs font-semibold text-[var(--text-muted)]">
+                    {a.artistName.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-sans text-sm font-medium text-[var(--text)] truncate">{a.artistName}</p>
+                <p className="font-sans text-[10px] text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">
+                  Ver perfil
+                </p>
+              </div>
+            </Link>
+            {oppStatus === 'open' && (
+              <Button
+                variant="outline"
+                size="sm"
+                loading={accepting}
+                onClick={() => onAccept(a.id)}
+              >
+                Aceptar
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function OpportunityDetail() {
   const { id } = useParams<{ id: string }>()
@@ -51,6 +134,8 @@ export default function OpportunityDetail() {
       queryClient.invalidateQueries({ queryKey: ['opportunity', id] })
     },
   })
+
+  useOpportunityRealtime(id ?? '')
 
   /* Highlight applicants section when navigating from notification */
   useEffect(() => {
@@ -152,40 +237,13 @@ export default function OpportunityDetail() {
 
           {/* Applicants — visible only to owner */}
           {isOwner && opp.applicants && opp.applicants.length > 0 ? (
-            <div ref={applicantsRef} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 mb-8 transition-shadow duration-300">
-              <p className="font-sans text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                Interesados ({opp.applicants.length})
-              </p>
-              <div className="flex flex-col gap-3">
-                {opp.applicants.map((a: OpportunityApplicant) => (
-                  <div key={a.id} className="flex items-center justify-between gap-3">
-                    <Link
-                      to={`/p/${a.slug}-${a.id}`}
-                      className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
-                    >
-                      {a.avatar ? (
-                        <img src={a.avatar} alt={a.artistName} className="w-8 h-8 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[var(--surface)] flex items-center justify-center ring-1 ring-white/10 flex-shrink-0">
-                          <span className="font-display text-xs font-semibold text-[var(--text-muted)]">{a.artistName.charAt(0)}</span>
-                        </div>
-                      )}
-                      <span className="font-sans text-sm text-[var(--text)] truncate">{a.artistName}</span>
-                    </Link>
-                    {opp.status === 'open' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        loading={acceptCollabMutation.isPending}
-                        onClick={() => acceptCollabMutation.mutate(a.id)}
-                      >
-                        Aceptar collab
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ApplicantsList
+              applicants={opp.applicants}
+              oppStatus={opp.status}
+              onAccept={(profileId) => acceptCollabMutation.mutate(profileId)}
+              accepting={acceptCollabMutation.isPending}
+              containerRef={applicantsRef}
+            />
           ) : (
             opp.applicantCount > 0 && !isOwner && (
               <p className="font-sans text-xs text-[var(--text-muted)] mb-6">

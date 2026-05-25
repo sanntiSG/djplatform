@@ -52,6 +52,19 @@ export function useChatSocket(conversationId?: string) {
       }
     }
 
+    function onMessageDeleted({ conversationId: cid, messageId }: { conversationId: string; messageId: string }) {
+      qc.setQueryData<{ pages: MessageItem[][]; pageParams: unknown[] }>(
+        ['messages', cid],
+        old => {
+          if (!old) return old
+          return {
+            ...old,
+            pages: old.pages.map(page => page.filter(m => m._id !== messageId)),
+          }
+        },
+      )
+    }
+
     function onConversationRead({ conversationId: cid }: { conversationId: string }) {
       qc.invalidateQueries({ queryKey: ['messages', cid] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
@@ -68,11 +81,13 @@ export function useChatSocket(conversationId?: string) {
     }
 
     socket.on('message:new', onMessageNew)
+    socket.on('message:deleted', onMessageDeleted)
     socket.on('conversation:read', onConversationRead)
     socket.on('connect', onReconnect)
 
     return () => {
       socket.off('message:new', onMessageNew)
+      socket.off('message:deleted', onMessageDeleted)
       socket.off('conversation:read', onConversationRead)
       socket.off('connect', onReconnect)
     }

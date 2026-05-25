@@ -25,6 +25,7 @@ export interface OpportunityResponse {
   isApplied: boolean
   applicants?: OpportunityApplicant[]
   createdAt: string
+  myApplicationStatus?: 'pending' | 'accepted' | 'closed'
 }
 
 export interface CreateOpportunityInput {
@@ -70,6 +71,12 @@ export const opportunityService = {
       `/opportunities/${opportunityId}/accept-collab`,
       params,
     ),
+
+  cancelApply: (id: string) =>
+    apiClient.delete<{ ok: boolean }>(`/opportunities/${id}/apply`),
+
+  myApplications: () =>
+    apiClient.get<OpportunityResponse[]>('/opportunities/me/applications'),
 
   forYou: (limit = 6) =>
     apiClient.get<OpportunityResponse[]>(`/opportunities/for-you?limit=${limit}`),

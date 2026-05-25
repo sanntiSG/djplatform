@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import gsap from 'gsap'
@@ -24,12 +24,20 @@ function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: 
 }) {
   const qc = useQueryClient()
   const isClosed = status === 'closed' || status === 'filled'
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const acceptMutation = useMutation({
     mutationFn: () => opportunityService.acceptCollab(opportunityId, { collaboratorUserId: senderUserId }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
       qc.invalidateQueries({ queryKey: ['messages'] })
       qc.invalidateQueries({ queryKey: ['notification-inbox'] })
+    },
+  })
+  const cancelMutation = useMutation({
+    mutationFn: () => opportunityService.cancelApply(opportunityId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+      qc.invalidateQueries({ queryKey: ['opportunities', 'me', 'applications'] })
     },
   })
 
@@ -73,6 +81,33 @@ function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: 
           >
             {acceptMutation.isSuccess ? 'Colaboracion aceptada' : acceptMutation.isPending ? '...' : 'Aceptar colaboracion'}
           </button>
+        </div>
+      )}
+      {isOwn && !isClosed && (
+        <div className="px-3 pb-3">
+          {!confirmCancel ? (
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmCancel(true)
+                setTimeout(() => setConfirmCancel(false), 3000)
+              }}
+              className="w-full py-1.5 rounded-lg font-sans text-xs font-medium transition-colors border"
+              style={{ borderColor: 'rgba(242,242,247,0.12)', color: 'var(--text-muted)', background: 'transparent' }}
+            >
+              Cancelar postulacion
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate()}
+              className="w-full py-1.5 rounded-lg font-sans text-xs font-medium transition-colors disabled:opacity-50"
+              style={{ background: 'rgba(255,59,48,0.15)', color: '#ff3b30' }}
+            >
+              {cancelMutation.isPending ? '...' : 'Confirmar cancelacion'}
+            </button>
+          )}
         </div>
       )}
     </div>
