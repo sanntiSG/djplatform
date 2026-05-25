@@ -4,17 +4,19 @@ import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion'
 import { usePuzzleImages } from '../../hooks/usePuzzleImages'
 import { usePointerKind } from '../../hooks/usePointerKind'
 import { PuzzleBoard } from './PuzzleBoard'
+import { ProgressWaveform } from './ProgressWaveform'
 
 const ROTATE_TEXTS = [
-  'Sintonizando frecuencias…',
-  'Encendiendo la consola…',
-  'Subiendo los faders…',
-  'Calentando los platos…',
-  'Sincronizando BPM…',
-  'Cerrando el loop…',
-  'Levantando la noche…',
-  'Tu sesión está casi lista',
-  'Cerrando el último set…',
+  'Calibrando los monitores',
+  'Subiendo el master a 0 dB',
+  'Cargando crates de la noche',
+  'Sincronizando los decks',
+  'Ajustando el EQ del sistema',
+  'Tu cabina está casi lista',
+  'Afinando la pista de baile',
+  'Cerrando el último loop',
+  'Bajando las luces del club',
+  'Soltando el primer drop',
 ]
 
 function computePieceSize(): number {
@@ -29,9 +31,10 @@ function computePieceSize(): number {
 interface PuzzleLoaderProps {
   onDismiss?: () => void
   isReady?: boolean
+  progress?: number
 }
 
-export function PuzzleLoader({ onDismiss, isReady }: PuzzleLoaderProps) {
+export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderProps) {
   const { currentImage, nextImage } = usePuzzleImages()
   const [image, setImage] = useState(currentImage)
   const pointerKind = usePointerKind()
@@ -106,6 +109,8 @@ export function PuzzleLoader({ onDismiss, isReady }: PuzzleLoaderProps) {
         animateEntrance
       />
 
+      <ProgressWaveform progress={progress} />
+
       <div style={{ textAlign: 'center', minHeight: 28 }}>
         <p ref={textRef} style={{
           fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(0.95rem, 2.5vw, 1.2rem)',
@@ -119,7 +124,11 @@ export function PuzzleLoader({ onDismiss, isReady }: PuzzleLoaderProps) {
         fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(242,242,247,0.2)',
         margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase',
       }}>
-        {mode === 'tap' ? 'Tap dos piezas para intercambiarlas' : 'Arrastrá las piezas para ordenarlas'}
+        {progress >= 85
+          ? 'Casi listo'
+          : mode === 'tap'
+            ? 'Tap dos piezas para intercambiarlas'
+            : 'Arrastrá las piezas para ordenarlas'}
       </p>
     </div>
   )
