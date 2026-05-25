@@ -374,26 +374,47 @@ export async function acceptCollab(req: Request, res: Response, next: NextFuncti
       await opp.save()
     }
 
+    const acceptedUserId = collaboratorProfile.userId.toString()
+    const opportunityIdStr = opp._id.toString()
+
+    // Notify and emit to the accepted collaborator
     createNotification(
-      collaboratorProfile.userId.toString(),
-      'collab_confirmed',
+      acceptedUserId,
+      'opportunity_application_accepted',
       {
         actorId: req.user!.id,
         payload: { title: opp.title },
-        url: `/p/${collaboratorProfile.artistName.toLowerCase().replace(/\s+/g, '-')}-${collaboratorProfile._id}`,
+        url: `/oportunidades/${opportunityIdStr}`,
       },
     ).catch(() => { })
+    io.to(`user:${acceptedUserId}`).emit('opportunity:application_accepted', {
+      opportunityId: opportunityIdStr,
+      acceptedUserId,
+      opportunityStatus: 'filled',
+      title: opp.title,
+    })
 
     if (wasOpen) {
-      const losers = opp.applicantIds.map(String).filter((uid) => uid !== collaboratorProfile.userId.toString())
+      const losers = opp.applicantIds.map(String).filter((uid) => uid !== acceptedUserId)
       losers.forEach((uid) => {
-        createNotification(uid, 'opportunity_closed', {
+        createNotification(uid, 'opportunity_filled_other', {
           actorId: req.user!.id,
           payload: { title: opp.title },
-          url: `/oportunidades/${opp._id}`,
+          url: `/oportunidades/${opportunityIdStr}`,
         }).catch(() => {})
+        io.to(`user:${uid}`).emit('opportunity:closed', {
+          opportunityId: opportunityIdStr,
+          reason: 'filled_other',
+        })
       })
     }
+    // Notify publisher that the opportunity is now filled
+    io.to(`user:${req.user!.id}`).emit('opportunity:application_accepted', {
+      opportunityId: opportunityIdStr,
+      acceptedUserId,
+      opportunityStatus: 'filled',
+      title: opp.title,
+    })
 
     createActivity({
       type: 'collab_verified',

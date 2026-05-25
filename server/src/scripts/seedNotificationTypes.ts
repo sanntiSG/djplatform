@@ -22,8 +22,12 @@ const TYPES: Array<{
   { key: 'chat_message_reply',          label: 'Respuesta a mensaje',        description: 'Alguien respondio tu mensaje',                         category: 'profile' },
   { key: 'collab_request',              label: 'Propuesta de colaboracion',  description: 'Alguien te propuso una colaboracion',                  category: 'profile' },
   { key: 'collab_confirmed',            label: 'Colaboracion confirmada',    description: 'Una colaboracion que propusiste fue confirmada',        category: 'profile' },
-  { key: 'opportunity_new_application', label: 'Nueva postulacion',          description: 'Alguien se postulo a tu oportunidad',                  category: 'profile' },
-  { key: 'opportunity_closed',          label: 'Oportunidad cerrada',        description: 'Una oportunidad a la que te postulaste se cerro',       category: 'profile' },
+  { key: 'opportunity_new_application',    label: 'Nueva postulacion',          description: 'Alguien se postulo a tu oportunidad',                          category: 'profile' },
+  { key: 'opportunity_closed',             label: 'Oportunidad cerrada',        description: 'Una oportunidad a la que te postulaste se cerro',               category: 'profile' },
+  { key: 'opportunity_application_accepted', label: 'Postulacion aceptada',     description: 'Tu postulacion fue aceptada por el creador de la oportunidad',  category: 'profile' },
+  { key: 'opportunity_application_cancelled', label: 'Postulacion cancelada',   description: 'Un artista cancelo su postulacion a tu oportunidad',            category: 'profile' },
+  { key: 'opportunity_filled_other',       label: 'Oportunidad cubierta',       description: 'La oportunidad fue cubierta con otro artista',                  category: 'profile' },
+  { key: 'opportunity_cancelled',          label: 'Oportunidad cancelada',      description: 'El creador cerro o elimino la oportunidad',                     category: 'profile' },
 ]
 
 async function seed() {

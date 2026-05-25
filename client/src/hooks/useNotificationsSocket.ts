@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { getSocket } from '../services/socket.js'
+import { useToastStore } from '../store/useToastStore.js'
 
 type InboxData = {
   items: Array<{ _id: string; readAt: string | null }>
@@ -10,6 +11,7 @@ type InboxData = {
 
 export function useNotificationsSocket() {
   const qc = useQueryClient()
+  const showToast = useToastStore(s => s.show)
 
   useEffect(() => {
     const socket = getSocket()
@@ -56,16 +58,32 @@ export function useNotificationsSocket() {
       })
     }
 
+    function onApplicationAccepted({ opportunityId, title }: { opportunityId: string; title: string; acceptedUserId: string; opportunityStatus: string }) {
+      qc.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+      qc.invalidateQueries({ queryKey: ['opportunities'] })
+      qc.invalidateQueries({ queryKey: ['messages'] })
+      showToast(`Te aceptaron en "${title}"`, 'success')
+    }
+
+    function onOpportunityClosed({ opportunityId }: { opportunityId: string; reason: string }) {
+      qc.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+      qc.invalidateQueries({ queryKey: ['opportunities'] })
+    }
+
     socket.on('notification:new', onNew)
     socket.on('notification:read', onRead)
     socket.on('notification:read-all', onReadAll)
     socket.on('notification:removed', onRemoved)
+    socket.on('opportunity:application_accepted', onApplicationAccepted)
+    socket.on('opportunity:closed', onOpportunityClosed)
 
     return () => {
       socket.off('notification:new', onNew)
       socket.off('notification:read', onRead)
       socket.off('notification:read-all', onReadAll)
       socket.off('notification:removed', onRemoved)
+      socket.off('opportunity:application_accepted', onApplicationAccepted)
+      socket.off('opportunity:closed', onOpportunityClosed)
     }
-  }, [qc])
+  }, [qc, showToast])
 }

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import gsap from 'gsap'
 import { cn } from '../../utils/cn.js'
 import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion.js'
@@ -22,8 +22,15 @@ function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: 
   senderUserId: string
   isOwn: boolean
 }) {
+  const qc = useQueryClient()
+  const isClosed = status === 'closed' || status === 'filled'
   const acceptMutation = useMutation({
     mutationFn: () => opportunityService.acceptCollab(opportunityId, { collaboratorUserId: senderUserId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+      qc.invalidateQueries({ queryKey: ['messages'] })
+      qc.invalidateQueries({ queryKey: ['notification-inbox'] })
+    },
   })
 
   return (
@@ -52,7 +59,7 @@ function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: 
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </Link>
-      {!isOwn && status === 'open' && (
+      {!isOwn && !isClosed && (
         <div className="px-3 pb-3">
           <button
             type="button"

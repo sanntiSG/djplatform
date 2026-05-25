@@ -27,7 +27,11 @@ const TYPE_LABELS: Record<string, { title: (actorName?: string) => string; body:
   collab_confirmed:               { title: (a) => `${a ?? 'Alguien'} confirmo tu colaboracion`, body: (p) => String(p?.title ?? '') },
   event_attend:                   { title: (a) => `${a ?? 'Alguien'} confirmo asistencia a tu evento`, body: () => '' },
   opportunity_new_application:    { title: (a) => `${a ?? 'Alguien'} se postulo a tu oportunidad`, body: (p) => String(p?.title ?? '') },
-  opportunity_closed:             { title: () => 'Oportunidad cerrada', body: (p) => String(p?.title ?? '') },
+  opportunity_closed:             { title: () => 'Oportunidad cerrada',   body: (p) => String(p?.title ?? '') },
+  opportunity_application_accepted: { title: (a) => `${a ?? 'Alguien'} acepto tu postulacion`, body: (p) => String(p?.title ?? '') },
+  opportunity_application_cancelled: { title: (a) => `${a ?? 'Alguien'} cancelo su postulacion`, body: (p) => String(p?.title ?? '') },
+  opportunity_filled_other:       { title: () => 'Otro artista fue seleccionado', body: (p) => String(p?.title ?? '') },
+  opportunity_cancelled:          { title: () => 'La oportunidad se cerro', body: (p) => String(p?.title ?? '') },
 }
 
 export async function create(
