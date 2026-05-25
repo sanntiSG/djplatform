@@ -519,9 +519,15 @@ function NewsFeedRow({ event }: { event: EventResponse }) {
 export default function MainFeed() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { data: myProfile } = useMyProfile()
-  const ctaLabel = !user ? 'Publicar mi perfil' : !myProfile ? 'Crear mi perfil' : 'Ver mi perfil'
-  const ctaTo = !user ? '/auth/register' : !myProfile ? '/profile/setup' : profilePath(myProfile.slug, myProfile.id)
+  const { data: myProfile, isFetched: myProfileFetched } = useMyProfile()
+  const hasProfile = Boolean(user?.profileId) || Boolean(myProfile)
+  const profileResolved = !user || myProfileFetched
+  const ctaLabel = !user ? 'Publicar mi perfil' : !hasProfile ? 'Crear mi perfil' : 'Ver mi perfil'
+  const ctaTo = !user
+    ? '/auth/register'
+    : myProfile
+      ? profilePath(myProfile.slug, myProfile.id)
+      : '/profile/setup'
   const pageRef = useRef<HTMLDivElement>(null)
   const musicLibRef = useRef<HTMLElement>(null)
   const djsRef = useRef<HTMLElement>(null)
@@ -612,13 +618,14 @@ export default function MainFeed() {
   useEffect(() => {
     const pill = ctaPillRef.current
     if (!pill) return
+    const shouldShow = showFloatingCTA && profileResolved
     gsap.to(pill, {
-      y: showFloatingCTA ? 0 : 80,
-      opacity: showFloatingCTA ? 1 : 0,
+      y: shouldShow ? 0 : 80,
+      opacity: shouldShow ? 1 : 0,
       duration: 0.42,
-      ease: showFloatingCTA ? 'back.out(1.4)' : 'expo.in',
+      ease: shouldShow ? 'back.out(1.4)' : 'expo.in',
     })
-  }, [showFloatingCTA])
+  }, [showFloatingCTA, profileResolved])
 
   // Force scroll to top on mount/navigation
   useEffect(() => {

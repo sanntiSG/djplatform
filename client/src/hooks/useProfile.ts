@@ -39,7 +39,8 @@ export function useMyProfile() {
     queryKey: ['profiles', 'me'],
     queryFn: profileService.getMine,
     enabled: Boolean(token),
-    retry: false,
+    retry: 2,
+    staleTime: 60_000,
   })
 }
 
