@@ -6,6 +6,7 @@ import { Toggle } from '../components/ui/Toggle.js'
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
 import { cn } from '../utils/cn.js'
 import { ROLE_OPTIONS } from '@dj/shared'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function OpportunityNew() {
   const navigate = useNavigate()
@@ -18,6 +19,8 @@ export default function OpportunityNew() {
   const [isRemote, setIsRemote] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const queryClient = useQueryClient()
 
   function toggleRole(id: string) {
     setLookingForRoles((prev) =>
@@ -40,6 +43,7 @@ export default function OpportunityNew() {
         isPaid,
         isRemote,
       })
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
       navigate(`/oportunidades/${opp.id}`)
     } catch (err: any) {
       setError(err.message ?? 'Error al publicar')

@@ -119,12 +119,18 @@ export default function OpportunityDetail() {
 
   const closeMutation = useMutation({
     mutationFn: () => opportunityService.update(id!, { status: 'filled' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunity', id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunity', id] })
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => opportunityService.remove(id!),
-    onSuccess: () => navigate('/oportunidades'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+      navigate('/oportunidades')
+    },
   })
 
   const acceptCollabMutation = useMutation({
@@ -132,6 +138,7 @@ export default function OpportunityDetail() {
       opportunityService.acceptCollab(id!, { collaboratorProfileId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opportunity', id] })
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
     },
   })
 
