@@ -23,6 +23,7 @@ import { CommentCard } from '../components/ui/CommentCard.js'
 import { SuggestionsRail } from '../components/social/SuggestionsRail.js'
 import { OpportunityMatchCard } from '../components/opportunities/OpportunityMatchCard.js'
 import { CollabPoster } from '../components/feed/CollabPoster.js'
+import { RecommendationsSection } from '../components/feed/RecommendationsSection.js'
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
 import { useAuthStore } from '../store/useAuthStore.js'
@@ -1033,6 +1034,9 @@ export default function MainFeed() {
 
           {/* Puzzle interactivo */}
           <PuzzleSection />
+
+          {/* Recomendaciones por genero — arriba de Trending */}
+          <RecommendationsSection />
 
           {/* Trending — solo eventos */}
           {trendingEvents.length > 0 && (

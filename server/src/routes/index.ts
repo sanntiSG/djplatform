@@ -17,6 +17,7 @@ import opportunitiesRouter from './opportunities.js'
 import collaborationsRouter from './collaborations.js'
 import artistImagesRouter from './artistImages.js'
 import savedMediaRouter from './savedMedia.js'
+import feedRouter from './feed.js'
 
 const router = Router()
 
@@ -41,6 +42,7 @@ router.use('/opportunities', opportunitiesRouter)
 router.use('/collaborations', collaborationsRouter)
 router.use('/artist-images', artistImagesRouter)
 router.use('/users/me/saved-media', savedMediaRouter)
+router.use('/feed', feedRouter)
 router.use('/', sitemapRouter)
 
 export default router

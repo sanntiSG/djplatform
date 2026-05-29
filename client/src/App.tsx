@@ -41,6 +41,8 @@ import Opportunities from './pages/Opportunities.js'
 import OpportunityNew from './pages/OpportunityNew.js'
 import OpportunityDetail from './pages/OpportunityDetail.js'
 import Biblioteca from './pages/Biblioteca.js'
+import RecomendacionesCanciones from './pages/RecomendacionesCanciones.js'
+import RecomendacionesArtistas from './pages/RecomendacionesArtistas.js'
 
 const HIDE_HEADER_PATHS = ['/auth/login', '/auth/register', '/auth/change-password']
 
@@ -99,6 +101,8 @@ export default function App() {
         <Route path="/oportunidades/nueva" element={<RequireAuth><OpportunityNew /></RequireAuth>} />
 
         <Route path="/biblioteca" element={<RequireAuth><Biblioteca /></RequireAuth>} />
+        <Route path="/recomendaciones/canciones" element={<RequireAuth><RecomendacionesCanciones /></RequireAuth>} />
+        <Route path="/recomendaciones/artistas" element={<RequireAuth><RecomendacionesArtistas /></RequireAuth>} />
         <Route path="/me" element={<RequireAuth><Me /></RequireAuth>} />
         <Route path="/me/notificaciones" element={<RequireAuth><Notifications /></RequireAuth>} />
         <Route path="/me/mensajes" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
