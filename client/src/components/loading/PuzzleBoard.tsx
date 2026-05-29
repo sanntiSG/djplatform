@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion'
 import type { PoolImage } from '../../services/artistImageCache'
@@ -70,6 +70,10 @@ function PuzzlePiece({ tileIndex, imageUrl, size, isSelected, isCorrect, mode, p
   )
 }
 
+export interface PuzzleBoardHandle {
+  forceSolve(): Promise<void>
+}
+
 export interface PuzzleBoardProps {
   image: PoolImage
   mode: 'tap' | 'drag'
@@ -80,7 +84,7 @@ export interface PuzzleBoardProps {
   animateEntrance?: boolean
 }
 
-export function PuzzleBoard({
+export const PuzzleBoard = forwardRef<PuzzleBoardHandle, PuzzleBoardProps>(function PuzzleBoard({
   image,
   mode,
   pieceSize,
@@ -88,15 +92,19 @@ export function PuzzleBoard({
   showMiniPreview = true,
   showCounter = true,
   animateEntrance = true,
-}: PuzzleBoardProps) {
+}: PuzzleBoardProps, ref) {
   const [grid, setGrid] = useState<number[]>(shuffleIndices)
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null)
   const [solved, setSolved] = useState(false)
   const solvedCountRef = useRef(0)
+  const forcing = useRef(false)
 
   const pieceRefs = useRef<(HTMLDivElement | null)[]>(Array(9).fill(null))
   const gridRef = useRef<HTMLDivElement>(null)
+  const gridCurrentRef = useRef(grid)
   const prevImageUrl = useRef(image.imageUrl)
+
+  useEffect(() => { gridCurrentRef.current = grid }, [grid])
 
   const reduced = prefersReducedMotion()
   const gridSize = pieceSize * 3 + GAP * 2
@@ -126,7 +134,53 @@ export function PuzzleBoard({
     })
   }, [image.imageUrl, animateEntrance, reduced])
 
+  useImperativeHandle(ref, () => ({
+    forceSolve: () => new Promise<void>((resolve) => {
+      forcing.current = true
+      const currentGrid = gridCurrentRef.current
+      const misplaced = currentGrid.reduce<number[]>((acc, t, s) => { if (t !== s) acc.push(s); return acc }, [])
+
+      if (misplaced.length === 0) {
+        forcing.current = false
+        resolve()
+        return
+      }
+
+      // Record positions before any movement
+      const rects = pieceRefs.current.map(el => el?.getBoundingClientRect())
+      let completed = 0
+
+      misplaced.forEach((slot, idx) => {
+        const el = pieceRefs.current[slot]
+        const tileIndex = currentGrid[slot]
+        const fromRect = rects[slot]
+        const toRect = rects[tileIndex]
+        if (!el || !fromRect || !toRect) { completed++; return }
+
+        gsap.to(el, {
+          x: toRect.left - fromRect.left,
+          y: toRect.top - fromRect.top,
+          duration: 0.5,
+          ease: 'power3.inOut',
+          delay: idx * 0.04,
+          onComplete: () => {
+            completed++
+            if (completed >= misplaced.length) {
+              setGrid([0, 1, 2, 3, 4, 5, 6, 7, 8])
+              requestAnimationFrame(() => {
+                pieceRefs.current.forEach(el => { if (el) gsap.set(el, { clearProps: 'x,y' }) })
+                forcing.current = false
+                resolve()
+              })
+            }
+          },
+        })
+      })
+    }),
+  }), [])
+
   const checkSolved = useCallback((newGrid: number[]) => {
+    if (forcing.current) return
     if (!newGrid.every((v, i) => v === i)) return
     setSolved(true)
     solvedCountRef.current += 1
@@ -310,4 +364,4 @@ export function PuzzleBoard({
       </div>
     </div>
   )
-}
+})

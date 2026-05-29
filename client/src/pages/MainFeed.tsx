@@ -872,7 +872,7 @@ export default function MainFeed() {
   }, [])
 
   if (loadingPhase === 'splash') {
-    return <SplashScreen ready={splashShouldExit} onExited={() => setSplashExited(true)} />
+    return <SplashScreen ready={splashShouldExit} onExited={() => setSplashExited(true)} progress={bootProgress} />
   }
   if (loadingPhase === 'puzzle') {
     return <PuzzleLoader isReady={isReady} onDismiss={() => setPuzzleExited(true)} progress={bootProgress} />

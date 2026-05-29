@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion'
 import { usePuzzleImages } from '../../hooks/usePuzzleImages'
 import { usePointerKind } from '../../hooks/usePointerKind'
-import { PuzzleBoard } from './PuzzleBoard'
+import { PuzzleBoard, type PuzzleBoardHandle } from './PuzzleBoard'
 import { ProgressWaveform } from './ProgressWaveform'
 
 const ROTATE_TEXTS = [
@@ -42,7 +42,9 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
 
   const [textIndex, setTextIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
+  const boardRef = useRef<PuzzleBoardHandle>(null)
   const textRef = useRef<HTMLParagraphElement>(null)
+  const exitingRef = useRef(false)
   const reduced = prefersReducedMotion()
 
   const [pieceSize, setPieceSize] = useState(() => computePieceSize())
@@ -68,14 +70,36 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
     gsap.fromTo(textRef.current, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out })
   }, [textIndex, reduced])
 
-  // Exit when backend is ready
+  // Coordinated exit when backend is ready
   useEffect(() => {
-    if (!isReady || !containerRef.current) return
-    if (reduced) { onDismiss?.(); return }
-    gsap.to(containerRef.current, {
-      opacity: 0, scale: 0.96, duration: DURATION.slow, ease: EASE.softOut, onComplete: onDismiss,
-    })
-  }, [isReady, onDismiss, reduced])
+    if (!isReady || exitingRef.current) return
+    exitingRef.current = true
+
+    if (reduced) {
+      onDismiss?.()
+      return
+    }
+
+    const run = async () => {
+      // 1. Auto-resolve puzzle pieces
+      if (boardRef.current) {
+        await boardRef.current.forceSolve()
+      }
+
+      // 2. Brief hold showing complete image
+      await new Promise<void>(r => setTimeout(r, 200))
+
+      // 3. Morph: scale up + blur + fade out → hand off to feed
+      const container = containerRef.current
+      if (!container) { onDismiss?.(); return }
+      gsap.timeline()
+        .to(container, { scale: 1.04, duration: 0.5, ease: 'power2.in' }, 0)
+        .to(container, { filter: 'blur(6px)', opacity: 0, duration: 0.45, ease: 'power2.inOut', onComplete: onDismiss }, 0.1)
+    }
+
+    run()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady])
 
   const handleSolved = useCallback(() => {
     setImage(nextImage())
@@ -100,6 +124,7 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
       </p>
 
       <PuzzleBoard
+        ref={boardRef}
         image={image}
         mode={mode}
         pieceSize={pieceSize}

@@ -19,9 +19,10 @@ function panelGradient(i: number): string {
 interface Props {
   ready: boolean
   onExited: () => void
+  progress?: number
 }
 
-export default function SplashScreen({ ready, onExited }: Props) {
+export default function SplashScreen({ ready, onExited, progress }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const panelRefs = useRef<HTMLDivElement[]>([])
   const logoRef = useRef<HTMLDivElement>(null)
@@ -52,6 +53,23 @@ export default function SplashScreen({ ready, onExited }: Props) {
     )
   }, [subtitleIdx, reduced])
 
+  // Reactive counter driven by real boot progress
+  useEffect(() => {
+    if (progress === undefined) return
+    const obj = countObj.current
+    const target = Math.max(progress, Math.round(obj.val))
+    gsap.to(obj, {
+      val: target,
+      duration: 0.4,
+      ease: 'power2.out',
+      overwrite: true,
+      onUpdate: () => {
+        if (countEl.current)
+          countEl.current.textContent = String(Math.floor(obj.val)).padStart(2, '0')
+      },
+    })
+  }, [progress])
+
   // Main animation setup
   useEffect(() => {
     const container = containerRef.current
@@ -60,15 +78,6 @@ export default function SplashScreen({ ready, onExited }: Props) {
 
     if (reduced) {
       gsap.set(logoRef.current, { opacity: 1 })
-      gsap.to(countObj.current, {
-        val: 95,
-        duration: 1.2,
-        ease: 'power1.inOut',
-        onUpdate: () => {
-          if (countEl.current)
-            countEl.current.textContent = String(Math.floor(countObj.current.val)).padStart(2, '0')
-        },
-      })
       return () => {
         document.body.style.overflow = ''
       }
@@ -88,18 +97,6 @@ export default function SplashScreen({ ready, onExited }: Props) {
         { opacity: 0, y: 20, scale: 0.94 },
         { opacity: 1, y: 0, scale: 1, duration: 0.65, delay: 0.5, ease: 'expo.out' },
       )
-
-      // Counter: 0 → 95 during load
-      gsap.to(countObj.current, {
-        val: 95,
-        duration: 1.6,
-        delay: 0.4,
-        ease: 'power2.inOut',
-        onUpdate: () => {
-          if (countEl.current)
-            countEl.current.textContent = String(Math.floor(countObj.current.val)).padStart(2, '0')
-        },
-      })
 
       // Panel entry — all start simultaneously, varying durations (like Spotify Wrapped)
       const tl = gsap.timeline({
