@@ -7,6 +7,7 @@ import {
   getProfileSocial,
   follow,
   likeProfile,
+  listLikedProfiles,
   getProfileComments,
   postProfileComment,
   patchProfileComment,
@@ -30,6 +31,7 @@ router.get('/top', topByFollowers)
 router.post('/', requireAuth, create)
 router.get('/me', requireAuth, getMe)
 router.get('/me/suggestions', requireAuth, getSuggestions)
+router.get('/me/liked', requireAuth, listLikedProfiles)
 router.patch('/me', requireAuth, updateMe)
 router.patch('/me/photos/:photoId', requireAuth, updatePhotoCaption)
 router.patch('/me/media/:mediaId', requireAuth, updateMediaItemHandler)

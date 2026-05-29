@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { parseObjectId } from '../utils/parseId.js'
 import * as service from '../services/profileSocialService.js'
 import { Profile } from '../models/Profile.js'
+import { ProfileLike } from '../models/ProfileLike.js'
 import { create as createNotification } from '../services/notificationService.js'
 
 async function getProfileOwner(profileId: string): Promise<string | null> {
@@ -85,6 +86,33 @@ export async function likeProfile(req: Request, res: Response, next: NextFunctio
         }
       })
     }
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function listLikedProfiles(req: Request, res: Response, next: NextFunction) {
+  try {
+    const likes = await ProfileLike.find({ userId: req.user!.id })
+      .sort({ createdAt: -1 })
+      .populate<{ profileId: { _id: { toString(): string }; artistName: string; avatar?: string; genres: string[]; type: string } }>({
+        path: 'profileId',
+        select: 'artistName avatar genres type',
+      })
+      .lean()
+
+    const result = likes
+      .filter((l) => l.profileId)
+      .map((l) => ({
+        profileId: (l.profileId as unknown as { _id: { toString(): string } })._id.toString(),
+        artistName: (l.profileId as unknown as { artistName: string }).artistName,
+        avatar: (l.profileId as unknown as { avatar?: string }).avatar,
+        genres: (l.profileId as unknown as { genres: string[] }).genres ?? [],
+        type: (l.profileId as unknown as { type: string }).type,
+        likedAt: (l as unknown as { createdAt: Date }).createdAt,
+      }))
+
+    res.json(result)
   } catch (err) {
     next(err)
   }

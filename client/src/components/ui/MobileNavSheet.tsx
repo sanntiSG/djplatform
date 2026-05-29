@@ -18,6 +18,10 @@ const NAV_LINKS = [
   { to: '/oportunidades', label: 'Oportunidades' },
 ]
 
+const AUTH_NAV_LINKS = [
+  { to: '/biblioteca', label: 'Biblioteca' },
+]
+
 const MENU_STATE = { menuNav: true } as const
 
 export function MobileNavSheet({ open, onClose, onLogout }: Props) {
@@ -131,6 +135,25 @@ export function MobileNavSheet({ open, onClose, onLogout }: Props) {
               {label}
               <span
                 className="text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-1"
+                style={{ fontSize: '1.1rem' }}
+              >
+                ›
+              </span>
+            </Link>
+          ))}
+
+          {user && AUTH_NAV_LINKS.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              state={MENU_STATE}
+              onClick={onClose}
+              className="font-display font-semibold text-[var(--accent)] flex items-center justify-between border-b border-[var(--border)] group"
+              style={{ fontSize: 'clamp(1.6rem, 5.5vw, 2.1rem)', paddingBlock: '1.05rem' }}
+            >
+              {label}
+              <span
+                className="text-[var(--accent)] transition-transform duration-200 group-hover:translate-x-1"
                 style={{ fontSize: '1.1rem' }}
               >
                 ›

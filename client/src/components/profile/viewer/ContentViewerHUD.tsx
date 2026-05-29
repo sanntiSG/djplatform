@@ -6,6 +6,8 @@ import { useToggleContentLike, useProfileContentSocial } from '../../../hooks/us
 import { useSocialStats, useToggleLike as useToggleEventLike, useToggleAttend } from '../../../hooks/useSocial.js'
 import { ContentComments } from './ContentComments.js'
 import { LikeButton } from '../../ui/LikeButton.js'
+import { SaveButton } from '../../ui/SaveButton.js'
+import { useIsSaved, useToggleSaveMedia } from '../../../hooks/useSavedMedia.js'
 import { useTapAnim } from '../../../hooks/useTapAnim.js'
 import type { FeedItem } from '../../../utils/profileFeed.js'
 import type { ProfileResponse } from '../../../types/index.js'
@@ -103,6 +105,8 @@ function ContentHUDButtons({
   const stats = socialMap?.[key] ?? { likeCount: 0, commentCount: 0, isLiked: false }
 
   const { mutate: toggleLike, isPending: liking } = useToggleContentLike(profile.id, item.kind, item.id)
+  const { mutate: toggleSave, isPending: saving } = useToggleSaveMedia(profile.id, item.id)
+  const isSaved = useIsSaved(item.id)
 
   return (
     <>
@@ -112,6 +116,16 @@ function ContentHUDButtons({
           likeCount={stats.likeCount}
           onToggle={() => toggleLike()}
           disabled={liking}
+          accentColor={profileAccent}
+          size="md"
+          layout="column"
+        />
+      )}
+      {token && item.kind === 'media' && (
+        <SaveButton
+          isSaved={isSaved}
+          onToggle={() => toggleSave()}
+          disabled={saving}
           accentColor={profileAccent}
           size="md"
           layout="column"

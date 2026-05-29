@@ -16,6 +16,7 @@ import activityRouter from './activity.js'
 import opportunitiesRouter from './opportunities.js'
 import collaborationsRouter from './collaborations.js'
 import artistImagesRouter from './artistImages.js'
+import savedMediaRouter from './savedMedia.js'
 
 const router = Router()
 
@@ -39,6 +40,7 @@ router.use('/activity', activityRouter)
 router.use('/opportunities', opportunitiesRouter)
 router.use('/collaborations', collaborationsRouter)
 router.use('/artist-images', artistImagesRouter)
+router.use('/users/me/saved-media', savedMediaRouter)
 router.use('/', sitemapRouter)
 
 export default router
