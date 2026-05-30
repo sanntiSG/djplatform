@@ -606,8 +606,21 @@ export default function MainFeed() {
 
   const loadingPhase: 'splash' | 'puzzle' | 'done' =
     !splashExited ? 'splash'
-    : showPuzzle && (!isReady || !puzzleExited) ? 'puzzle'
-    : 'done'
+      : showPuzzle && (!isReady || !puzzleExited) ? 'puzzle'
+        : 'done'
+
+  /* Refresh ScrollTrigger whenever the page becomes fully visible.
+     On first load, GSAP auto-refreshes on window 'load'. On SPA
+     navigate-back the layout is already painted (react-query cache)
+     but ScrollTrigger positions are stale — a double-rAF refresh
+     recalculates all triggers after the commit is flushed. */
+  useEffect(() => {
+    if (loadingPhase !== 'done') return
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => ScrollTrigger.refresh()),
+    )
+    return () => cancelAnimationFrame(id)
+  }, [loadingPhase])
 
   /* Floating CTA scroll trigger */
   useEffect(() => {

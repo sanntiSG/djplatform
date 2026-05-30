@@ -11,6 +11,9 @@ import { useTapAnim } from '../hooks/useTapAnim.js'
 import { DURATION, EASE, STAGGER, prefersReducedMotion, revealStagger } from '../utils/motion.js'
 import { profilePath, toSlug } from '../utils/slug.js'
 import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
+import { usePlayerStore } from '../store/usePlayerStore.js'
+import { LibraryPlayerBar } from '../components/library/LibraryPlayerBar.js'
+import { LibraryNowPlaying } from '../components/library/LibraryNowPlaying.js'
 import type { SavedMediaItem } from '../services/savedMediaService.js'
 import type { LikedProfileItem } from '../hooks/useLikedProfiles.js'
 
@@ -161,13 +164,117 @@ function ContextMenu({
 
 /* ─────────────────────── SavedSongCard ─────────────────────── */
 
-function SavedSongCard({ item }: { item: SavedMediaItem }) {
+function PlayOverlay({ onClick, isActive, isPlaying, canPlay }: {
+  onClick: (e: React.MouseEvent) => void
+  isActive: boolean
+  isPlaying: boolean
+  canPlay: boolean
+}) {
+  const { ref, tapHandlers } = useTapAnim<HTMLButtonElement>(0.9)
+  if (!canPlay) {
+    return (
+      <div
+        title="No disponible en reproductor"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0)',
+          borderRadius: 10,
+          cursor: 'not-allowed',
+          opacity: 0.35,
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+        </svg>
+      </div>
+    )
+  }
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label={isActive && isPlaying ? 'Pausar' : 'Reproducir'}
+      onClick={onClick}
+      {...tapHandlers}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: isActive ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
+        borderRadius: 10,
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'background 0.18s ease',
+      }}
+      onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.45)' }}
+      onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0)' }}
+    >
+      {isActive && isPlaying ? (
+        /* Equalizer bars animation for "now playing" */
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--accent)">
+          <rect x="2" y="6" width="4" height="12" rx="1">
+            <animate attributeName="height" values="12;6;12" dur="0.8s" repeatCount="indefinite" />
+            <animate attributeName="y" values="6;9;6" dur="0.8s" repeatCount="indefinite" />
+          </rect>
+          <rect x="10" y="4" width="4" height="16" rx="1">
+            <animate attributeName="height" values="16;8;16" dur="0.65s" repeatCount="indefinite" />
+            <animate attributeName="y" values="4;8;4" dur="0.65s" repeatCount="indefinite" />
+          </rect>
+          <rect x="18" y="8" width="4" height="8" rx="1">
+            <animate attributeName="height" values="8;14;8" dur="0.9s" repeatCount="indefinite" />
+            <animate attributeName="y" values="8;5;8" dur="0.9s" repeatCount="indefinite" />
+          </rect>
+        </svg>
+      ) : isActive ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+          <polygon points="5,3 19,12 5,21" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function SavedSongCard({
+  item,
+  queue,
+  queueIndex,
+}: {
+  item: SavedMediaItem
+  queue: SavedMediaItem[]
+  queueIndex: number
+}) {
   const navigate = useNavigate()
   const heightRef = useRef<HTMLDivElement>(null)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startPosRef = useRef({ x: 0, y: 0 })
   const { ref: btnRef, tapHandlers } = useTapAnim<HTMLButtonElement>(0.94)
+
+  const { current, isPlaying, playQueue, togglePlay } = usePlayerStore()
+  const activeItem = current()
+  const isActive = Boolean(activeItem && activeItem.profileId === item.profileId && activeItem.mediaId === item.mediaId)
+  const canPlay = item.platform !== 'soundcloud' && Boolean(item.embedId)
+
+  const handlePlayClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isActive) {
+      togglePlay()
+    } else {
+      playQueue(queue, queueIndex)
+    }
+  }, [isActive, togglePlay, playQueue, queue, queueIndex])
 
   const { mutate: remove, isPending } = useRemoveSavedMedia()
 
@@ -280,16 +387,21 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
           alignItems: 'center',
           gap: 14,
           padding: '12px 14px',
-          background: 'var(--surface-2, rgba(255,255,255,0.04))',
+          background: isActive
+            ? 'rgba(212,255,0,0.07)'
+            : 'var(--surface-2, rgba(255,255,255,0.04))',
           borderRadius: 14,
           touchAction: 'pan-y',
           userSelect: 'none',
           willChange: 'transform',
+          transition: 'background 0.22s ease',
+          outline: isActive ? '1px solid rgba(212,255,0,0.18)' : 'none',
         }}
       >
-        {/* Thumbnail */}
+        {/* Thumbnail + play overlay */}
         <div
           style={{
+            position: 'relative',
             width: 54,
             height: 54,
             borderRadius: 10,
@@ -311,6 +423,12 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
           ) : (
             <PlatformIcon platform={item.platform} />
           )}
+          <PlayOverlay
+            onClick={handlePlayClick}
+            isActive={isActive}
+            isPlaying={isPlaying}
+            canPlay={canPlay}
+          />
         </div>
 
         {/* Info */}
@@ -792,9 +910,9 @@ function TabCanciones() {
         />
       ) : (
         <div ref={listRef} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {filtered.map((item) => (
+          {filtered.map((item, i) => (
             <div key={item._id} data-song-card>
-              <SavedSongCard item={item} />
+              <SavedSongCard item={item} queue={filtered} queueIndex={i} />
             </div>
           ))}
         </div>
@@ -884,8 +1002,18 @@ function TabArtistas() {
 
 export default function Biblioteca() {
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') ?? 'canciones'
+  const initialTab = params.get('tab') ?? 'canciones'
+  const [tab, setTabState] = useState(initialTab)
   const pageRef = useRef<HTMLDivElement>(null)
+  const { current, close: closePlayer } = usePlayerStore()
+  const hasActivePlayer = Boolean(current())
+
+  useEffect(() => {
+    const queryTab = params.get('tab') ?? 'canciones'
+    if (queryTab !== tab) {
+      setTabState(queryTab)
+    }
+  }, [params])
 
   useEffect(() => {
     const el = pageRef.current
@@ -893,7 +1021,13 @@ export default function Biblioteca() {
     gsap.fromTo(el, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut })
   }, [])
 
+  // Stop playback when leaving the library page
+  useEffect(() => {
+    return () => { closePlayer() }
+  }, [closePlayer])
+
   function setTab(t: string) {
+    setTabState(t)
     setParams({ tab: t }, { replace: true })
   }
 
@@ -918,8 +1052,10 @@ export default function Biblioteca() {
       style={{
         maxWidth: 720,
         margin: '0 auto',
-        padding: 'calc(var(--header-h, 72px) + 24px) 20px 48px',
+        // Extra bottom padding when the player bar is visible so last row isn't hidden
+        padding: `calc(var(--header-h, 72px) + 24px) 20px ${hasActivePlayer ? 104 : 48}px`,
         minHeight: '100dvh',
+        transition: 'padding-bottom 0.3s ease',
       }}
     >
       {/* Page heading */}
@@ -954,6 +1090,10 @@ export default function Biblioteca() {
 
       {/* Tab content */}
       {tab === 'canciones' ? <TabCanciones /> : <TabArtistas />}
+
+      {/* Player — portals into document.body, visible across tabs */}
+      <LibraryPlayerBar />
+      <LibraryNowPlaying />
     </div>
   )
 }

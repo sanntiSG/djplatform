@@ -295,7 +295,6 @@ export function RecommendationsSection() {
   const { data: songs, isLoading: songsLoading } = useRecommendedSongs(5)
   const { data: artists, isLoading: artistsLoading } = useRecommendedArtists(5)
   const sectionRef = useRef<HTMLElement>(null)
-  const didReveal = useRef(false)
 
   const hasSongs = (songs?.length ?? 0) > 0
   const hasArtists = (artists?.length ?? 0) > 0
@@ -304,10 +303,14 @@ export function RecommendationsSection() {
 
   useEffect(() => {
     const el = sectionRef.current
-    if (!el || didReveal.current || !hasAny || prefersReducedMotion()) return
+    if (!el || !hasAny) return
 
-    didReveal.current = true
-    const cards = el.querySelectorAll('.rec-card')
+    const cards = el.querySelectorAll<HTMLElement>('.rec-card')
+
+    if (prefersReducedMotion()) {
+      gsap.set(cards, { opacity: 1, y: 0 })
+      return
+    }
 
     const rect = el.getBoundingClientRect()
     const inView = rect.top < window.innerHeight * 0.95 && rect.bottom > 0
@@ -318,11 +321,17 @@ export function RecommendationsSection() {
         { opacity: 0, y: 28 },
         { opacity: 1, y: 0, stagger: 0.03, duration: DURATION.base, ease: EASE.softOut },
       )
-      return () => tween.kill()
+      return () => {
+        tween.kill()
+        gsap.set(cards, { clearProps: 'opacity,y,transform' })
+      }
     }
 
     const st = revealStagger(cards, el, { y: 28, stagger: 0.03, start: 'top 88%' })
-    return () => st.kill()
+    return () => {
+      st.kill()
+      gsap.set(cards, { clearProps: 'opacity,y,transform' })
+    }
   }, [hasAny])
 
   if (isLoading || !hasAny) return null
