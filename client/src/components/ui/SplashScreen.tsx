@@ -55,7 +55,7 @@ export default function SplashScreen({ ready, onExited, progress }: Props) {
 
   // Reactive counter driven by real boot progress
   useEffect(() => {
-    if (progress === undefined) return
+    if (progress === undefined || exitPending.current) return
     const obj = countObj.current
     const target = Math.max(progress, Math.round(obj.val))
     gsap.to(obj, {
