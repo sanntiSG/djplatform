@@ -14,6 +14,8 @@ export function useSwipeToDelete<C extends HTMLElement = HTMLDivElement, P exten
   const cardRef = useRef<C>(null)
   const panelRef = useRef<P>(null)
   const startX = useRef(0)
+  const startY = useRef(0)
+  const activePointerId = useRef<number>(-1)
   const dragging = useRef(false)
   const threshold = opts.threshold ?? 75
 
@@ -28,19 +30,34 @@ export function useSwipeToDelete<C extends HTMLElement = HTMLDivElement, P exten
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (opts.disabled || prefersReducedMotion()) return
+      // Don't engage swipe when touching interactive child elements
+      if ((e.target as HTMLElement).closest('button, a, [data-no-swipe]')) return
       startX.current = e.clientX
-      dragging.current = true
-      cardRef.current?.setPointerCapture(e.pointerId)
+      startY.current = e.clientY
+      activePointerId.current = e.pointerId
+      dragging.current = false
     },
     [opts.disabled],
   )
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!dragging.current || opts.disabled) return
+      if (opts.disabled || e.pointerId !== activePointerId.current) return
       const dx = e.clientX - startX.current
-      if (dx >= 0) return
+      const dy = e.clientY - startY.current
+
+      if (!dragging.current) {
+        // Commit to swipe only when clearly moving left with horizontal intent
+        if (dx < 0 && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          dragging.current = true
+          cardRef.current?.setPointerCapture(e.pointerId)
+        } else {
+          return
+        }
+      }
+
       const clamped = Math.max(-120, dx)
+      if (clamped >= 0) return
       gsap.set(cardRef.current, { x: clamped })
       const ratio = Math.min(1, Math.abs(clamped) / threshold)
       gsap.set(panelRef.current, { opacity: ratio })
@@ -50,8 +67,12 @@ export function useSwipeToDelete<C extends HTMLElement = HTMLDivElement, P exten
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
-      if (!dragging.current) return
+      if (e.pointerId !== activePointerId.current) return
+      const wasDragging = dragging.current
       dragging.current = false
+      activePointerId.current = -1
+
+      if (!wasDragging) return
       const dx = e.clientX - startX.current
 
       if (dx < -threshold) {
@@ -72,8 +93,10 @@ export function useSwipeToDelete<C extends HTMLElement = HTMLDivElement, P exten
   )
 
   const onPointerCancel = useCallback(() => {
+    const wasDragging = dragging.current
     dragging.current = false
-    rollback()
+    activePointerId.current = -1
+    if (wasDragging) rollback()
   }, [rollback])
 
   return {

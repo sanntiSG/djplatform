@@ -10,6 +10,7 @@ export interface SavedMediaItem {
   title?: string
   platform: 'youtube' | 'soundcloud' | 'spotify'
   thumbnailUrl?: string
+  embedId?: string
   type: 'audio' | 'video'
   genres?: string[]
 }

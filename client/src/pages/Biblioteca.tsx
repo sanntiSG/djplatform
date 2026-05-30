@@ -10,6 +10,7 @@ import { useSwipeToDelete } from '../hooks/useSwipeToDelete.js'
 import { useTapAnim } from '../hooks/useTapAnim.js'
 import { DURATION, EASE, STAGGER, prefersReducedMotion, revealStagger } from '../utils/motion.js'
 import { profilePath, toSlug } from '../utils/slug.js'
+import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
 import type { SavedMediaItem } from '../services/savedMediaService.js'
 import type { LikedProfileItem } from '../hooks/useLikedProfiles.js'
 
@@ -165,6 +166,7 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
   const heightRef = useRef<HTMLDivElement>(null)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startPosRef = useRef({ x: 0, y: 0 })
   const { ref: btnRef, tapHandlers } = useTapAnim<HTMLButtonElement>(0.94)
 
   const { mutate: remove, isPending } = useRemoveSavedMedia()
@@ -208,6 +210,7 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
   ]
 
   const onLongPressStart = useCallback((e: React.PointerEvent) => {
+    startPosRef.current = { x: e.clientX, y: e.clientY }
     longPressTimer.current = setTimeout(() => {
       const el = e.currentTarget as HTMLElement
       setMenuAnchor(el.getBoundingClientRect())
@@ -221,7 +224,7 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
     }
   }, [])
 
-  const thumbnailUrl = item.thumbnailUrl
+  const thumbnailUrl = getMediaThumbnail(item.platform, item.embedId, item.thumbnailUrl)
   const title = item.title ?? item.platform
 
   return (
@@ -254,6 +257,14 @@ function SavedSongCard({ item }: { item: SavedMediaItem }) {
         onPointerDown={(e) => {
           swipeHandlers.onPointerDown?.(e)
           onLongPressStart(e)
+        }}
+        onPointerMove={(e) => {
+          swipeHandlers.onPointerMove?.(e)
+          if (longPressTimer.current) {
+            const dx = e.clientX - startPosRef.current.x
+            const dy = e.clientY - startPosRef.current.y
+            if (Math.hypot(dx, dy) > 6) onLongPressEnd()
+          }
         }}
         onPointerUp={(e) => {
           swipeHandlers.onPointerUp?.(e)
@@ -379,6 +390,7 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
   const heightRef = useRef<HTMLDivElement>(null)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startPosRef = useRef({ x: 0, y: 0 })
   const { ref: btnRef, tapHandlers } = useTapAnim<HTMLButtonElement>(0.94)
 
   const { mutate: toggleLike, isPending } = useProfileLike(item.profileId)
@@ -418,6 +430,7 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
   ]
 
   const onLongPressStart = useCallback((e: React.PointerEvent) => {
+    startPosRef.current = { x: e.clientX, y: e.clientY }
     longPressTimer.current = setTimeout(() => {
       const el = e.currentTarget as HTMLElement
       setMenuAnchor(el.getBoundingClientRect())
@@ -459,6 +472,14 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
         onPointerDown={(e) => {
           swipeHandlers.onPointerDown?.(e)
           onLongPressStart(e)
+        }}
+        onPointerMove={(e) => {
+          swipeHandlers.onPointerMove?.(e)
+          if (longPressTimer.current) {
+            const dx = e.clientX - startPosRef.current.x
+            const dy = e.clientY - startPosRef.current.y
+            if (Math.hypot(dx, dy) > 6) onLongPressEnd()
+          }
         }}
         onPointerUp={(e) => {
           swipeHandlers.onPointerUp?.(e)

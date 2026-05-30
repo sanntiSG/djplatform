@@ -6,6 +6,7 @@ import { useRecommendedSongs, useRecommendedArtists } from '../../hooks/useRecom
 import { useTapAnim } from '../../hooks/useTapAnim.js'
 import { revealStagger, DURATION, EASE, prefersReducedMotion } from '../../utils/motion.js'
 import { profilePath, toSlug } from '../../utils/slug.js'
+import { getMediaThumbnail } from '../../utils/mediaThumbnail.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -35,7 +36,8 @@ function PlatformDot({ platform }: { platform: string }) {
 
 function SongRecCard({ song }: { song: import('../../hooks/useRecommendations.js').RecommendedSong }) {
   const { ref, tapHandlers } = useTapAnim<HTMLAnchorElement>(0.94)
-  const to = profilePath(toSlug(song.artistName), String(song.profileId))
+  const to = `${profilePath(toSlug(song.artistName), String(song.profileId))}#${String(song.mediaId)}`
+  const thumbnail = getMediaThumbnail(song.platform, song.embedId, song.thumbnailUrl)
 
   return (
     <Link
@@ -63,9 +65,9 @@ function SongRecCard({ song }: { song: import('../../hooks/useRecommendations.js
           position: 'relative',
         }}
       >
-        {song.thumbnailUrl ? (
+        {thumbnail ? (
           <img
-            src={song.thumbnailUrl}
+            src={thumbnail}
             alt={song.title ?? song.platform}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             loading="lazy"
@@ -264,9 +266,8 @@ function RecRow({
       {/* Mobile: horizontal scroll / Desktop: 5-col grid */}
       <div className="mt-4">
         <div
-          className="md:hidden"
+          className="md:hidden flex"
           style={{
-            display: 'flex',
             gap: 12,
             overflowX: 'auto',
             scrollSnapType: 'x mandatory',
@@ -307,6 +308,19 @@ export function RecommendationsSection() {
 
     didReveal.current = true
     const cards = el.querySelectorAll('.rec-card')
+
+    const rect = el.getBoundingClientRect()
+    const inView = rect.top < window.innerHeight * 0.95 && rect.bottom > 0
+
+    if (inView) {
+      const tween = gsap.fromTo(
+        cards,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, stagger: 0.03, duration: DURATION.base, ease: EASE.softOut },
+      )
+      return () => tween.kill()
+    }
+
     const st = revealStagger(cards, el, { y: 28, stagger: 0.03, start: 'top 88%' })
     return () => st.kill()
   }, [hasAny])

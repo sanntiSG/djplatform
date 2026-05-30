@@ -42,6 +42,7 @@ export async function resolveMedia(url: string): Promise<MediaResolveOutput> {
       platform: 'youtube',
       url,
       embedId: ytMatch[1],
+      thumbnailUrl: `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`,
       type: 'video',
       description: '',
       genres: [],

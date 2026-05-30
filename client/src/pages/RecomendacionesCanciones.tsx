@@ -5,17 +5,19 @@ import { Link } from 'react-router-dom'
 import { useRecommendedSongs } from '../hooks/useRecommendations.js'
 import { profilePath, toSlug } from '../utils/slug.js'
 import { DURATION, EASE, revealStagger, prefersReducedMotion } from '../utils/motion.js'
+import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
 import { useTapAnim } from '../hooks/useTapAnim.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
 function SongCard({ song }: { song: import('../hooks/useRecommendations.js').RecommendedSong }) {
   const { ref, tapHandlers } = useTapAnim<HTMLAnchorElement>(0.95)
+  const thumbnail = getMediaThumbnail(song.platform, song.embedId, song.thumbnailUrl)
 
   return (
     <Link
       ref={ref}
-      to={profilePath(toSlug(song.artistName), String(song.profileId))}
+      to={`${profilePath(toSlug(song.artistName), String(song.profileId))}#${String(song.mediaId)}`}
       {...tapHandlers}
       className="rec-card"
       style={{
@@ -38,8 +40,8 @@ function SongCard({ song }: { song: import('../hooks/useRecommendations.js').Rec
           background: 'var(--surface-3, rgba(255,255,255,0.07))',
         }}
       >
-        {song.thumbnailUrl && (
-          <img src={song.thumbnailUrl} alt={song.title ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+        {thumbnail && (
+          <img src={thumbnail} alt={song.title ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>

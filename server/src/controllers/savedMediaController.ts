@@ -80,6 +80,7 @@ export async function listSaved(req: Request, res: Response) {
         title: '$mediaItem.title',
         platform: '$mediaItem.platform',
         thumbnailUrl: '$mediaItem.thumbnailUrl',
+        embedId: '$mediaItem.embedId',
         type: '$mediaItem.type',
         genres: '$mediaItem.genres',
       },
