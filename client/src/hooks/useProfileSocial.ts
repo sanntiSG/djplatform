@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { profileSocialService } from '../services/profileSocialService.js'
 import { useToastStore } from '../store/useToastStore.js'
+import { LIKED_PROFILES_KEY } from './useLikedProfiles.js'
 import type { ProfileSocial, ProfileComment } from '../types/index.js'
 
 const errToast = () => useToastStore.getState().show('No se pudo guardar. Intenta de nuevo.')
@@ -62,6 +63,8 @@ export function useProfileLike(profileId: string) {
       qc.setQueryData<ProfileSocial>(['profiles', profileId, 'social'], (old) =>
         old ? { ...old, isLiked: result.liked, likeCount: result.likeCount } : old,
       )
+      // Keep the Library "Artistas" list in sync: refetch after any like toggle
+      qc.invalidateQueries({ queryKey: LIKED_PROFILES_KEY })
     },
   })
 }

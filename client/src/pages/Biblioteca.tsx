@@ -529,6 +529,8 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
           height: 0,
           opacity: 0,
           marginBottom: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
           duration: 0.28,
           ease: EASE.softIn,
           onComplete: () => { toggleLike(); onUnlike() },
