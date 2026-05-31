@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MediaList } from '../media/MediaList.js'
+import { MusicItemActions } from './MusicItemActions.js'
 import { Button } from '../ui/Button.js'
 import type { ProfileResponse } from '../../types/index.js'
 
@@ -32,5 +33,17 @@ export function ProfileMusicTab({ profile, isOwner, onItemClick }: ProfileMusicT
     )
   }
 
-  return <MediaList items={musicItems} onItemClick={onItemClick} />
+  return (
+    <MediaList
+      items={musicItems}
+      onItemClick={onItemClick}
+      renderActions={(item) => (
+        <MusicItemActions
+          profileId={profile.id}
+          item={item}
+          accentColor={profile.accentColor}
+        />
+      )}
+    />
+  )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import type React from 'react'
 import gsap from 'gsap'
 import { useCatalogs } from '../../hooks/useCatalogs.js'
 import { MediaEmbed } from './MediaEmbed.js'
@@ -12,9 +13,11 @@ interface MediaListProps {
   onRemove?: (index: number) => void
   onUpdate?: (index: number, patch: Partial<Pick<MediaItem, 'title' | 'description' | 'genres'>>) => void
   onItemClick?: (item: { kind: 'photo' | 'media' | 'event'; id: string }, rect: DOMRect) => void
+  /** Optional slot rendered below each item's metadata (non-editable mode only) */
+  renderActions?: (item: MediaItem) => React.ReactNode
 }
 
-export function MediaList({ items, editable = false, onRemove, onUpdate, onItemClick }: MediaListProps) {
+export function MediaList({ items, editable = false, onRemove, onUpdate, onItemClick, renderActions }: MediaListProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const { genres } = useCatalogs()
 
@@ -95,6 +98,11 @@ export function MediaList({ items, editable = false, onRemove, onUpdate, onItemC
                       {g}
                     </span>
                   ))}
+                </div>
+              )}
+              {renderActions && item.id && (
+                <div onClick={(e) => e.stopPropagation()} data-no-swipe>
+                  {renderActions(item)}
                 </div>
               )}
             </div>
