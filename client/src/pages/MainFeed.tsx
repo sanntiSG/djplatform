@@ -15,7 +15,7 @@ import SplashScreen from '../components/ui/SplashScreen.js'
 import { PuzzleLoader } from '../components/loading/PuzzleLoader.js'
 import { PuzzleSection } from '../components/feed/PuzzleSection.js'
 import { useDelayedPending } from '../hooks/useDelayedPending.js'
-import { useAppBootProgress } from '../hooks/useAppBootProgress.js'
+import { useColdStartProgress } from '../hooks/useColdStartProgress.js'
 import { RainbowPill } from '../components/ui/RainbowPill.js'
 import { NumberedListItem } from '../components/ui/NumberedListItem.js'
 import { ColorBlockCard } from '../components/ui/ColorBlockCard.js'
@@ -590,10 +590,7 @@ export default function MainFeed() {
 
   // Activity feed is non-blocking — page renders even if activity is loading
   const isReady = !artistsQuery.isLoading && !eventsQuery.isLoading
-  const bootProgress = useAppBootProgress({
-    artistsDone: artistsQuery.status === 'success',
-    eventsDone: eventsQuery.status === 'success',
-  })
+  const bootProgress = useColdStartProgress({ isDataReady: isReady })
   const hasContent =
     allAvailable.length > 0 || featuredEvents.length > 0 || topArtists.length > 0
 
