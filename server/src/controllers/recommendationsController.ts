@@ -59,13 +59,25 @@ export async function recommendSongs(req: Request, res: Response) {
     const userId = new mongoose.Types.ObjectId(req.user!.id)
     const limit = Math.min(20, parseInt(String(req.query.limit ?? '5'), 10) || 5)
 
-    const { genres, savedMediaIds } = await getUserGenres(userId)
+    const [{ genres, savedMediaIds }, ownProfile] = await Promise.all([
+      getUserGenres(userId),
+      Profile.findOne({ userId: req.user!.id }, { _id: 1 }).lean(),
+    ])
+
+    // Base match: always exclude the authenticated user's own profile
+    const baseMatch: Record<string, unknown> = {
+      isVisible: true,
+      'media.0': { $exists: true },
+    }
+    if (ownProfile) {
+      baseMatch._id = { $ne: ownProfile._id }
+    }
 
     const pipeline: mongoose.PipelineStage[] = []
 
     if (genres.length > 0) {
       pipeline.push(
-        { $match: { isVisible: true, 'media.0': { $exists: true } } },
+        { $match: baseMatch },
         { $project: { artistName: 1, avatar: 1, media: 1 } },
         { $unwind: '$media' },
         {
@@ -93,7 +105,7 @@ export async function recommendSongs(req: Request, res: Response) {
       )
     } else {
       pipeline.push(
-        { $match: { isVisible: true, 'media.0': { $exists: true } } },
+        { $match: baseMatch },
         { $project: { artistName: 1, avatar: 1, media: 1 } },
         { $unwind: '$media' },
         { $sample: { size: limit } },
@@ -127,11 +139,19 @@ export async function recommendArtists(req: Request, res: Response) {
     const userId = new mongoose.Types.ObjectId(req.user!.id)
     const limit = Math.min(20, parseInt(String(req.query.limit ?? '5'), 10) || 5)
 
-    const { genres, likedProfileIds } = await getUserGenres(userId)
+    const [{ genres, likedProfileIds }, ownProfile] = await Promise.all([
+      getUserGenres(userId),
+      Profile.findOne({ userId: req.user!.id }, { _id: 1 }).lean(),
+    ])
+
+    // Exclude: profiles already liked + the authenticated user's own profile
+    const excludeIds: mongoose.Types.ObjectId[] = ownProfile
+      ? [ownProfile._id as mongoose.Types.ObjectId, ...likedProfileIds]
+      : likedProfileIds
 
     let query: Record<string, unknown> = {
       isVisible: true,
-      _id: { $nin: likedProfileIds },
+      _id: { $nin: excludeIds },
     }
 
     if (genres.length > 0) {
