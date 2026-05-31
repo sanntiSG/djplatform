@@ -1,15 +1,18 @@
 /**
  * LibraryNowPlaying
- * Fullscreen viewer that mirrors the profile publication viewer look.
- * Mounts when expanded===true in usePlayerStore.
- * The embed here is the "large" version; the hidden iframe in LibraryPlayerBar
- * is suspended while this is open to avoid double audio.
+ * Fullscreen "Now Playing" overlay — chrome only (title, controls, close).
+ * Audio and the actual embed iframe live in SharedPlayerIframe (Biblioteca.tsx).
+ *
+ * Z-index layers (from bottom to top):
+ *   z-55  dark background (this component)
+ *   z-60  SharedPlayerIframe (the actual embed, centered)
+ *   z-65  this component's transparent chrome wrapper
  */
 import { useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
-import { prefersReducedMotion } from '../../utils/motion.js'
+import { prefersReducedMotion, DURATION, EASE } from '../../utils/motion.js'
 import { useTapAnim } from '../../hooks/useTapAnim.js'
 
 /* ── Icons ────────────────────────────────────────────────── */
@@ -17,7 +20,6 @@ import { useTapAnim } from '../../hooks/useTapAnim.js'
 function PlayIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
 }
-
 function PauseIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -26,7 +28,6 @@ function PauseIcon() {
     </svg>
   )
 }
-
 function PrevIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -35,7 +36,6 @@ function PrevIcon() {
     </svg>
   )
 }
-
 function NextIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -44,7 +44,6 @@ function NextIcon() {
     </svg>
   )
 }
-
 function ChevronDownIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -55,12 +54,7 @@ function ChevronDownIcon() {
 
 /* ── Control button ───────────────────────────────────────── */
 
-function CtrlBtn({
-  onClick,
-  label,
-  children,
-  large = false,
-}: {
+function CtrlBtn({ onClick, label, children, large = false }: {
   onClick: () => void
   label: string
   children: React.ReactNode
@@ -94,74 +88,31 @@ function CtrlBtn({
   )
 }
 
-/* ── Platform embed ───────────────────────────────────────── */
-
-function LargeEmbed({
-  platform,
-  embedId,
-  title,
-}: {
-  platform: string
-  embedId: string | undefined
-  title?: string
-}) {
-  if (!embedId) return null
-
-  if (platform === 'youtube') {
-    return (
-      <div
-        className="w-full max-w-3xl mx-auto"
-        style={{ aspectRatio: '16/9', borderRadius: 20, overflow: 'hidden' }}
-      >
-        <iframe
-          src={`https://www.youtube.com/embed/${embedId}?autoplay=1&playsinline=1&rel=0`}
-          title={title ?? 'Video'}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          style={{ width: '100%', height: '100%', border: 'none' }}
-        />
-      </div>
-    )
-  }
-
-  if (platform === 'spotify') {
-    return (
-      <div className="w-full max-w-xl mx-auto" style={{ borderRadius: 16, overflow: 'hidden' }}>
-        <iframe
-          src={`https://open.spotify.com/embed/track/${embedId}?utm_source=generator&theme=0`}
-          title={title ?? 'Spotify'}
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          style={{ width: '100%', height: 352, border: 'none', borderRadius: 16 }}
-        />
-      </div>
-    )
-  }
-
-  return null
-}
-
 /* ── Main component ───────────────────────────────────────── */
 
 export function LibraryNowPlaying() {
   const { expanded, current, isPlaying, togglePlay, next, prev, setExpanded } = usePlayerStore()
   const item = current()
-  const overlayRef = useRef<HTMLDivElement>(null)
+
+  const bgRef     = useRef<HTMLDivElement>(null)
+  const chromeRef = useRef<HTMLDivElement>(null)
   const closingRef = useRef(false)
 
   const handleClose = useCallback(() => {
     if (closingRef.current) return
     closingRef.current = true
-    const el = overlayRef.current
-    if (!el || prefersReducedMotion()) {
+    const bg     = bgRef.current
+    const chrome = chromeRef.current
+    if (!bg || prefersReducedMotion()) {
       setExpanded(false)
       closingRef.current = false
       return
     }
-    gsap.to(el, {
+    gsap.to([bg, chrome], {
       opacity: 0,
-      y: 40,
-      duration: 0.28,
-      ease: 'expo.in',
+      y: 32,
+      duration: DURATION.base,
+      ease: EASE.softIn,
       onComplete: () => {
         setExpanded(false)
         closingRef.current = false
@@ -173,9 +124,10 @@ export function LibraryNowPlaying() {
   useEffect(() => {
     if (!expanded) return
     closingRef.current = false
-    const el = overlayRef.current
-    if (!el || prefersReducedMotion()) return
-    gsap.fromTo(el, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.32, ease: 'expo.out' })
+    const bg     = bgRef.current
+    const chrome = chromeRef.current
+    if (!bg || prefersReducedMotion()) return
+    gsap.fromTo([bg, chrome], { opacity: 0, y: 32 }, { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.softOut })
   }, [expanded])
 
   // Lock body scroll
@@ -185,14 +137,12 @@ export function LibraryNowPlaying() {
     return () => { document.body.style.overflow = '' }
   }, [expanded])
 
-  // Escape + popstate
+  // Escape + popstate to close
   useEffect(() => {
     if (!expanded) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') handleClose()
-    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.history.pushState({ nowPlaying: true }, '')
-    function onPop() { handleClose() }
+    const onPop = () => handleClose()
     window.addEventListener('keydown', onKey)
     window.addEventListener('popstate', onPop)
     return () => {
@@ -205,30 +155,45 @@ export function LibraryNowPlaying() {
 
   const canPlay = item.platform !== 'soundcloud' && Boolean(item.embedId)
 
-  const overlay = (
+  // ── Dark background layer (z-55) ───────────────────────────────
+  const background = (
     <div
-      ref={overlayRef}
+      ref={bgRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 55,
+        background: 'var(--bg)',
+      }}
+    />
+  )
+
+  // ── Chrome layer (z-65, transparent middle so iframe at z-60 shows) ──
+  const chrome = (
+    <div
+      ref={chromeRef}
       role="dialog"
       aria-modal="true"
       aria-label={`Reproduciendo: ${item.title ?? item.artistName}`}
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 55,
-        background: 'var(--bg)',
+        zIndex: 65,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        pointerEvents: 'none', // clicks fall through to SharedPlayerIframe below
       }}
     >
-      {/* Top bar */}
+      {/* Top bar — opaque, clickable */}
       <div
         style={{
+          pointerEvents: 'auto',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
           paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))',
+          background: 'var(--bg)',
           flexShrink: 0,
         }}
       >
@@ -252,66 +217,68 @@ export function LibraryNowPlaying() {
           <ChevronDownIcon />
         </button>
         <div style={{ textAlign: 'center', flex: 1, padding: '0 12px' }}>
-          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>
+          <p style={{
+            fontFamily: 'Satoshi, sans-serif',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            margin: 0,
+          }}>
             Reproduciendo ahora
           </p>
         </div>
         <div style={{ width: 36 }} />
       </div>
 
-      {/* Embed */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '12px 20px',
-          overflow: 'hidden',
-        }}
-      >
-        {canPlay ? (
-          <LargeEmbed
-            key={`${item.profileId}-${item.mediaId}`}
-            platform={item.platform}
-            embedId={item.embedId}
-            title={item.title}
-          />
-        ) : (
+      {/* Embed area — transparent placeholder (SharedPlayerIframe sits here at z-60) */}
+      <div style={{ flex: 1 }}>
+        {!canPlay && (
           <div
             style={{
-              width: '100%',
-              maxWidth: 360,
-              padding: 40,
-              borderRadius: 20,
-              background: 'var(--surface-elevated)',
+              height: '100%',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: 12,
-              textAlign: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'auto',
             }}
           >
-            <p style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
-              Plataforma no compatible
-            </p>
-            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', margin: 0, opacity: 0.6 }}>
-              La reproduccion de SoundCloud no esta disponible en el reproductor interno.
-            </p>
+            <div
+              style={{
+                maxWidth: 360,
+                padding: 40,
+                borderRadius: 20,
+                background: 'var(--surface-elevated)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                textAlign: 'center',
+              }}
+            >
+              <p style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
+                Plataforma no compatible
+              </p>
+              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', margin: 0, opacity: 0.6 }}>
+                La reproduccion de SoundCloud no esta disponible en el reproductor interno.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Track info */}
+      {/* Bottom chrome — opaque, clickable */}
       <div
         style={{
-          padding: '8px 28px 12px',
+          pointerEvents: 'auto',
+          background: 'var(--bg)',
           flexShrink: 0,
-          textAlign: 'center',
         }}
       >
-        <p
-          style={{
+        {/* Track info */}
+        <div style={{ padding: '8px 28px 12px', textAlign: 'center' }}>
+          <p style={{
             fontFamily: "'Clash Display', sans-serif",
             fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
             fontWeight: 700,
@@ -320,55 +287,38 @@ export function LibraryNowPlaying() {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-          }}
-        >
-          {item.title ?? item.platform}
-        </p>
-        <p
-          style={{
-            fontFamily: 'Satoshi, sans-serif',
-            fontSize: 14,
-            color: 'var(--text-muted)',
-            margin: '4px 0 0',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {item.artistName}
-        </p>
-      </div>
+          }}>
+            {item.title ?? item.platform}
+          </p>
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.artistName}
+          </p>
+        </div>
 
-      {/* Transport controls */}
-      <div
-        style={{
+        {/* Transport controls */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 16,
           padding: '8px 28px',
           paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
-          flexShrink: 0,
-        }}
-      >
-        <CtrlBtn label="Anterior" onClick={prev}>
-          <PrevIcon />
-        </CtrlBtn>
-
-        <CtrlBtn
-          label={isPlaying ? 'Pausa' : 'Reproducir'}
-          onClick={() => canPlay && togglePlay()}
-          large
-        >
-          {isPlaying ? <PauseIcon /> : <PlayIcon />}
-        </CtrlBtn>
-
-        <CtrlBtn label="Siguiente" onClick={next}>
-          <NextIcon />
-        </CtrlBtn>
+        }}>
+          <CtrlBtn label="Anterior" onClick={prev}><PrevIcon /></CtrlBtn>
+          <CtrlBtn label={isPlaying ? 'Pausa' : 'Reproducir'} onClick={() => canPlay && togglePlay()} large>
+            {isPlaying ? <PauseIcon /> : <PlayIcon />}
+          </CtrlBtn>
+          <CtrlBtn label="Siguiente" onClick={next}><NextIcon /></CtrlBtn>
+        </div>
       </div>
     </div>
   )
 
-  return createPortal(overlay, document.body)
+  return createPortal(
+    <>
+      {background}
+      {chrome}
+    </>,
+    document.body,
+  )
 }

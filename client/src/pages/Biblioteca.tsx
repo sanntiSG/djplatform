@@ -14,6 +14,7 @@ import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
 import { usePlayerStore } from '../store/usePlayerStore.js'
 import { LibraryPlayerBar } from '../components/library/LibraryPlayerBar.js'
 import { LibraryNowPlaying } from '../components/library/LibraryNowPlaying.js'
+import { SharedPlayerIframe } from '../components/library/SharedPlayerIframe.js'
 import type { SavedMediaItem } from '../services/savedMediaService.js'
 import type { LikedProfileItem } from '../hooks/useLikedProfiles.js'
 
@@ -1094,6 +1095,7 @@ export default function Biblioteca() {
       {tab === 'canciones' ? <TabCanciones /> : <TabArtistas />}
 
       {/* Player — portals into document.body, visible across tabs */}
+      <SharedPlayerIframe />
       <LibraryPlayerBar />
       <LibraryNowPlaying />
     </div>

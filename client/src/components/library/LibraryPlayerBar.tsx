@@ -110,78 +110,8 @@ function CtrlBtn({
   )
 }
 
-/* ── Hidden embed iframe for playback ─────────────────────── */
-
-function HiddenEmbed({
-  platform,
-  embedId,
-  isPlaying,
-  iframeRef,
-}: {
-  platform: string
-  embedId: string | undefined
-  isPlaying: boolean
-  iframeRef: React.RefObject<HTMLIFrameElement | null>
-}) {
-  // YouTube: use postMessage to pause/resume without remounting
-  useEffect(() => {
-    if (platform !== 'youtube') return
-    const iframe = iframeRef.current
-    if (!iframe?.contentWindow) return
-    const cmd = isPlaying ? 'playVideo' : 'pauseVideo'
-    iframe.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: cmd, args: [] }),
-      '*',
-    )
-  }, [isPlaying, platform, iframeRef])
-
-  if (!embedId) return null
-
-  if (platform === 'youtube') {
-    const src = `https://www.youtube.com/embed/${embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`
-    return (
-      <iframe
-        ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-        src={src}
-        title="player"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          opacity: 0,
-          pointerEvents: 'none',
-          border: 'none',
-        }}
-      />
-    )
-  }
-
-  if (platform === 'spotify') {
-    // Remount on play (autoplay), keep mounted while isPlaying
-    if (!isPlaying) return null
-    const src = `https://open.spotify.com/embed/track/${embedId}?utm_source=generator&theme=0`
-    return (
-      <iframe
-        ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-        src={src}
-        title="player"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          opacity: 0,
-          pointerEvents: 'none',
-          border: 'none',
-        }}
-      />
-    )
-  }
-
-  return null
-}
+// Audio playback is handled by SharedPlayerIframe (see Biblioteca.tsx)
+// This component only manages the mini-player UI bar.
 
 /* ── Main component ───────────────────────────────────────── */
 
@@ -189,8 +119,6 @@ export function LibraryPlayerBar() {
   const { current, isPlaying, togglePlay, next, prev, setExpanded, close } = usePlayerStore()
   const item = current()
   const barRef = useRef<HTMLDivElement>(null)
-  const prevItemRef = useRef<string | null>(null)
-  const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
   // Slide in / out
   const hasItem = Boolean(item)
@@ -209,10 +137,6 @@ export function LibraryPlayerBar() {
   }, [hasItem])
 
   // When the track changes, reset the iframe key so it remounts with autoplay
-  const itemKey = item ? `${item.profileId}-${item.mediaId}` : null
-  const trackChanged = itemKey !== prevItemRef.current
-  if (trackChanged) prevItemRef.current = itemKey
-
   const thumbnail = item ? getMediaThumbnail(item.platform, item.embedId, item.thumbnailUrl) : null
   const canPlay = item ? (item.platform !== 'soundcloud' && Boolean(item.embedId)) : false
 
@@ -281,16 +205,7 @@ export function LibraryPlayerBar() {
               </span>
             </div>
           )}
-          {/* Hidden iframe lives here so it doesn't affect layout */}
-          {canPlay && (
-            <HiddenEmbed
-              key={itemKey ?? undefined}
-              platform={item.platform}
-              embedId={item.embedId}
-              isPlaying={isPlaying}
-              iframeRef={iframeRef}
-            />
-          )}
+          {/* Audio lives in SharedPlayerIframe (Biblioteca.tsx) */}
         </div>
 
         {/* Info */}
