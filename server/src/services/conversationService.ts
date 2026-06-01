@@ -18,41 +18,55 @@ export async function findOrCreateConversation(userAId: string, userBId: string)
   return conv
 }
 
-export async function listConversationsForUser(userId: string) {
+export async function listConversationsForUser(userId: string, limit = 50) {
+  // Limite para no traer miles de conversaciones de una sola vez
   const convs = await Conversation.find({
     participants: new mongoose.Types.ObjectId(userId),
-  }).sort({ lastMessageAt: -1 }).lean()
+  }).sort({ lastMessageAt: -1 }).limit(limit).lean()
 
-  const enriched = await Promise.all(
-    convs.map(async conv => {
-      const otherId = conv.participants.find(p => p.toString() !== userId)
-      if (!otherId) return null
+  if (!convs.length) return []
 
-      const otherUser = await User.findById(otherId).lean()
-      const otherProfile = otherUser?.profileId
-        ? await Profile.findById(otherUser.profileId).select('artistName avatar slug').lean()
-        : null
+  // --- Fix N+1: antes era 1 + 2*N queries; ahora son exactamente 3 ---
+  const otherIds = convs
+    .map(conv => conv.participants.find(p => p.toString() !== userId))
+    .filter((id): id is mongoose.Types.ObjectId => Boolean(id))
 
-      const myUnread = conv.unreadCount instanceof Map
-        ? conv.unreadCount.get(userId) ?? 0
-        : (conv.unreadCount as Record<string, number>)[userId] ?? 0
+  // 1 query: todos los usuarios contrarios
+  const users = await User.find({ _id: { $in: otherIds } }).select('_id email profileId').lean()
+  const userMap = new Map(users.map(u => [u._id.toString(), u]))
 
-      return {
-        _id: conv._id,
-        otherUser: {
-          _id: otherId,
-          artistName: otherProfile?.artistName ?? (otherUser?.email.split('@')[0] ?? 'Usuario'),
-          avatar: otherProfile?.avatar ?? null,
-          slug: (otherProfile as unknown as { slug?: string })?.slug ?? null,
-          profileId: otherUser?.profileId ?? null,
-        },
-        lastMessageAt: conv.lastMessageAt,
-        lastMessagePreview: conv.lastMessagePreview,
-        lastMessageSenderId: conv.lastMessageSenderId,
-        unreadCount: myUnread,
-      }
-    }),
-  )
+  // 2 query: todos los perfiles de esos usuarios
+  const profileIds = users.map(u => u.profileId).filter(Boolean)
+  const profiles = await Profile.find({ _id: { $in: profileIds } }).select('artistName avatar slug userId').lean()
+  const profileByUserId = new Map(profiles.map(p => [p.userId.toString(), p]))
+
+  // Mapear en memoria — sin queries adicionales
+  const enriched = convs.map(conv => {
+    const otherId = conv.participants.find(p => p.toString() !== userId)
+    if (!otherId) return null
+
+    const otherUser = userMap.get(otherId.toString())
+    const otherProfile = otherUser ? profileByUserId.get(otherUser._id.toString()) : null
+
+    const myUnread = conv.unreadCount instanceof Map
+      ? conv.unreadCount.get(userId) ?? 0
+      : (conv.unreadCount as Record<string, number>)[userId] ?? 0
+
+    return {
+      _id: conv._id,
+      otherUser: {
+        _id: otherId,
+        artistName: otherProfile?.artistName ?? (otherUser?.email.split('@')[0] ?? 'Usuario'),
+        avatar: otherProfile?.avatar ?? null,
+        slug: (otherProfile as unknown as { slug?: string })?.slug ?? null,
+        profileId: otherUser?.profileId ?? null,
+      },
+      lastMessageAt: conv.lastMessageAt,
+      lastMessagePreview: conv.lastMessagePreview,
+      lastMessageSenderId: conv.lastMessageSenderId,
+      unreadCount: myUnread,
+    }
+  })
 
   return enriched.filter(Boolean)
 }
@@ -124,7 +138,11 @@ export async function markConversationRead(conversationId: string, userId: strin
 }
 
 export async function getTotalUnread(userId: string): Promise<number> {
-  const convs = await Conversation.find({ participants: new mongoose.Types.ObjectId(userId) }).lean()
+  // Projection para no traer todos los campos de la conversacion
+  const convs = await Conversation.find(
+    { participants: new mongoose.Types.ObjectId(userId) },
+    { unreadCount: 1 },
+  ).lean()
   let total = 0
   for (const conv of convs) {
     const n = conv.unreadCount instanceof Map

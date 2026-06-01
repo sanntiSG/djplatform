@@ -18,7 +18,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      refetchOnWindowFocus: 'always',
+      // 'always' ignora staleTime y re-dispara todas las queries en cada cambio de foco
+      // (la home tiene ~9 queries). Con true respeta el staleTime de 5min.
+      refetchOnWindowFocus: true,
       refetchOnReconnect: 'always',
       retry: 1,
     },

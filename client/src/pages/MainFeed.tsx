@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { cloudinaryUrl } from '../utils/cloudinaryUrl.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useProfiles, useTopProfiles, useMyProfile } from '../hooks/useProfile.js'
@@ -96,7 +97,12 @@ function ArtistSlot({ profile }: { profile: ProfileResponse }) {
           }}
         >
           {profile.avatar ? (
-            <img src={profile.avatar} alt={profile.artistName} className="w-full h-full object-cover" />
+            <img
+              src={cloudinaryUrl(profile.avatar, { w: 96, h: 96, fit: 'fill', gravity: 'face' })}
+              alt={profile.artistName}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-[var(--surface-elevated)] flex items-center justify-center">
               <span className="font-display font-bold text-2xl" style={{ color: 'var(--border)' }}>
@@ -384,7 +390,12 @@ function ActivityCard({ event }: { event: ActivityEvent }) {
       {/* Thumbnail / Avatar */}
       <div className="w-9 h-9 rounded-[8px] overflow-hidden flex-shrink-0 bg-[var(--surface)] relative">
         {thumbSrc ? (
-          <img src={thumbSrc} alt={event.actorName} className="w-full h-full object-cover" />
+          <img
+            src={cloudinaryUrl(thumbSrc, { w: 72, h: 72, fit: 'fill' })}
+            alt={event.actorName}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
         ) : event.type === 'media_added' ? (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--c-pink-muted)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--c-pink)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">

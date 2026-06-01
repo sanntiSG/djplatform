@@ -92,6 +92,9 @@ export async function listProfiles(filters: {
   const query: FilterQuery<IProfile> = { isVisible: true }
 
   if (filters.type) query.type = filters.type
+  // Busqueda substring en location — case-insensitive.
+  // Nota: $regex con $options:'i' no aprovecha indice B-tree independientemente del anclaje;
+  // el fix real es un campo locationNormalized indexado (deuda tecnica documentada).
   if (filters.location) query.location = { $regex: filters.location, $options: 'i' }
   if (filters.genres?.length) query.genres = { $in: filters.genres }
   if (filters.eventTypes?.length) query.eventTypes = { $in: filters.eventTypes }
@@ -99,7 +102,10 @@ export async function listProfiles(filters: {
   if (filters.q) query.$text = { $search: filters.q }
   if (filters.cursor) query._id = { $lt: filters.cursor }
 
+  // Proyeccion para listado/grid: excluye media[] y photos[] que no se muestran en tarjetas
+  // Esto reduce el payload entre 5x-20x dependiendo de cuantos tracks tenga cada perfil
   return Profile.find(query)
+    .select('artistName avatar slug type location genres eventTypes availability isVisible userId followersCount createdAt updatedAt')
     .sort(filters.q ? { score: { $meta: 'textScore' }, _id: -1 } : { _id: -1 })
     .limit(filters.limit ?? 20)
     .lean() as unknown as IProfile[]
@@ -115,11 +121,17 @@ export async function getTopProfilesByFollowers(limit = 10): Promise<IProfile[]>
 
   if (!results.length) {
     // Fallback: return most recently created visible profiles
-    return Profile.find({ isVisible: true }).sort({ _id: -1 }).limit(limit).lean() as unknown as IProfile[]
+    return Profile.find({ isVisible: true })
+      .select('artistName avatar slug type location genres availability isVisible userId followersCount createdAt updatedAt')
+      .sort({ _id: -1 })
+      .limit(limit)
+      .lean() as unknown as IProfile[]
   }
 
   const ids = results.map((r: { _id: unknown }) => r._id)
-  const profiles = await Profile.find({ _id: { $in: ids }, isVisible: true }).lean() as unknown as IProfile[]
+  const profiles = await Profile.find({ _id: { $in: ids }, isVisible: true })
+    .select('artistName avatar slug type location genres availability isVisible userId followersCount createdAt updatedAt')
+    .lean() as unknown as IProfile[]
 
   // Re-sort to match follower order
   return ids
@@ -173,7 +185,7 @@ export function serializeProfile(p: IProfile) {
     eventTypes: p.eventTypes,
     availability: p.availability,
     whatsapp: p.whatsapp,
-    media: p.media.map((m) => ({
+    media: (p.media ?? []).map((m) => ({
       id: (m as unknown as { _id: Types.ObjectId })._id?.toString(),
       platform: m.platform,
       url: m.url,

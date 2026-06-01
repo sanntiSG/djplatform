@@ -31,4 +31,8 @@ conversationSchema.index(
   { unique: true },
 )
 
+// Indice multikey para buscar conversaciones por usuario (listConversationsForUser / getTotalUnread)
+// Sin este indice, cada consulta hace collection scan sobre todos los docs
+conversationSchema.index({ participants: 1, lastMessageAt: -1 })
+
 export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema)

@@ -15,6 +15,11 @@ import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
 import { getSuggestionsFor } from '../services/matchingService.js'
+import { cache } from '../services/cache.js'
+
+const PROFILE_LIST_TTL = 30_000   // 30s — listados cambian con nuevos perfiles
+const PROFILE_TOP_TTL  = 60_000   // 60s — ranking de top cambia menos seguido
+const PROFILE_GET_TTL  = 60_000   // 60s — perfil publico individual
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -70,6 +75,10 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
       return
     }
 
+    // Invalidar cache del perfil publico y del listado (contiene datos del perfil)
+    cache.del(`profile:${profile._id.toString()}`)
+    cache.del('profile:top:10')
+
     const serialized = serializeProfile(profile)
 
     if (needsCheck) {
@@ -114,12 +123,32 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
 
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
-    const profile = await getProfileById(parseObjectId(req.params.id))
-    if (!profile || (!profile.isVisible && req.user?.role !== 'admin')) {
+    const id = parseObjectId(req.params.id)
+    const isAdmin = req.user?.role === 'admin'
+
+    // Cache solo para visitantes publicos o usuarios sin rol admin
+    const cacheKey = `profile:${id}`
+    if (!isAdmin) {
+      const cached = cache.get(cacheKey)
+      if (cached) {
+        res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+        res.json(cached)
+        return
+      }
+    }
+
+    const profile = await getProfileById(id)
+    if (!profile || (!profile.isVisible && !isAdmin)) {
       res.status(404).json({ error: 'Perfil no encontrado' })
       return
     }
-    res.json(serializeProfile(profile))
+
+    const serialized = serializeProfile(profile)
+    if (!isAdmin) {
+      cache.set(cacheKey, serialized, PROFILE_GET_TTL)
+      res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+    }
+    res.json(serialized)
   } catch (err) {
     next(err)
   }
@@ -164,8 +193,18 @@ export async function updateMediaItemHandler(req: Request, res: Response, next: 
 export async function topByFollowers(req: Request, res: Response, next: NextFunction) {
   try {
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 20) : 10
+    const cacheKey = `profile:top:${limit}`
+    const cached = cache.get(cacheKey)
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+      res.json(cached)
+      return
+    }
     const profiles = await getTopProfilesByFollowers(limit)
-    res.json(profiles.map(serializeProfile))
+    const serialized = profiles.map(serializeProfile)
+    cache.set(cacheKey, serialized, PROFILE_TOP_TTL)
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    res.json(serialized)
   } catch (err) {
     next(err)
   }
@@ -195,7 +234,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       ? (req.query.eventTypes as string).split(',').filter(Boolean)
       : undefined
 
-    const profiles = await listProfiles({
+    const filters = {
       type: req.query.type as string | undefined,
       location: req.query.location as string | undefined,
       genres,
@@ -204,8 +243,22 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       q: req.query.q as string | undefined,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
       cursor: req.query.cursor as string | undefined,
-    })
-    res.json(profiles.map(serializeProfile))
+    }
+
+    // Cache por combinacion de filtros — key estable basada en query string canonico
+    const cacheKey = `profile:list:${JSON.stringify(filters)}`
+    const cached = cache.get(cacheKey)
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+      res.json(cached)
+      return
+    }
+
+    const profiles = await listProfiles(filters)
+    const serialized = profiles.map(serializeProfile)
+    cache.set(cacheKey, serialized, PROFILE_LIST_TTL)
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+    res.json(serialized)
   } catch (err) {
     next(err)
   }

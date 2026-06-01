@@ -8,8 +8,8 @@ export function useConversations() {
     queryFn: () => conversationsService.list(),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
-    // Socket invalidates in real time; this is a fallback for missed reconnects
-    refetchInterval: 5 * 60_000,
+    // Socket (message:new) invalida en tiempo real; 15min como fallback para reconexiones perdidas
+    refetchInterval: 15 * 60_000,
   })
 }
 
@@ -31,7 +31,7 @@ export function useConversationUnread() {
     queryFn: () => conversationsService.getUnreadTotal(),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
-    // Socket keeps this in sync; fallback for missed reconnects only
-    refetchInterval: 5 * 60_000,
+    // Socket mantiene en sincro; 15min como fallback para reconexiones perdidas
+    refetchInterval: 15 * 60_000,
   })
 }

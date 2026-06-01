@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { cn } from '../../utils/cn.js'
 import { eventPath } from '../../utils/slug.js'
+import { cloudinaryUrl } from '../../utils/cloudinaryUrl.js'
 import type { EventResponse } from '../../types/index.js'
 
 interface EventCardProps {
@@ -57,8 +58,9 @@ export function EventCard({ event, className }: EventCardProps) {
       <div className="relative h-48 overflow-hidden bg-[var(--surface-elevated)]">
         {event.cover ? (
           <img
-            src={event.cover}
+            src={cloudinaryUrl(event.cover, { w: 480, h: 192, fit: 'fill', gravity: 'auto' })}
             alt={event.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         ) : (
@@ -89,8 +91,9 @@ export function EventCard({ event, className }: EventCardProps) {
           <div className="flex items-center gap-2 mt-1 pt-3 border-t border-[var(--border)]">
             {event.profile.avatar ? (
               <img
-                src={event.profile.avatar}
+                src={cloudinaryUrl(event.profile.avatar, { w: 48, h: 48, fit: 'fill', gravity: 'face' })}
                 alt={event.profile.artistName}
+                loading="lazy"
                 className="w-6 h-6 rounded-full object-cover flex-shrink-0"
               />
             ) : (

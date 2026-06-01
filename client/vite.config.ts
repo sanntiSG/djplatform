@@ -23,4 +23,32 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Vendor chunk de React — primer chunk que carga el browser
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react'
+          }
+          // GSAP — pesado (~450kb sin minificar), solo se necesita en paginas con animaciones
+          if (id.includes('node_modules/gsap')) {
+            return 'vendor-gsap'
+          }
+          // socket.io — se carga con el primer uso de mensajes/notificaciones
+          if (id.includes('node_modules/socket.io-client')) {
+            return 'vendor-socket'
+          }
+          // Admin — completamente separado, solo admin lo descarga
+          if (id.includes('/pages/admin/')) {
+            return 'chunk-admin'
+          }
+          // React Query + router — librerias de estado/navegacion
+          if (id.includes('@tanstack/react-query') || id.includes('react-router')) {
+            return 'vendor-router-query'
+          }
+        },
+      },
+    },
+  },
 })

@@ -28,7 +28,9 @@ async function callSightengineImage(imageUrl: string): Promise<ModerationResult>
     api_secret: env.SIGHTENGINE_API_SECRET,
   })
 
-  const res = await fetch(`https://api.sightengine.com/1.0/check.json?${params.toString()}`)
+  const res = await fetch(`https://api.sightengine.com/1.0/check.json?${params.toString()}`, {
+    signal: AbortSignal.timeout(8000),
+  })
   if (!res.ok) {
     logger.error('Sightengine request failed', { status: res.status })
     return { approved: true, reasons: [], cached: false }
@@ -83,6 +85,7 @@ async function callSightengineText(text: string): Promise<boolean> {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
+      signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return true
     const data = (await res.json()) as { status?: string; moderation_classes?: { categories?: Record<string, number>[] } }
@@ -105,7 +108,10 @@ async function extractArtworkUrl(
       return `https://img.youtube.com/vi/${embedId}/hqdefault.jpg`
     }
     if (platform === 'spotify') {
-      const oembedRes = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(mediaUrl)}`)
+      const oembedRes = await fetch(
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(mediaUrl)}`,
+        { signal: AbortSignal.timeout(7000) },
+      )
       if (oembedRes.ok) {
         const data = (await oembedRes.json()) as { thumbnail_url?: string }
         return data.thumbnail_url ?? null
@@ -114,6 +120,7 @@ async function extractArtworkUrl(
     if (platform === 'soundcloud') {
       const oembedRes = await fetch(
         `https://soundcloud.com/oembed?url=${encodeURIComponent(mediaUrl)}&format=json`,
+        { signal: AbortSignal.timeout(7000) },
       )
       if (oembedRes.ok) {
         const data = (await oembedRes.json()) as { thumbnail_url?: string }
@@ -159,20 +166,20 @@ export async function moderateTrack(
     return { approved: cached.result === 'approved', reasons: cached.reasons, cached: true }
   }
 
+  // Paralelizar: extraccion de artwork y moderacion de texto corren al mismo tiempo
+  const [artworkUrl, textOk] = await Promise.all([
+    extractArtworkUrl(platform, mediaUrl, embedId),
+    title?.trim() ? callSightengineText(title.trim()) : Promise.resolve(true),
+  ])
+
   const reasons: string[] = []
 
-  // Moderate artwork
-  const artworkUrl = await extractArtworkUrl(platform, mediaUrl, embedId)
   if (artworkUrl) {
     const imgResult = await callSightengineImage(artworkUrl)
     reasons.push(...imgResult.reasons)
   }
 
-  // Moderate title text
-  if (title?.trim()) {
-    const titleOk = await callSightengineText(title.trim())
-    if (!titleOk) reasons.push('inappropriate-text')
-  }
+  if (!textOk) reasons.push('inappropriate-text')
 
   const approved = reasons.length === 0
 

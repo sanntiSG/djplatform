@@ -7,6 +7,11 @@
  *   z-55  dark background (this component)
  *   z-60  SharedPlayerIframe (the actual embed, centered)
  *   z-65  this component's transparent chrome wrapper
+ *
+ * Controls in expanded view:
+ *   - Minimize (chevron down) — collapses back to mini-player
+ *   - Previous / Next — skip tracks
+ *   - NO play/pause button — user uses native controls from YouTube/Spotify/SoundCloud
  */
 import { useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
@@ -17,17 +22,6 @@ import { useTapAnim } from '../../hooks/useTapAnim.js'
 
 /* ── Icons ────────────────────────────────────────────────── */
 
-function PlayIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-}
-function PauseIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="6" y="4" width="4" height="16" rx="1" />
-      <rect x="14" y="4" width="4" height="16" rx="1" />
-    </svg>
-  )
-}
 function PrevIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -54,11 +48,10 @@ function ChevronDownIcon() {
 
 /* ── Control button ───────────────────────────────────────── */
 
-function CtrlBtn({ onClick, label, children, large = false }: {
+function CtrlBtn({ onClick, label, children }: {
   onClick: () => void
   label: string
   children: React.ReactNode
-  large?: boolean
 }) {
   const { ref, tapHandlers } = useTapAnim<HTMLButtonElement>(0.88)
   return (
@@ -69,15 +62,15 @@ function CtrlBtn({ onClick, label, children, large = false }: {
       onClick={onClick}
       {...tapHandlers}
       style={{
-        background: large ? 'rgba(255,255,255,0.1)' : 'none',
+        background: 'none',
         border: 'none',
         color: 'var(--text)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: large ? 56 : 44,
-        height: large ? 56 : 44,
+        width: 44,
+        height: 44,
         borderRadius: '50%',
         flexShrink: 0,
         transition: 'background 0.18s ease',
@@ -91,7 +84,7 @@ function CtrlBtn({ onClick, label, children, large = false }: {
 /* ── Main component ───────────────────────────────────────── */
 
 export function LibraryNowPlaying() {
-  const { expanded, current, isPlaying, togglePlay, next, prev, setExpanded } = usePlayerStore()
+  const { expanded, current, next, prev, setExpanded } = usePlayerStore()
   const item = current()
 
   const bgRef     = useRef<HTMLDivElement>(null)
@@ -153,8 +146,6 @@ export function LibraryNowPlaying() {
 
   if (!expanded || !item) return null
 
-  const canPlay = item.platform !== 'soundcloud' && Boolean(item.embedId)
-
   // ── Dark background layer (z-55) ───────────────────────────────
   const background = (
     <div
@@ -199,7 +190,7 @@ export function LibraryNowPlaying() {
       >
         <button
           type="button"
-          aria-label="Cerrar visor"
+          aria-label="Minimizar"
           onClick={handleClose}
           style={{
             background: 'rgba(255,255,255,0.08)',
@@ -233,40 +224,7 @@ export function LibraryNowPlaying() {
       </div>
 
       {/* Embed area — transparent placeholder (SharedPlayerIframe sits here at z-60) */}
-      <div style={{ flex: 1 }}>
-        {!canPlay && (
-          <div
-            style={{
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-            }}
-          >
-            <div
-              style={{
-                maxWidth: 360,
-                padding: 40,
-                borderRadius: 20,
-                background: 'var(--surface-elevated)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 12,
-                textAlign: 'center',
-              }}
-            >
-              <p style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
-                Plataforma no compatible
-              </p>
-              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', margin: 0, opacity: 0.6 }}>
-                La reproduccion de SoundCloud no esta disponible en el reproductor interno.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      <div style={{ flex: 1 }} />
 
       {/* Bottom chrome — opaque, clickable */}
       <div
@@ -295,19 +253,16 @@ export function LibraryNowPlaying() {
           </p>
         </div>
 
-        {/* Transport controls */}
+        {/* Transport controls — only prev/next, NO play/pause (use native embed controls) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 16,
+          gap: 24,
           padding: '8px 28px',
           paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
         }}>
           <CtrlBtn label="Anterior" onClick={prev}><PrevIcon /></CtrlBtn>
-          <CtrlBtn label={isPlaying ? 'Pausa' : 'Reproducir'} onClick={() => canPlay && togglePlay()} large>
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
-          </CtrlBtn>
           <CtrlBtn label="Siguiente" onClick={next}><NextIcon /></CtrlBtn>
         </div>
       </div>

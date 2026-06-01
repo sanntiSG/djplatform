@@ -3,7 +3,14 @@ import { env } from './env.js'
 
 export async function connectDB(): Promise<void> {
   try {
-    await mongoose.connect(env.MONGODB_URI)
+    await mongoose.connect(env.MONGODB_URI, {
+      maxPoolSize: 20,          // suficiente para una instancia; escalar con replicas
+      minPoolSize: 2,           // mantener conexiones calientes
+      serverSelectionTimeoutMS: 5000,  // falla rapido si Atlas no responde
+      socketTimeoutMS: 45000,
+      maxIdleTimeMS: 30000,     // libera conexiones ociosas antes del idle de Atlas
+      family: 4,                // forzar IPv4 — evita demora de doble-resolución en Render
+    })
     console.log('MongoDB conectado')
 
     // Limpieza de indices viejos que causan errores 500 (E11000)

@@ -112,7 +112,9 @@ export async function listAttendees(req: Request, res: Response, next: NextFunct
       res.status(403).json({ error: 'No autorizado' }); return
     }
 
-    const attendances = await EventAttendance.find({ eventId }).lean()
+    // Limite para que un evento con miles de asistentes no sature el payload
+    const MAX_ATTENDEES = 200
+    const attendances = await EventAttendance.find({ eventId }).limit(MAX_ATTENDEES).lean()
     const userIds = attendances.map((a) => a.userId)
 
     // Join users → profiles

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import mongoose from 'mongoose'
 import authRouter from './auth.js'
 import profileRouter from './profile.js'
 import eventRouter from './event.js'
@@ -22,7 +23,14 @@ import feedRouter from './feed.js'
 const router = Router()
 
 router.get('/health', (_req, res) => {
-  res.json({ ok: true, timestamp: new Date().toISOString() })
+  // readyState: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+  const dbReady = mongoose.connection.readyState === 1
+  const status = dbReady ? 200 : 503
+  res.status(status).json({
+    ok: dbReady,
+    db: dbReady ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString(),
+  })
 })
 
 router.use('/auth', authRouter)

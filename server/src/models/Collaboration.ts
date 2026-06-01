@@ -43,5 +43,8 @@ const collaborationSchema = new mongoose.Schema<ICollaboration>(
 collaborationSchema.index({ fromProfileId: 1 })
 collaborationSchema.index({ toProfileId: 1 })
 collaborationSchema.index({ fromProfileId: 1, toProfileId: 1 })
+// Indice para listForProfile: filtra por fromProfileId/toProfileId y ordena por confirmedAt
+collaborationSchema.index({ fromProfileId: 1, confirmedAt: -1 })
+collaborationSchema.index({ toProfileId: 1, confirmedAt: -1 })
 
 export const Collaboration = mongoose.model<ICollaboration>('Collaboration', collaborationSchema)

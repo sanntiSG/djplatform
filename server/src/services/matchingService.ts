@@ -97,11 +97,16 @@ export async function getSuggestionsFor(profileId: string, userId: string, limit
   const follows = await ProfileFollow.find({ followerId: userId }).lean()
   const followedProfileIds = new Set(follows.map((f) => (f.followedId as Types.ObjectId).toString()))
 
+  // Proyeccion estricta: solo campos usados en computeScore + serializacion del resultado
+  // Sin esto se traian 400 documentos completos (con media[], photos[], bio, etc.)
   const candidates = await Profile.find({
     _id: { $ne: me._id },
     userId: { $ne: userId },
     isVisible: true,
-  }).limit(400).lean() as unknown as IProfile[]
+  })
+    .select('artistName avatar type slug userId genres roles eventTypes location openToWork updatedAt')
+    .limit(400)
+    .lean() as unknown as IProfile[]
 
   const scored = candidates
     .filter((c) => !followedProfileIds.has((c._id as Types.ObjectId).toString()))

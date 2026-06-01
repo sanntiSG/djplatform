@@ -66,13 +66,16 @@ app.use(
     credentials: true,
   }),
 )
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true }))
+// Limite bajo para JSON — las subidas van por multipart a Cloudinary, no por este body
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
-app.use('/api', generalLimiter, router)
+// Limiters especificos ANTES del router general para que efectivamente se ejecuten
+// (montar despues del router que ya respondio = middleware muerto)
 app.use('/api/auth', authLimiter)
 app.use('/api/uploads', uploadLimiter)
 app.use('/api/media', uploadLimiter)
+app.use('/api', generalLimiter, router)
 app.use(errorHandler)
 
 const httpServer = http.createServer(app)

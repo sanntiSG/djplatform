@@ -66,8 +66,9 @@ export async function listEvents(cursor?: string, limit = 20): Promise<IEvent[]>
     .lean() as unknown as IEvent[]
 }
 
-export async function listEventsByProfile(profileId: string): Promise<IEvent[]> {
-  return Event.find({ profileId, isVisible: true }).sort({ date: -1 }).lean() as unknown as IEvent[]
+export async function listEventsByProfile(profileId: string, limit = 50): Promise<IEvent[]> {
+  // Limite para evitar que perfiles con cientos de eventos saturen el payload
+  return Event.find({ profileId, isVisible: true }).sort({ date: -1 }).limit(limit).lean() as unknown as IEvent[]
 }
 
 export function serializeEvent(e: IEvent) {

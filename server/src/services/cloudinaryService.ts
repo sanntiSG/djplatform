@@ -34,7 +34,14 @@ export async function destroyAsset(url: string): Promise<void> {
   const publicId = extractPublicId(url)
   if (!publicId) return
   try {
-    await cloudinary.uploader.destroy(publicId)
+    // El SDK de Cloudinary v2 no expone timeout en los tipos, usamos Promise.race
+    const timeoutMs = 10000
+    await Promise.race([
+      cloudinary.uploader.destroy(publicId),
+      new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Cloudinary destroy timeout')), timeoutMs),
+      ),
+    ])
   } catch (err) {
     logger.error('Cloudinary destroy failed', { publicId, err })
   }

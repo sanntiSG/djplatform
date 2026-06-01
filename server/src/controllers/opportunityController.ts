@@ -511,6 +511,7 @@ export async function myApplications(req: Request, res: Response, next: NextFunc
     const userId = req.user!.id
     const opps = await Opportunity.find({ applicantIds: userId, isVisible: true })
       .sort({ _id: -1 })
+      .limit(100)  // limite razonable para postulaciones del usuario
       .lean()
 
     const { Collaboration } = await import('../models/Collaboration.js')

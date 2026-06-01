@@ -48,5 +48,7 @@ opportunitySchema.index({ status: 1, createdAt: -1 })
 opportunitySchema.index({ lookingForRoles: 1 })
 opportunitySchema.index({ location: 1 })
 opportunitySchema.index({ profileId: 1 })
+// Indice para myApplications: busca oportunidades donde el usuario esta como postulante
+opportunitySchema.index({ applicantIds: 1 })
 
 export const Opportunity = mongoose.model<IOpportunity>('Opportunity', opportunitySchema)

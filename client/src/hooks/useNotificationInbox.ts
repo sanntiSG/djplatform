@@ -7,8 +7,9 @@ export function useNotificationInbox() {
   const query = useQuery({
     queryKey: ['notification-inbox'],
     queryFn: () => notificationsService.getInbox({ limit: 50 }),
-    // Socket keeps inbox in sync; this is a fallback for missed reconnects
-    refetchInterval: 5 * 60_000,
+    // Socket (notification:new) invalida la query en tiempo real; este intervalo es solo
+    // un fallback por si se pierden eventos de reconexion. 15min es suficiente.
+    refetchInterval: 15 * 60_000,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
   })

@@ -30,6 +30,7 @@ export function useActivityFeed(limit = 20) {
     queryKey: ['activity-feed', limit],
     queryFn: () => activityService.list(limit),
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    // Socket (activity:new) actualiza el feed en tiempo real; 5min como fallback
+    refetchInterval: 5 * 60_000,
   })
 }

@@ -47,10 +47,12 @@ export async function create(
     if (!type || !type.enabledByAdmin || !user) return
     if (!isTypeEnabledForUser(user, typeKey, type.category)) return
 
-    // Fetch actor name if provided
+    // Fetch actor name if provided — populate acotado a artistName para no traer media[]/photos[]
     let actorName: string | undefined
     if (input.actorId) {
-      const actor = await User.findById(input.actorId).populate('profileId').lean() as any
+      const actor = await User.findById(input.actorId)
+        .populate({ path: 'profileId', select: 'artistName' })
+        .lean() as any
       actorName = actor?.profileId?.artistName
     }
 

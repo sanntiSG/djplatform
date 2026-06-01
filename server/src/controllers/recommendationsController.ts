@@ -9,9 +9,10 @@ async function getUserGenres(userId: mongoose.Types.ObjectId): Promise<{
   savedMediaIds: mongoose.Types.ObjectId[]
   likedProfileIds: mongoose.Types.ObjectId[]
 }> {
+  // Limite para que usuarios con cientos de guardados no generen payloads gigantes
   const [savedMedia, likedProfiles] = await Promise.all([
-    SavedMedia.find({ userId }).lean(),
-    ProfileLike.find({ userId }).lean(),
+    SavedMedia.find({ userId }).limit(500).lean(),
+    ProfileLike.find({ userId }).limit(500).lean(),
   ])
 
   const savedMediaIds = savedMedia.map((s) => s.mediaId)
