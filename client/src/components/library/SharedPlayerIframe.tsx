@@ -33,7 +33,7 @@
  * We keep the existing "remount on play" behaviour (returns null when
  * !isPlaying && !expanded) to trigger autoplay on mount.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
@@ -69,13 +69,6 @@ export function SharedPlayerIframe() {
   const isPlayingRef = useRef(isPlaying)
   /** Guard to prevent infinite loops when WE set isPlaying from YT callback */
   const suppressSyncRef = useRef(false)
-  /**
-   * Incremented when YouTube fires onReady.
-   * Adding it to the play/pause effect deps forces that effect to re-run
-   * with the current isPlaying state, so any pause/play tapped before
-   * onReady is correctly applied the moment the player is ready.
-   */
-  const [ytReadyTick, setYtReadyTick] = useState(0)
 
   // Sync isPlaying ref so async callbacks always see the latest value
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
@@ -149,10 +142,6 @@ export function SharedPlayerIframe() {
 
         if (data.event === 'onReady') {
           isReadyRef.current = true
-          // Trigger the play/pause effect to re-run with current isPlaying state.
-          // This handles the case where the user paused (or played) before the
-          // player finished loading — the correct command is sent on ready.
-          setYtReadyTick(t => t + 1)
         }
 
         // Sync isPlaying with native YouTube player state
@@ -176,17 +165,19 @@ export function SharedPlayerIframe() {
   }, [item?.mediaId]) // re-run when track changes
 
   /* ── YouTube: play / pause control ───────────────────────── */
+  // No isReadyRef guard — commands sent before YouTube loads are silently
+  // ignored; autoplay=1 handles the initial play. By the time the user can
+  // tap pause the player is always ready.
   useEffect(() => {
-    if (suppressSyncRef.current) return // avoid echo from onStateChange sync
+    if (suppressSyncRef.current) return
     if (!item || item.platform !== 'youtube') return
-    if (!isReadyRef.current) return // wait for onReady
     const iframe = containerRef.current?.querySelector('iframe')
     if (!iframe?.contentWindow) return
     iframe.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: isPlaying ? 'playVideo' : 'pauseVideo', args: [] }),
       '*',
     )
-  }, [isPlaying, item, ytReadyTick])
+  }, [isPlaying, item])
 
   /* ── render guard ─────────────────────────────────────────── */
   if (!item) return null
