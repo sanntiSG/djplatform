@@ -266,7 +266,7 @@ function SavedSongCard({
   const { current, isPlaying, playQueue, togglePlay } = usePlayerStore()
   const activeItem = current()
   const isActive = Boolean(activeItem && activeItem.profileId === item.profileId && activeItem.mediaId === item.mediaId)
-  const canPlay = item.platform !== 'soundcloud' && Boolean(item.embedId)
+  const canPlay = Boolean(item.embedId || (item as any).embedHtml)
 
   const handlePlayClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -510,6 +510,7 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startPosRef = useRef({ x: 0, y: 0 })
+  const wasSwipingRef = useRef(false)
   const { ref: btnRef, tapHandlers } = useTapAnim<HTMLButtonElement>(0.94)
 
   const { mutate: toggleLike, isPending } = useProfileLike(item.profileId)
@@ -552,6 +553,7 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
 
   const onLongPressStart = useCallback((e: React.PointerEvent) => {
     startPosRef.current = { x: e.clientX, y: e.clientY }
+    wasSwipingRef.current = false
     longPressTimer.current = setTimeout(() => {
       const el = e.currentTarget as HTMLElement
       setMenuAnchor(el.getBoundingClientRect())
@@ -564,6 +566,12 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
       longPressTimer.current = null
     }
   }, [])
+
+  // Navigate to profile only if we didn't swipe or long-press
+  const handleCardClick = useCallback(() => {
+    if (wasSwipingRef.current || menuAnchor) return
+    navigate(profilePath(toSlug(item.artistName), item.profileId))
+  }, [navigate, item.artistName, item.profileId, menuAnchor])
 
   return (
     <div ref={heightRef} style={{ position: 'relative', overflow: 'hidden', marginBottom: 1 }}>
@@ -596,9 +604,13 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
         }}
         onPointerMove={(e) => {
           swipeHandlers.onPointerMove?.(e)
+          // Track if a horizontal swipe is happening
+          const dx = e.clientX - startPosRef.current.x
+          const dy = e.clientY - startPosRef.current.y
+          if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+            wasSwipingRef.current = true
+          }
           if (longPressTimer.current) {
-            const dx = e.clientX - startPosRef.current.x
-            const dy = e.clientY - startPosRef.current.y
             if (Math.hypot(dx, dy) > 6) onLongPressEnd()
           }
         }}
@@ -610,6 +622,7 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
           swipeHandlers.onPointerCancel?.(e)
           onLongPressEnd()
         }}
+        onClick={handleCardClick}
         style={{
           position: 'relative',
           display: 'flex',
@@ -621,88 +634,80 @@ function LikedArtistCard({ item, onUnlike }: { item: LikedProfileItem; onUnlike:
           touchAction: 'pan-y',
           userSelect: 'none',
           willChange: 'transform',
+          cursor: 'pointer',
         }}
       >
-        <Link
-          to={profilePath(toSlug(item.artistName), item.profileId)}
+        {/* Avatar */}
+        <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            flex: 1,
-            minWidth: 0,
-            textDecoration: 'none',
+            width: 54,
+            height: 54,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0,
+            background: 'var(--surface-3, rgba(255,255,255,0.07))',
           }}
-          onClick={(e) => e.stopPropagation()}
         >
-          <div
+          {item.avatar ? (
+            <img
+              src={item.avatar}
+              alt={item.artistName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="lazy"
+            />
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Clash Display', sans-serif",
+                fontSize: 18,
+                fontWeight: 700,
+                color: 'var(--accent)',
+              }}
+            >
+              {item.artistName[0]?.toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p
             style={{
-              width: 54,
-              height: 54,
-              borderRadius: '50%',
+              fontFamily: "'Clash Display', sans-serif",
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text)',
+              margin: 0,
               overflow: 'hidden',
-              flexShrink: 0,
-              background: 'var(--surface-3, rgba(255,255,255,0.07))',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            {item.avatar ? (
-              <img
-                src={item.avatar}
-                alt={item.artistName}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                loading="lazy"
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Clash Display', sans-serif",
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: 'var(--accent)',
-                }}
-              >
-                {item.artistName[0]?.toUpperCase()}
-              </div>
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+            {item.artistName}
+          </p>
+          {item.genres?.length > 0 && (
             <p
               style={{
-                fontFamily: "'Clash Display', sans-serif",
-                fontSize: 14,
-                fontWeight: 600,
-                color: 'var(--text)',
-                margin: 0,
+                fontFamily: 'Satoshi, sans-serif',
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                margin: '2px 0 0',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
             >
-              {item.artistName}
+              {item.genres.slice(0, 3).join(' · ')}
             </p>
-            {item.genres?.length > 0 && (
-              <p
-                style={{
-                  fontFamily: 'Satoshi, sans-serif',
-                  fontSize: 12,
-                  color: 'var(--text-muted)',
-                  margin: '2px 0 0',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {item.genres.slice(0, 3).join(' · ')}
-              </p>
-            )}
-          </div>
-        </Link>
+          )}
+        </div>
 
+        {/* Desktop ⋯ menu button */}
         <button
           ref={btnRef}
           type="button"

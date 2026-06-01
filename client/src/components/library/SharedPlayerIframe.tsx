@@ -13,14 +13,19 @@
  * How it works
  * ─────────────
  * • Mini   → iframe is 1×1 px, opacity 0, z-index −1. Audio plays hidden.
+ *            NO visible window opens when the user presses play.
  * • Expanded → iframe scales up to full visible size (clip-path reveal, GSAP).
  *   z-index 60, above the NowPlaying background (z-55) but below its chrome (z-65).
+ * • Collapse → iframe goes back to hidden 1×1 px. Audio keeps playing
+ *   uninterrupted — no pause, no restart.
  *
- * YouTube first-tap fix
- * ─────────────────────
- * Listens for the YouTube IFrame API onReady postMessage.
- * If the user tapped play before the player loaded, queues the command
- * and fires it the moment the player is ready.
+ * YouTube bidirectional sync
+ * ──────────────────────────
+ * Listens for the YouTube IFrame API onReady & onStateChange postMessages.
+ * - onReady: fires any queued play command.
+ * - onStateChange: syncs usePlayerStore.isPlaying with the real video state
+ *   so native YouTube controls (inside expanded view) stay in sync with
+ *   the mini-player buttons.
  *
  * Spotify note
  * ─────────────
@@ -36,15 +41,22 @@ import { prefersReducedMotion, EASE, DURATION } from '../../utils/motion.js'
 
 /* ── helpers ────────────────────────────────────────────────────── */
 
-type Platform = 'youtube' | 'spotify'
+type Platform = 'youtube' | 'spotify' | 'soundcloud'
 
 function getExpandedSize(platform: Platform, vw: number) {
   if (platform === 'youtube') {
     const w = Math.min(vw - 40, 700)
     return { width: w, height: Math.round(w * 9 / 16) }
   }
+  if (platform === 'soundcloud') {
+    return { width: Math.min(vw - 40, 600), height: 166 }
+  }
   return { width: Math.min(vw - 40, 500), height: 352 }
 }
+
+/* YouTube onStateChange codes */
+const YT_PLAYING = 1
+const YT_PAUSED  = 2
 
 /* ── component ──────────────────────────────────────────────────── */
 
@@ -55,32 +67,21 @@ export function SharedPlayerIframe() {
   const containerRef = useRef<HTMLDivElement>(null)
   const isReadyRef   = useRef(false)
   const isPlayingRef = useRef(isPlaying)
-  const initializedRef = useRef(false)
+  /** Guard to prevent infinite loops when WE set isPlaying from YT callback */
+  const suppressSyncRef = useRef(false)
 
   // Sync isPlaying ref so async callbacks always see the latest value
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
 
-  /* ── initial hidden state (once per mount) ────────────────── */
+  /* ── animate expand / collapse ────────────────────────────── */
+  // NOTE: Initial hidden state is in the div's style prop (not GSAP) so it
+  // applies from frame 1 — prevents the phantom iframe window on first play.
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    gsap.set(el, {
-      xPercent: -50,
-      yPercent: -50,
-      clipPath: 'inset(50% round 16px)',
-      opacity: 0,
-      zIndex: -1,
-      pointerEvents: 'none',
-    })
-    initializedRef.current = true
-  }, [])
-
-  /* ── animate expand / collapse ────────────────────────────── */
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el || !initializedRef.current) return
 
     if (expanded && item) {
+      // EXPAND: make visible at full size
       const size = getExpandedSize(item.platform as Platform, window.innerWidth)
       gsap.killTweensOf(el)
       gsap.set(el, { zIndex: 60, width: size.width, height: size.height })
@@ -101,9 +102,20 @@ export function SharedPlayerIframe() {
         )
       }
     } else {
+      // COLLAPSE: go back to hidden 1×1 — audio keeps playing
       gsap.killTweensOf(el)
+      const hide = () => gsap.set(el, {
+        zIndex: -1,
+        pointerEvents: 'none',
+        scale: 1,
+        width: 1,
+        height: 1,
+        clipPath: 'inset(50% round 16px)',
+        opacity: 0,
+      })
+
       if (prefersReducedMotion()) {
-        gsap.set(el, { clipPath: 'inset(50% round 16px)', opacity: 0, zIndex: -1, pointerEvents: 'none' })
+        hide()
       } else {
         gsap.to(el, {
           clipPath: 'inset(42% round 16px)',
@@ -111,20 +123,23 @@ export function SharedPlayerIframe() {
           scale: 0.92,
           duration: DURATION.base,
           ease: EASE.softIn,
-          onComplete: () => gsap.set(el, { zIndex: -1, pointerEvents: 'none', scale: 1 }),
+          onComplete: hide,
         })
       }
     }
   }, [expanded]) // only fires when expanded changes; track changes handled by iframe remount
 
-  /* ── YouTube: listen for onReady to fix first-tap ────────── */
+  /* ── YouTube: listen for onReady + onStateChange ─────────── */
   useEffect(() => {
     if (!item || item.platform !== 'youtube') return
     isReadyRef.current = false
 
     const handleMessage = (e: MessageEvent) => {
       try {
-        const data = JSON.parse(typeof e.data === 'string' ? e.data : '{}') as { event?: string }
+        const raw = typeof e.data === 'string' ? e.data : ''
+        if (!raw) return
+        const data = JSON.parse(raw) as { event?: string; info?: number }
+
         if (data.event === 'onReady') {
           isReadyRef.current = true
           // Fire queued play command if the user tapped before the player loaded
@@ -136,7 +151,21 @@ export function SharedPlayerIframe() {
             )
           }
         }
-      } catch { /* ignore */ }
+
+        // Sync isPlaying with native YouTube player state
+        if (data.event === 'onStateChange' && typeof data.info === 'number') {
+          const store = usePlayerStore.getState()
+          if (data.info === YT_PLAYING && !store.isPlaying) {
+            suppressSyncRef.current = true
+            usePlayerStore.setState({ isPlaying: true })
+            suppressSyncRef.current = false
+          } else if (data.info === YT_PAUSED && store.isPlaying) {
+            suppressSyncRef.current = true
+            usePlayerStore.setState({ isPlaying: false })
+            suppressSyncRef.current = false
+          }
+        }
+      } catch { /* ignore non-JSON messages */ }
     }
 
     window.addEventListener('message', handleMessage)
@@ -145,6 +174,7 @@ export function SharedPlayerIframe() {
 
   /* ── YouTube: play / pause control ───────────────────────── */
   useEffect(() => {
+    if (suppressSyncRef.current) return // avoid echo from onStateChange sync
     if (!item || item.platform !== 'youtube') return
     if (!isReadyRef.current) return // wait for onReady
     const iframe = containerRef.current?.querySelector('iframe')
@@ -157,7 +187,12 @@ export function SharedPlayerIframe() {
 
   /* ── render guard ─────────────────────────────────────────── */
   if (!item) return null
-  const canPlay = item.platform !== 'soundcloud' && Boolean(item.embedId)
+
+  // SoundCloud: use embedHtml via a dedicated widget iframe if available
+  const isSoundcloud = item.platform === 'soundcloud'
+  const canPlay = isSoundcloud
+    ? Boolean((item as any).embedHtml || item.embedId)
+    : Boolean(item.embedId)
   if (!canPlay) return null
 
   // Spotify: keep remount-on-play behaviour (no pause API in embeds)
@@ -167,20 +202,38 @@ export function SharedPlayerIframe() {
   const platform = item.platform as Platform
   const br = platform === 'youtube' ? 20 : 16
 
-  const embedSrc = platform === 'youtube'
-    ? `https://www.youtube.com/embed/${item.embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`
-    : `https://open.spotify.com/embed/track/${item.embedId}?utm_source=generator&theme=0`
+  let embedSrc: string | null = null
+  if (platform === 'youtube') {
+    embedSrc = `https://www.youtube.com/embed/${item.embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`
+  } else if (platform === 'spotify') {
+    embedSrc = `https://open.spotify.com/embed/track/${item.embedId}?utm_source=generator&theme=0`
+  } else if (platform === 'soundcloud') {
+    // SoundCloud widget embed
+    const scUrl = item.embedId || ''
+    embedSrc = `https://w.soundcloud.com/player/?url=${encodeURIComponent(scUrl)}&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=true`
+  }
+
+  if (!embedSrc) return null
 
   return createPortal(
     <div
       ref={containerRef}
       style={{
+        // ── Initial hidden state applied from frame 1 (before GSAP fires) ──
+        // Prevents the phantom iframe window appearing when the user taps play.
         position: 'fixed',
         left: '50%',
         top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 1,
+        height: 1,
         overflow: 'hidden',
         borderRadius: br,
-        // GSAP controls: xPercent, yPercent, width, height, clipPath, opacity, zIndex, pointerEvents
+        opacity: 0,
+        zIndex: -1,
+        pointerEvents: 'none',
+        // GSAP then takes full control of: width, height, clipPath, opacity,
+        // zIndex, pointerEvents, scale on each expand / collapse.
       }}
     >
       {/* key forces iframe remount on track change (new src + autoplay) */}
