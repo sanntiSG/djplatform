@@ -33,7 +33,7 @@
  * We keep the existing "remount on play" behaviour (returns null when
  * !isPlaying && !expanded) to trigger autoplay on mount.
  */
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
@@ -69,6 +69,13 @@ export function SharedPlayerIframe() {
   const isPlayingRef = useRef(isPlaying)
   /** Guard to prevent infinite loops when WE set isPlaying from YT callback */
   const suppressSyncRef = useRef(false)
+  /**
+   * Incremented when YouTube fires onReady.
+   * Adding it to the play/pause effect deps forces that effect to re-run
+   * with the current isPlaying state, so any pause/play tapped before
+   * onReady is correctly applied the moment the player is ready.
+   */
+  const [ytReadyTick, setYtReadyTick] = useState(0)
 
   // Sync isPlaying ref so async callbacks always see the latest value
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
@@ -142,14 +149,10 @@ export function SharedPlayerIframe() {
 
         if (data.event === 'onReady') {
           isReadyRef.current = true
-          // Fire queued play command if the user tapped before the player loaded
-          if (isPlayingRef.current) {
-            const iframe = containerRef.current?.querySelector('iframe')
-            iframe?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-              '*',
-            )
-          }
+          // Trigger the play/pause effect to re-run with current isPlaying state.
+          // This handles the case where the user paused (or played) before the
+          // player finished loading — the correct command is sent on ready.
+          setYtReadyTick(t => t + 1)
         }
 
         // Sync isPlaying with native YouTube player state
@@ -183,7 +186,7 @@ export function SharedPlayerIframe() {
       JSON.stringify({ event: 'command', func: isPlaying ? 'playVideo' : 'pauseVideo', args: [] }),
       '*',
     )
-  }, [isPlaying, item])
+  }, [isPlaying, item, ytReadyTick])
 
   /* ── render guard ─────────────────────────────────────────── */
   if (!item) return null
