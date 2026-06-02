@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
   <defs>
     <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ec4899" stop-opacity="0.8"/>
@@ -7,7 +7,7 @@
     </linearGradient>
     <radialGradient id="g2" cx="70%" cy="25%" r="60%">
       <stop offset="0%" stop-color="#d4ff00" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#08080a" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="600" height="600" fill="#08080a"/>

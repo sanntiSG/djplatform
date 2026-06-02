@@ -50,6 +50,11 @@ export function PuzzleSection() {
   const charRefs = useRef<HTMLSpanElement[]>([])
   const hasPlayedOnce = useRef(false)
 
+  // Discovery text for real REsonar user images
+  const [solvedDiscoveryName, setSolvedDiscoveryName] = useState<string | null>(null)
+  const discoveryRef = useRef<HTMLDivElement>(null)
+  const discoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const isPlaying = mode === 'playing'
 
   // Migrate users who previously dismissed the section permanently
@@ -183,8 +188,69 @@ export function PuzzleSection() {
     })
   }, [reduced])
 
+  // Reset discovery text when image changes; animate in for user images
+  useEffect(() => {
+    if (discoveryTimerRef.current) {
+      clearTimeout(discoveryTimerRef.current)
+      discoveryTimerRef.current = null
+    }
+    setSolvedDiscoveryName(null)
+
+    if (image.source !== 'user' || !discoveryRef.current) return
+    if (reduced) {
+      gsap.set(discoveryRef.current, { opacity: 1, y: 0 })
+    } else {
+      gsap.fromTo(
+        discoveryRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.out, delay: 0.25 },
+      )
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image.imageUrl])
+
+  // Animate revealed artist name in
+  useEffect(() => {
+    if (!solvedDiscoveryName || !discoveryRef.current || image.source !== 'user') return
+    if (reduced) return
+    gsap.fromTo(
+      discoveryRef.current,
+      { opacity: 0, scale: 0.96, y: 6 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.38, ease: EASE.pop },
+    )
+  }, [solvedDiscoveryName, image.source, reduced])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (discoveryTimerRef.current) clearTimeout(discoveryTimerRef.current) }
+  }, [])
+
   // ── Puzzle solved: advance to next non-recent image
-  const handleSolved = useCallback(() => setImage(nextImage()), [nextImage])
+  const handleSolved = useCallback(() => {
+    if (image.source === 'user') {
+      const artistName = image.name
+      const el = discoveryRef.current
+
+      if (el && !reduced) {
+        gsap.to(el, {
+          opacity: 0, y: -5, duration: 0.18, ease: 'power2.in',
+          onComplete: () => setSolvedDiscoveryName(artistName),
+        })
+      } else {
+        setSolvedDiscoveryName(artistName)
+      }
+
+      discoveryTimerRef.current = setTimeout(() => {
+        discoveryTimerRef.current = null
+        setSolvedDiscoveryName(null)
+        setImage(nextImage())
+      }, 1900)
+      return
+    }
+
+    setImage(nextImage())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image, nextImage, reduced])
 
   // Reset char ref collection on each render
   charRefs.current = []
@@ -424,6 +490,62 @@ export function PuzzleSection() {
                 animateEntrance
               />
             </div>
+
+            {/* Discovery text — only for real REsonar user images */}
+            {image.source === 'user' && (
+              <div
+                ref={discoveryRef}
+                style={{
+                  textAlign: 'center',
+                  opacity: 0,
+                  willChange: 'transform, opacity',
+                  minHeight: 24,
+                }}
+              >
+                {solvedDiscoveryName ? (
+                  <p style={{
+                    fontFamily: 'Satoshi, sans-serif',
+                    fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+                    fontWeight: 700,
+                    color: 'var(--accent, #d4ff00)',
+                    margin: 0,
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.4,
+                  }}>
+                    Descubriste a {solvedDiscoveryName}
+                    {image.userId && (
+                      <a
+                        href={`/p/${image.userId}`}
+                        style={{
+                          display: 'inline-block',
+                          marginLeft: 8,
+                          fontSize: '0.7em',
+                          color: 'rgba(212,255,0,0.65)',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          textDecoration: 'none',
+                          borderBottom: '1px solid rgba(212,255,0,0.3)',
+                        }}
+                      >
+                        Ver perfil
+                      </a>
+                    )}
+                  </p>
+                ) : (
+                  <p style={{
+                    fontFamily: 'Satoshi, sans-serif',
+                    fontSize: 'clamp(0.72rem, 1.8vw, 0.84rem)',
+                    fontWeight: 500,
+                    color: 'rgba(242,242,247,0.38)',
+                    margin: 0,
+                    letterSpacing: '0.02em',
+                    lineHeight: 1.4,
+                  }}>
+                    Descubrí a este artista de REsonar
+                  </p>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

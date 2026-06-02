@@ -1,9 +1,11 @@
 import { logger } from '../utils/logger.js'
+import { Profile } from '../models/Profile.js'
 
 export interface ArtistImage {
   name: string
   imageUrl: string
-  source: 'deezer' | 'spotify'
+  source: 'deezer' | 'spotify' | 'user'
+  userId?: string
 }
 
 // Curated artist seed — electronic / underground + Argentine scene
@@ -49,6 +51,17 @@ let poolCache: { images: ArtistImage[]; fetchedAt: number } | null = null
 let spotifyToken: SpotifyToken | null = null
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000 // 12h
+const TARGET_POOL_SIZE = 24
+const USER_RATIO = 0.6 // ~60% of pool from real REsonar users
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 async function getSpotifyToken(): Promise<string | null> {
   const clientId = process.env.SPOTIFY_CLIENT_ID
@@ -114,15 +127,36 @@ async function fetchFromSpotify(name: string, token: string): Promise<ArtistImag
   }
 }
 
-export async function getArtistImagePool(): Promise<ArtistImage[]> {
-  if (poolCache && Date.now() - poolCache.fetchedAt < CACHE_TTL_MS) {
-    return poolCache.images
-  }
+/** Fetch real REsonar user avatars for the discovery feature */
+async function fetchUserAvatars(): Promise<ArtistImage[]> {
+  try {
+    const profiles = await Profile.find(
+      { isVisible: true, avatar: { $exists: true, $ne: '' } },
+      { artistName: 1, avatar: 1, userId: 1 },
+    )
+      .sort({ createdAt: -1 })
+      .limit(60)
+      .lean()
 
+    return profiles
+      .filter(p => p.avatar && p.artistName)
+      .map(p => ({
+        name: p.artistName,
+        imageUrl: p.avatar!,
+        source: 'user' as const,
+        userId: String(p._id), // profile _id used to build /p/:id link
+      }))
+  } catch (err) {
+    logger.error('fetchUserAvatars failed', { err })
+    return []
+  }
+}
+
+/** Fetch external (Deezer/Spotify) images from the curated seed list */
+async function fetchExternalImages(): Promise<ArtistImage[]> {
   const spotToken = await getSpotifyToken()
   const images: ArtistImage[] = []
 
-  // Fetch in batches of 5 to avoid hammering APIs
   const batchSize = 5
   for (let i = 0; i < ARTIST_NAMES.length; i += batchSize) {
     const batch = ARTIST_NAMES.slice(i, i + batchSize)
@@ -139,9 +173,37 @@ export async function getArtistImagePool(): Promise<ArtistImage[]> {
     }
   }
 
+  return images
+}
+
+export async function getArtistImagePool(): Promise<ArtistImage[]> {
+  if (poolCache && Date.now() - poolCache.fetchedAt < CACHE_TTL_MS) {
+    return poolCache.images
+  }
+
+  // Fetch user avatars and external images in parallel
+  const [userImages, externalImages] = await Promise.all([
+    fetchUserAvatars(),
+    fetchExternalImages(),
+  ])
+
+  // Blend: ~60% users, ~40% external
+  const userSlots = Math.ceil(TARGET_POOL_SIZE * USER_RATIO)      // 15
+  const externalSlots = TARGET_POOL_SIZE - userSlots               //  9
+
+  const userPool = shuffleArray(userImages).slice(0, Math.max(userSlots, 0))
+  const externalPool = shuffleArray(externalImages).slice(0, externalSlots)
+
+  const images = shuffleArray([...userPool, ...externalPool])
+
   if (images.length > 0) {
     poolCache = { images, fetchedAt: Date.now() }
-    logger.info(`Artist image pool refreshed: ${images.length} images (${images.filter(i => i.source === 'deezer').length} Deezer, ${images.filter(i => i.source === 'spotify').length} Spotify)`)
+    logger.info(
+      `Artist image pool refreshed: ${images.length} images — `
+      + `${images.filter(i => i.source === 'user').length} users, `
+      + `${images.filter(i => i.source === 'deezer').length} Deezer, `
+      + `${images.filter(i => i.source === 'spotify').length} Spotify`,
+    )
   }
 
   return images

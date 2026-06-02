@@ -49,6 +49,11 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
 
   const [pieceSize, setPieceSize] = useState(() => computePieceSize())
 
+  // Discovery text state — only shown when image.source === 'user'
+  const [solvedDiscoveryName, setSolvedDiscoveryName] = useState<string | null>(null)
+  const discoveryRef = useRef<HTMLDivElement>(null)
+  const discoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     let rafId = 0
     const onResize = () => {
@@ -70,10 +75,57 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
     gsap.fromTo(textRef.current, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out })
   }, [textIndex, reduced])
 
+  // Reset discovery text when image changes; animate in for user images
+  useEffect(() => {
+    if (discoveryTimerRef.current) {
+      clearTimeout(discoveryTimerRef.current)
+      discoveryTimerRef.current = null
+    }
+    setSolvedDiscoveryName(null)
+
+    if (image.source !== 'user') return
+    if (!discoveryRef.current) return
+
+    if (reduced) {
+      gsap.set(discoveryRef.current, { opacity: 1, y: 0 })
+    } else {
+      gsap.fromTo(
+        discoveryRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.out, delay: 0.35 },
+      )
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image.imageUrl])
+
+  // Animate text transition when discovery name is revealed
+  useEffect(() => {
+    if (!solvedDiscoveryName || !discoveryRef.current || image.source !== 'user') return
+    if (reduced) return
+    gsap.fromTo(
+      discoveryRef.current,
+      { opacity: 0, scale: 0.96, y: 6 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.38, ease: EASE.pop },
+    )
+  }, [solvedDiscoveryName, image.source, reduced])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (discoveryTimerRef.current) clearTimeout(discoveryTimerRef.current)
+    }
+  }, [])
+
   // Coordinated exit when backend is ready
   useEffect(() => {
     if (!isReady || exitingRef.current) return
     exitingRef.current = true
+
+    // Cancel any pending discovery timer before exiting
+    if (discoveryTimerRef.current) {
+      clearTimeout(discoveryTimerRef.current)
+      discoveryTimerRef.current = null
+    }
 
     if (reduced) {
       onDismiss?.()
@@ -81,15 +133,10 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
     }
 
     const run = async () => {
-      // 1. Auto-resolve puzzle pieces
       if (boardRef.current) {
         await boardRef.current.forceSolve()
       }
-
-      // 2. Brief hold showing complete image
       await new Promise<void>(r => setTimeout(r, 200))
-
-      // 3. Morph: scale up + blur + fade out → hand off to feed
       const container = containerRef.current
       if (!container) { onDismiss?.(); return }
       gsap.timeline()
@@ -102,8 +149,37 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
   }, [isReady])
 
   const handleSolved = useCallback(() => {
+    // For user images: reveal artist name, then advance after a delay
+    if (image.source === 'user') {
+      const artistName = image.name
+      const el = discoveryRef.current
+
+      if (el && !reduced) {
+        // Phase out current text
+        gsap.to(el, {
+          opacity: 0, y: -5, duration: 0.18, ease: 'power2.in',
+          onComplete: () => {
+            setSolvedDiscoveryName(artistName)
+          },
+        })
+      } else {
+        setSolvedDiscoveryName(artistName)
+      }
+
+      // Advance to next image after showing the revealed name
+      discoveryTimerRef.current = setTimeout(() => {
+        discoveryTimerRef.current = null
+        setSolvedDiscoveryName(null)
+        setImage(nextImage())
+      }, 1900)
+
+      return
+    }
+
     setImage(nextImage())
-  }, [nextImage])
+  }, [image, nextImage, reduced])
+
+  const isUserImage = image.source === 'user'
 
   return (
     <div
@@ -133,6 +209,61 @@ export function PuzzleLoader({ onDismiss, isReady, progress = 0 }: PuzzleLoaderP
         showCounter
         animateEntrance
       />
+
+      {/* Discovery text — only for real REsonar user images */}
+      {isUserImage && (
+        <div
+          ref={discoveryRef}
+          style={{
+            textAlign: 'center',
+            opacity: 0,
+            willChange: 'transform, opacity',
+          }}
+        >
+          {solvedDiscoveryName ? (
+            <p style={{
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+              fontWeight: 700,
+              color: 'var(--accent, #d4ff00)',
+              margin: 0,
+              letterSpacing: '0.01em',
+              lineHeight: 1.4,
+            }}>
+              Descubriste a {solvedDiscoveryName}
+              {image.userId && (
+                <a
+                  href={`/p/${image.userId}`}
+                  style={{
+                    display: 'inline-block',
+                    marginLeft: 8,
+                    fontSize: '0.7em',
+                    color: 'rgba(212,255,0,0.65)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    borderBottom: '1px solid rgba(212,255,0,0.3)',
+                  }}
+                >
+                  Ver perfil
+                </a>
+              )}
+            </p>
+          ) : (
+            <p style={{
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: 'clamp(0.72rem, 1.8vw, 0.84rem)',
+              fontWeight: 500,
+              color: 'rgba(242,242,247,0.38)',
+              margin: 0,
+              letterSpacing: '0.02em',
+              lineHeight: 1.4,
+            }}>
+              Descubrí a este artista de REsonar
+            </p>
+          )}
+        </div>
+      )}
 
       <ProgressWaveform progress={progress} />
 
