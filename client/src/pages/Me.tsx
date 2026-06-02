@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { useMyProfile } from '../hooks/useProfile.js'
@@ -7,9 +8,12 @@ import { Button } from '../components/ui/Button.js'
 import { Card } from '../components/ui/Card.js'
 import { Pill } from '../components/ui/Pill.js'
 import { PublishMenu } from '../components/profile/PublishMenu.js'
+import { DeleteAccountModal } from '../components/ui/DeleteAccountModal.js'
 import { notificationsService } from '../services/notificationsService.js'
 import { conversationsService } from '../services/conversationsService.js'
 import { collaborationsService } from '../services/collaborationsService.js'
+import { authService } from '../services/authService.js'
+import { unsubscribe as pushUnsubscribe } from '../services/pushService.js'
 import type { Availability } from '../types/index.js'
 
 const availabilityLabel: Record<Availability, string> = {
@@ -56,6 +60,20 @@ export default function Me() {
   const rejectCollab = useMutation({
     mutationFn: (id: string) => collaborationsService.reject(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collaborations'] }),
+  })
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => authService.deleteAccount(),
+    onSuccess: async () => {
+      // Drop local push subscription (best-effort)
+      try { await pushUnsubscribe() } catch { /* noop */ }
+      // Clear auth + all query cache
+      queryClient.clear()
+      clearAuth()
+      navigate('/')
+    },
   })
 
   function handleLogout() {
@@ -241,7 +259,60 @@ export default function Me() {
         <Button variant="outline" size="md" onClick={handleLogout}>
           Cerrar sesion
         </Button>
+
+        {/* Destructive zone */}
+        <div
+          style={{
+            borderTop: '1px solid rgba(239,68,68,0.15)',
+            paddingTop: 20,
+            display: 'flex', flexDirection: 'column', gap: 8,
+          }}
+        >
+          <p style={{
+            fontFamily: 'Satoshi, sans-serif',
+            fontSize: 11, color: 'rgba(242,242,247,0.25)',
+            letterSpacing: '0.1em', textTransform: 'uppercase',
+            margin: 0,
+          }}>
+            Zona de peligro
+          </p>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            style={{
+              width: '100%', padding: '12px 16px',
+              borderRadius: 12,
+              background: 'transparent',
+              color: 'rgba(239,68,68,0.75)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(239,68,68,0.07)'
+              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.35)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'
+            }}
+          >
+            Eliminar cuenta
+          </button>
+        </div>
       </div>
+
+      <DeleteAccountModal
+        open={showDeleteModal}
+        isLoading={deleteAccountMutation.isPending}
+        onConfirm={() => deleteAccountMutation.mutate()}
+        onDismiss={() => {
+          if (!deleteAccountMutation.isPending) setShowDeleteModal(false)
+        }}
+      />
     </div>
   )
 }

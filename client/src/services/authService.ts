@@ -8,4 +8,5 @@ export const authService = {
   me: () => apiClient.get<UserResponse>('/auth/me'),
   changePassword: (data: ChangePasswordInput) =>
     apiClient.post<AuthResponse>('/auth/change-password', data),
+  deleteAccount: () => apiClient.delete<{ message: string }>('/auth/me'),
 }

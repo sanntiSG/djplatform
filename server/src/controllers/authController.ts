@@ -3,6 +3,7 @@ import { RegisterSchema, LoginSchema, GoogleAuthSchema, ChangePasswordSchema } f
 import { hashPassword, comparePassword } from '../utils/password.js'
 import { signToken } from '../utils/jwt.js'
 import { buildAuthResponse, changePassword as changePasswordService } from '../services/authService.js'
+import { deleteAccount as deleteAccountService } from '../services/accountDeletionService.js'
 import {
   findUserByEmail,
   findUserByEmailWithPassword,
@@ -86,6 +87,16 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
     const data = ChangePasswordSchema.parse(req.body)
     const response = await changePasswordService(req.user!.id, data)
     res.json(response)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function deleteAccount(req: Request, res: Response, next: NextFunction) {
+  try {
+    await deleteAccountService(req.user!.id)
+    // 202 Accepted: account is invalidated. Background cascade continues asynchronously.
+    res.status(202).json({ message: 'Cuenta eliminada' })
   } catch (err) {
     next(err)
   }
