@@ -28,6 +28,7 @@ import { RecommendationsSection } from '../components/feed/RecommendationsSectio
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
 import { useAuthStore } from '../store/useAuthStore.js'
+import { OnboardingGate } from '../components/onboarding/OnboardingOverlay.js'
 import type { ReactNode } from 'react'
 import type { ProfileResponse, EventResponse } from '../types/index.js'
 
@@ -901,6 +902,9 @@ export default function MainFeed() {
 
   return (
     <div ref={pageRef} className="min-h-screen bg-[var(--bg)] md:pt-16 overflow-x-hidden">
+
+      {/* ─── ONBOARDING OVERLAY — shown once per session for guests ── */}
+      {!user && <OnboardingGate />}
 
       {/* ─── PAGE HEADER ─────────────────────────────────── */}
       <div className="px-4 md:px-6 pb-6 pt-safe md:pt-10">
