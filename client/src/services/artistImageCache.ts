@@ -1,5 +1,5 @@
-// v2: added source:'user' + userId for discovery text feature
-const CACHE_KEY = 'puzzle-image-pool-v2'
+// v3: URLs de avatares de usuario pre-optimizadas con Cloudinary transforms
+const CACHE_KEY = 'puzzle-image-pool-v3'
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 export interface PoolImage {
@@ -11,7 +11,7 @@ export interface PoolImage {
 }
 
 interface CachedPool {
-  version: 2
+  version: 3
   fetchedAt: number
   ttlMs: number
   images: PoolImage[]
@@ -22,7 +22,7 @@ export function getPool(): PoolImage[] | null {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const data: CachedPool = JSON.parse(raw)
-    if (data.version !== 2) return null
+    if (data.version !== 3) return null
     if (Date.now() - data.fetchedAt > data.ttlMs) {
       localStorage.removeItem(CACHE_KEY)
       return null
@@ -35,7 +35,7 @@ export function getPool(): PoolImage[] | null {
 
 export function savePool(images: PoolImage[], ttlMs = DEFAULT_TTL_MS): void {
   try {
-    const data: CachedPool = { version: 2, fetchedAt: Date.now(), ttlMs, images }
+    const data: CachedPool = { version: 3, fetchedAt: Date.now(), ttlMs, images }
     localStorage.setItem(CACHE_KEY, JSON.stringify(data))
   } catch {
     // Silently fail if localStorage is full or unavailable
@@ -44,6 +44,7 @@ export function savePool(images: PoolImage[], ttlMs = DEFAULT_TTL_MS): void {
 
 export function clearPool(): void {
   localStorage.removeItem(CACHE_KEY)
-  // Also clear old v1 key from earlier sessions
+  // Clear previous version keys
+  try { localStorage.removeItem('puzzle-image-pool-v2') } catch { /* noop */ }
   try { localStorage.removeItem('puzzle-image-pool-v1') } catch { /* noop */ }
 }

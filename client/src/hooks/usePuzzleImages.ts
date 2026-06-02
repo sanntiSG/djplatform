@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getPool, savePool, type PoolImage } from '../services/artistImageCache'
 import { apiClient } from '../services/apiClient'
+import { cloudinaryUrl } from '../utils/cloudinaryUrl'
 
 // Local SVG bootstrap images — always available offline
 const BOOTSTRAP_IMAGES: PoolImage[] = [
@@ -34,6 +35,32 @@ const LOCAL_IMAGES: PoolImage[] = [
 // Full offline pool: 9 bootstrap + 12 local = 21 images
 const FALLBACK_POOL: PoolImage[] = [...BOOTSTRAP_IMAGES, ...LOCAL_IMAGES]
 
+// Puzzle piece size upper bound (144 * 3 = 432px). 480px gives a bit of headroom.
+const PUZZLE_IMAGE_PX = 480
+
+/**
+ * Normalise a PoolImage's imageUrl:
+ * - User avatars (Cloudinary) → downscale to 480×480 with face crop + auto format.
+ *   This cuts file size 5–10× and prevents first-decode jank on the main thread.
+ * - Deezer / Spotify / SVG → returned unchanged (not Cloudinary or already sized).
+ */
+function optimiseUrl(img: PoolImage): PoolImage {
+  if (img.source !== 'user') return img
+  const optimised = cloudinaryUrl(img.imageUrl, {
+    w: PUZZLE_IMAGE_PX,
+    h: PUZZLE_IMAGE_PX,
+    fit: 'fill',
+    gravity: 'face',
+    q: 'auto',
+    f: 'auto',
+  })
+  return optimised === img.imageUrl ? img : { ...img, imageUrl: optimised }
+}
+
+function optimisePool(images: PoolImage[]): PoolImage[] {
+  return images.map(optimiseUrl)
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -46,17 +73,43 @@ function shuffle<T>(arr: T[]): T[] {
 export function usePuzzleImages() {
   const [pool, setPool] = useState<PoolImage[]>(() => {
     const cached = getPool()
+    // Cached pools are already optimised (saved post-optimisation below)
     return cached && cached.length >= 9 ? shuffle(cached) : shuffle(FALLBACK_POOL)
   })
 
   // Tracks recently served image URLs to avoid immediate repetition
   const recentRef = useRef<string[]>([])
   const fetchedRef = useRef(false)
+  // Tracks URLs already preloaded so we don't repeat decode work
+  const preloadedRef = useRef<Set<string>>(new Set())
 
   // Seed the first pool image into recent on mount / pool change
   useEffect(() => {
     if (pool.length > 0 && recentRef.current.length === 0) {
       recentRef.current = [pool[0].imageUrl]
+    }
+  }, [pool])
+
+  // Background preload + decode for every image in the pool.
+  // Uses Image.decode() to move decompression off the main thread so GSAP
+  // animations stay at 60fps even on the first appearance of a user avatar.
+  useEffect(() => {
+    const preloaded = preloadedRef.current
+    // Deduplicate URLs (pool may contain repeated user avatars)
+    const unique = Array.from(new Set(pool.map(p => p.imageUrl)))
+
+    for (const url of unique) {
+      if (preloaded.has(url)) continue
+      preloaded.add(url)
+
+      // Skip SVG data-URLs and blob: URLs — already in memory
+      if (url.startsWith('data:') || url.startsWith('blob:')) continue
+
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = url
+      // decode() resolves once the image is fully decoded and GPU-ready
+      img.decode?.().catch(() => { /* non-fatal: image just won't be pre-warm */ })
     }
   }, [pool])
 
@@ -72,8 +125,10 @@ export function usePuzzleImages() {
       .get<{ images: PoolImage[]; ttlSeconds: number }>('/artist-images')
       .then(({ images, ttlSeconds }) => {
         if (images.length >= 9) {
-          savePool(images, ttlSeconds * 1000)
-          setPool(shuffle(images))
+          // Optimise URLs before caching so the stored pool is already downscaled
+          const optimised = optimisePool(images)
+          savePool(optimised, ttlSeconds * 1000)
+          setPool(shuffle(optimised))
         }
       })
       .catch(() => {

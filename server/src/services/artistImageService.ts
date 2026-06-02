@@ -51,8 +51,9 @@ let poolCache: { images: ArtistImage[]; fetchedAt: number } | null = null
 let spotifyToken: SpotifyToken | null = null
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000 // 12h
-const TARGET_POOL_SIZE = 24
-const USER_RATIO = 0.6 // ~60% of pool from real REsonar users
+const TARGET_POOL_SIZE = 18
+const USER_RATIO = 0.5  // ~50% of pool from real REsonar users
+const MAX_PER_USER = 2  // allow each user avatar to appear up to this many times
 
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -187,11 +188,20 @@ export async function getArtistImagePool(): Promise<ArtistImage[]> {
     fetchExternalImages(),
   ])
 
-  // Blend: ~60% users, ~40% external
-  const userSlots = Math.ceil(TARGET_POOL_SIZE * USER_RATIO)      // 15
-  const externalSlots = TARGET_POOL_SIZE - userSlots               //  9
+  // Blend: ~50% users, ~50% external, with cyclic repetition for users (max MAX_PER_USER per user)
+  const desiredUsers   = Math.ceil(TARGET_POOL_SIZE * USER_RATIO)         //  9
+  const externalSlots  = TARGET_POOL_SIZE - desiredUsers                   //  9
 
-  const userPool = shuffleArray(userImages).slice(0, Math.max(userSlots, 0))
+  // Build user pool cycling through shuffled unique users until quota is reached.
+  // With few users each can appear up to MAX_PER_USER times;
+  // with many users each appears at most once (quota reached before second cycle).
+  const userCap = Math.min(desiredUsers, userImages.length * MAX_PER_USER)
+  const shuffledUsers = shuffleArray(userImages)
+  const userPool: ArtistImage[] = []
+  for (let i = 0; userPool.length < userCap; i++) {
+    userPool.push(shuffledUsers[i % shuffledUsers.length])
+  }
+
   const externalPool = shuffleArray(externalImages).slice(0, externalSlots)
 
   const images = shuffleArray([...userPool, ...externalPool])
