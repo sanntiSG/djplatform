@@ -32,4 +32,10 @@ export type {
   TrendingSong,
   TrendingItem,
   TrendingResponse,
+  CreateProjectInput,
+  UpdateProjectInput,
+  ProjectResponse,
+  ProjectMember,
+  ApplyProjectInput,
+  ProjectPhase,
 } from '@dj/shared'

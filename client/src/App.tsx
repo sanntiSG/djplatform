@@ -27,7 +27,10 @@ const GenreDetail    = lazy(() => import('./pages/GenreDetail.js'))
 const Opportunities  = lazy(() => import('./pages/Opportunities.js'))
 const OpportunityDetail = lazy(() => import('./pages/OpportunityDetail.js'))
 const Activity       = lazy(() => import('./pages/Activity.js'))
-const Trending       = lazy(() => import('./pages/Trending.js'))
+const Trending        = lazy(() => import('./pages/Trending.js'))
+const Projects        = lazy(() => import('./pages/Projects.js'))
+const ProjectDetail   = lazy(() => import('./pages/ProjectDetail.js'))
+const ProjectNew      = lazy(() => import('./pages/ProjectNew.js'))
 
 // Paginas de usuario autenticado — solo se cargan cuando el usuario las visita
 const Me                      = lazy(() => import('./pages/Me.js'))
@@ -117,6 +120,9 @@ export default function App() {
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/actividad" element={<Activity />} />
           <Route path="/trending" element={<Trending />} />
+          <Route path="/proyectos" element={<Projects />} />
+          <Route path="/proyectos/:id" element={<ProjectDetail />} />
+          <Route path="/proyectos/nueva" element={<RequireAuth><ProjectNew /></RequireAuth>} />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
           <Route path="/oportunidades/nueva" element={<RequireAuth><OpportunityNew /></RequireAuth>} />

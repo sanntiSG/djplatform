@@ -1,0 +1,400 @@
+/**
+ * ProjectDetail — detalle completo de un proyecto.
+ * - Creador: ve panel de miembros + pendientes, puede aceptar/rechazar.
+ * - Visitante: puede postularse o cancelar postulacion.
+ * - Miembro: ve la lista de miembros activos y puede salir.
+ * Incluye ProjectPhaseBar para visualizar la fase actual.
+ */
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import gsap from 'gsap'
+import { useProject, useApplyToProject, useCancelApply, useAcceptMember, useRemoveMember, useUpdateProject } from '../hooks/useProjects.js'
+import { useAuthStore } from '../store/useAuthStore.js'
+import { ProjectPhaseBar } from '../components/projects/ProjectPhaseBar.js'
+import { Button } from '../components/ui/Button.js'
+import { profilePath, toSlug } from '../utils/slug.js'
+import { DURATION, EASE, prefersReducedMotion } from '../utils/motion.js'
+import { PROJECT_PHASES, PROJECT_PHASE_LABELS } from '@dj/shared'
+import type { ProjectMember, ProjectPhase } from '../types/index.js'
+
+function parseProjectId(param: string): string {
+  const match = param.match(/[0-9a-fA-F]{24}$/)
+  return match ? match[0] : param
+}
+
+/* ── Member avatar ───────────────────────────────────────── */
+function MemberAvatar({ member }: { member: ProjectMember }) {
+  return (
+    <Link
+      to={profilePath(toSlug(member.artistName), member.profileId)}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
+    >
+      <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-elevated)' }}>
+        {member.avatar ? (
+          <img src={member.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--accent)' }}>
+              {member.artistName[0]?.toUpperCase()}
+            </span>
+          </div>
+        )}
+      </div>
+      <div>
+        <p style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
+          {member.artistName}
+          {member.isCreator && (
+            <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, fontWeight: 600, color: 'var(--accent)', marginLeft: 6, letterSpacing: '0.05em' }}>
+              Creador
+            </span>
+          )}
+        </p>
+        {member.role && !member.isCreator && (
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', margin: '1px 0 0' }}>
+            {member.role}
+          </p>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+/* ── Phase selector (creator only) ──────────────────────── */
+function PhaseSelector({ current, onChange }: { current: ProjectPhase; onChange: (p: ProjectPhase) => void }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      {PROJECT_PHASES.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onChange(p)}
+          style={{
+            fontFamily: 'Satoshi, sans-serif',
+            fontSize: 12,
+            fontWeight: p === current ? 700 : 500,
+            padding: '5px 12px',
+            borderRadius: 'var(--radius-xl)',
+            border: p === current ? 'none' : '1px solid var(--border)',
+            background: p === current ? 'var(--accent)' : 'transparent',
+            color: p === current ? 'var(--bg)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 150ms',
+          }}
+        >
+          {PROJECT_PHASE_LABELS[p]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* ── Main page ───────────────────────────────────────────── */
+export default function ProjectDetail() {
+  const { id: rawId } = useParams<{ id: string }>()
+  const projectId = parseProjectId(rawId ?? '')
+  const navigate  = useNavigate()
+  const { user }  = useAuthStore()
+
+  const { data: project, isLoading } = useProject(projectId)
+  const { mutate: applyMutation,  isPending: applying    } = useApplyToProject(projectId)
+  const { mutate: cancelMutation, isPending: cancelling  } = useCancelApply(projectId)
+  const { mutate: acceptMutation, isPending: accepting   } = useAcceptMember(projectId)
+  const { mutate: kickMutation                           } = useRemoveMember(projectId)
+  const { mutate: updateMutation                         } = useUpdateProject(projectId)
+
+  const [applyMsg, setApplyMsg] = useState('')
+  const [showApplyForm, setShowApplyForm] = useState(false)
+  const pageRef = useRef<HTMLDivElement>(null)
+
+  const isOwner  = Boolean(user && project?.userId === user.id)
+  const isMember = Boolean(project?.isMember)
+
+  useEffect(() => {
+    if (!pageRef.current || prefersReducedMotion()) return
+    gsap.fromTo(pageRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut })
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: 'calc(var(--header-h, 72px) + 24px) 20px 48px', maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ height: 240, borderRadius: 'var(--radius-lg)', background: 'var(--surface)', animation: 'shimmer 1.5s ease-in-out infinite', marginBottom: 16 }} />
+        <div style={{ height: 24, borderRadius: 8, background: 'var(--surface)', animation: 'shimmer 1.5s ease-in-out infinite', width: '60%', marginBottom: 8 }} />
+        <div style={{ height: 14, borderRadius: 8, background: 'var(--surface)', animation: 'shimmer 1.5s ease-in-out infinite', width: '40%' }} />
+      </div>
+    )
+  }
+
+  if (!project) {
+    return (
+      <div style={{ padding: 'calc(var(--header-h, 72px) + 48px) 20px', textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
+        <p style={{ fontFamily: "'Clash Display', sans-serif", fontSize: '1.1rem', color: 'var(--text-muted)' }}>
+          Proyecto no encontrado
+        </p>
+        <button type="button" onClick={() => navigate('/proyectos')} style={{ marginTop: 16, fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>
+          Ver todos los proyectos
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={pageRef} style={{ maxWidth: 720, margin: '0 auto', padding: 'calc(var(--header-h, 72px) + 16px) 20px 80px', minHeight: '100dvh' }}>
+      {/* Back */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 20, transition: 'color 180ms' }}
+        onPointerEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
+        onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Proyectos
+      </button>
+
+      {/* Cover */}
+      {project.cover && (
+        <div style={{ width: '100%', aspectRatio: '16/6', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 24 }}>
+          <img src={project.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        {/* Creator */}
+        <Link to={profilePath(toSlug(project.artistName), project.profileId)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', marginBottom: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface-elevated)', flexShrink: 0 }}>
+            {project.avatar ? (
+              <img src={project.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{project.artistName[0]?.toUpperCase()}</span>
+              </div>
+            )}
+          </div>
+          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)' }}>{project.artistName}</span>
+        </Link>
+
+        <h1 style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(1.6rem, 5vw, 2.2rem)', fontWeight: 700, color: 'var(--text)', margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+          {project.title}
+        </h1>
+
+        {/* Phase bar */}
+        <ProjectPhaseBar phase={project.phase} />
+
+        {/* Creator: phase selector */}
+        {isOwner && (
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+              Actualizar fase
+            </p>
+            <PhaseSelector
+              current={project.phase}
+              onChange={(p) => updateMutation({ phase: p })}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Meta chips */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 'var(--radius-xl)', background: project.status === 'open' ? 'rgba(45,212,191,0.12)' : 'var(--surface)', color: project.status === 'open' ? '#2dd4bf' : 'var(--text-muted)', border: `1px solid ${project.status === 'open' ? 'rgba(45,212,191,0.25)' : 'var(--border)'}` }}>
+          {project.status === 'open' ? 'Abierto' : 'Cerrado'}
+        </span>
+        {project.location && (
+          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', padding: '4px 10px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
+            {project.location}
+          </span>
+        )}
+        {project.memberCount > 0 && (
+          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', padding: '4px 10px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
+            {project.memberCount} miembro{project.memberCount !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
+      {/* Description */}
+      {project.description && (
+        <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 15, color: 'var(--text)', lineHeight: 1.65, margin: '0 0 28px', maxWidth: 65 + 'ch' }}>
+          {project.description}
+        </p>
+      )}
+
+      {/* Roles */}
+      {project.lookingForRoles.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+            Buscando
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {project.lookingForRoles.map((role) => (
+              <span key={role} style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 'var(--radius-xl)', background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid rgba(212,255,0,0.2)' }}>
+                {role}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Members panel */}
+      {project.members && project.members.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 12px' }}>
+            Miembros
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {project.members.filter((m) => m.status === 'member').map((m) => (
+              <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <MemberAvatar member={m} />
+                {isOwner && !m.isCreator && (
+                  <button
+                    type="button"
+                    onClick={() => kickMutation(m.id)}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '4px 10px', cursor: 'pointer' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+                {!isOwner && m.userId === user?.id && !m.isCreator && (
+                  <button
+                    type="button"
+                    onClick={() => kickMutation(m.id)}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '4px 10px', cursor: 'pointer' }}
+                  >
+                    Salir
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Pending applicants (owner only) */}
+          {isOwner && project.members.some((m) => m.status === 'pending') && (
+            <div style={{ marginTop: 20 }}>
+              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--c-orange, #fb923c)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                Solicitudes pendientes
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {project.members.filter((m) => m.status === 'pending').map((m) => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <MemberAvatar member={m} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => acceptMutation(m.id)}
+                        disabled={accepting}
+                        style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 'var(--radius-xl)', border: 'none', background: 'var(--accent)', color: 'var(--bg)', cursor: 'pointer' }}
+                      >
+                        Aceptar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => kickMutation(m.id)}
+                        style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CTA — apply / cancel / already member */}
+      {user && !isOwner && (
+        <div style={{ paddingTop: 8 }}>
+          {isMember ? (
+            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--accent)' }}>
+              Sos parte de este proyecto.
+            </p>
+          ) : project.isApplied ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>
+                Solicitud enviada. Esperando respuesta del creador.
+              </p>
+              <button
+                type="button"
+                onClick={() => cancelMutation()}
+                disabled={cancelling}
+                style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                Cancelar solicitud
+              </button>
+            </div>
+          ) : project.status === 'open' ? (
+            showApplyForm ? (
+              <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: 16 }}>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+                  Mensaje al creador (opcional)
+                </p>
+                <textarea
+                  value={applyMsg}
+                  onChange={(e) => setApplyMsg(e.target.value)}
+                  placeholder="Contales quien sos y por que te interesa unirte..."
+                  maxLength={280}
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-elevated)', color: 'var(--text)', fontFamily: 'Satoshi, sans-serif', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  <Button
+                    type="button"
+                    disabled={applying}
+                    onClick={() => applyMutation({ message: applyMsg.trim() || undefined }, { onSuccess: () => setShowApplyForm(false) })}
+                  >
+                    {applying ? 'Enviando...' : 'Solicitar ingreso'}
+                  </Button>
+                  <button type="button" onClick={() => setShowApplyForm(false)} style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Button type="button" onClick={() => setShowApplyForm(true)}>
+                Quiero unirme
+              </Button>
+            )
+          ) : (
+            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text-muted)' }}>
+              Este proyecto ya no acepta nuevos integrantes.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Owner controls */}
+      {isOwner && (
+        <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <Link
+            to={`/proyectos/${projectId}/editar`}
+            style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', color: 'var(--text-muted)', textDecoration: 'none', transition: 'border-color 180ms, color 180ms' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+          >
+            Editar
+          </Link>
+          {project.status === 'open' ? (
+            <button
+              type="button"
+              onClick={() => updateMutation({ status: 'closed' })}
+              style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              Cerrar convocatoria
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => updateMutation({ status: 'open' })}
+              style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(212,255,0,0.3)', background: 'var(--accent-muted)', color: 'var(--accent)', cursor: 'pointer' }}
+            >
+              Reabrir convocatoria
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

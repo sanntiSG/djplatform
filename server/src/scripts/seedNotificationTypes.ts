@@ -28,6 +28,8 @@ const TYPES: Array<{
   { key: 'opportunity_application_cancelled', label: 'Postulacion cancelada',   description: 'Un artista cancelo su postulacion a tu oportunidad',            category: 'profile' },
   { key: 'opportunity_filled_other',       label: 'Oportunidad cubierta',       description: 'La oportunidad fue cubierta con otro artista',                  category: 'profile' },
   { key: 'opportunity_cancelled',          label: 'Oportunidad cancelada',      description: 'El creador cerro o elimino la oportunidad',                     category: 'profile' },
+  { key: 'project_new_application',       label: 'Solicitud de ingreso',        description: 'Alguien quiere unirse a tu proyecto',                            category: 'profile' },
+  { key: 'project_application_accepted',  label: 'Ingreso aceptado',            description: 'Tu solicitud para unirte al proyecto fue aceptada',               category: 'profile' },
 ]
 
 async function seed() {

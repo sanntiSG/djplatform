@@ -20,6 +20,7 @@ import artistImagesRouter from './artistImages.js'
 import savedMediaRouter from './savedMedia.js'
 import feedRouter from './feed.js'
 import trendingRouter from './trending.js'
+import projectsRouter from './projects.js'
 
 const router = Router()
 
@@ -53,6 +54,7 @@ router.use('/artist-images', artistImagesRouter)
 router.use('/users/me/saved-media', savedMediaRouter)
 router.use('/feed', feedRouter)
 router.use('/trending', trendingRouter)
+router.use('/projects', projectsRouter)
 router.use('/', sitemapRouter)
 
 export default router
