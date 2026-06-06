@@ -15,10 +15,12 @@
  */
 import { useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
 import { prefersReducedMotion, DURATION, EASE } from '../../utils/motion.js'
 import { useTapAnim } from '../../hooks/useTapAnim.js'
+import { profilePath, toSlug } from '../../utils/slug.js'
 
 /* ── Icons ────────────────────────────────────────────────── */
 
@@ -86,32 +88,81 @@ function CtrlBtn({ onClick, label, children }: {
 export function LibraryNowPlaying() {
   const { expanded, current, next, prev, setExpanded } = usePlayerStore()
   const item = current()
+  const navigate = useNavigate()
 
-  const bgRef     = useRef<HTMLDivElement>(null)
-  const chromeRef = useRef<HTMLDivElement>(null)
+  const bgRef      = useRef<HTMLDivElement>(null)
+  const chromeRef  = useRef<HTMLDivElement>(null)
+  const artistRef  = useRef<HTMLButtonElement>(null)
+  const arrowRef   = useRef<SVGSVGElement>(null)
   const closingRef = useRef(false)
 
-  const handleClose = useCallback(() => {
-    if (closingRef.current) return
-    closingRef.current = true
-    const bg     = bgRef.current
-    const chrome = chromeRef.current
-    if (!bg || prefersReducedMotion()) {
-      setExpanded(false)
-      closingRef.current = false
-      return
-    }
-    gsap.to([bg, chrome], {
-      opacity: 0,
-      y: 32,
-      duration: DURATION.base,
-      ease: EASE.softIn,
-      onComplete: () => {
+  /** Animate out and optionally run a callback after the exit (e.g., navigate) */
+  const animateClose = useCallback(
+    (onComplete?: () => void) => {
+      if (closingRef.current) return
+      closingRef.current = true
+      const bg     = bgRef.current
+      const chrome = chromeRef.current
+      if (!bg || prefersReducedMotion()) {
         setExpanded(false)
         closingRef.current = false
-      },
-    })
-  }, [setExpanded])
+        onComplete?.()
+        return
+      }
+      gsap.to([bg, chrome], {
+        opacity: 0,
+        y: 32,
+        duration: DURATION.base,
+        ease: EASE.softIn,
+        onComplete: () => {
+          setExpanded(false)
+          closingRef.current = false
+          onComplete?.()
+        },
+      })
+    },
+    [setExpanded],
+  )
+
+  const handleClose = useCallback(() => animateClose(), [animateClose])
+
+  /** Navigate to the artist's profile — closes the player first */
+  const handleNavigateToArtist = useCallback(() => {
+    if (!item) return
+    const url = profilePath(toSlug(item.artistName), item.profileId)
+    animateClose(() => navigate(url))
+  }, [item, animateClose, navigate])
+
+  /* Artist button hover — subtle GSAP brightness + arrow shift */
+  const handleArtistEnter = useCallback(() => {
+    if (prefersReducedMotion()) return
+    if (artistRef.current) {
+      gsap.to(artistRef.current, {
+        color: 'var(--text)',
+        duration: DURATION.micro,
+        ease: EASE.out,
+      })
+    }
+    if (arrowRef.current) {
+      gsap.to(arrowRef.current, { x: 3, opacity: 0.8, duration: DURATION.micro, ease: EASE.out })
+    }
+  }, [])
+
+  const handleArtistLeave = useCallback(() => {
+    if (prefersReducedMotion()) return
+    if (artistRef.current) {
+      gsap.to(artistRef.current, {
+        color: 'var(--text-muted)',
+        duration: DURATION.micro,
+        ease: EASE.out,
+      })
+    }
+    if (arrowRef.current) {
+      gsap.to(arrowRef.current, { x: 0, opacity: 0.4, duration: DURATION.micro, ease: EASE.out })
+    }
+  }, [])
+
+  const { ref: artistBtnRef, tapHandlers: artistTapHandlers } = useTapAnim<HTMLButtonElement>(0.95)
 
   // Entrance animation
   useEffect(() => {
@@ -248,9 +299,62 @@ export function LibraryNowPlaying() {
           }}>
             {item.title ?? item.platform}
           </p>
-          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {item.artistName}
-          </p>
+          {/* Artist name — navigates to artist profile on tap */}
+          <button
+            ref={(el) => {
+              ;(artistRef as React.MutableRefObject<HTMLButtonElement | null>).current = el
+              ;(artistBtnRef as React.MutableRefObject<HTMLButtonElement | null>).current = el
+            }}
+            type="button"
+            onClick={handleNavigateToArtist}
+            onPointerEnter={handleArtistEnter}
+            onPointerDown={artistTapHandlers.onPointerDown}
+            onPointerUp={artistTapHandlers.onPointerUp}
+            onPointerCancel={artistTapHandlers.onPointerCancel}
+            onPointerLeave={() => { artistTapHandlers.onPointerLeave(); handleArtistLeave() }}
+            aria-label={`Ver perfil de ${item.artistName}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: 14,
+              color: 'var(--text-muted)',
+              margin: '4px auto 0',
+              maxWidth: '100%',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '2px 6px',
+              borderRadius: 'var(--radius-sm)',
+            }}
+          >
+            <span
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {item.artistName}
+            </span>
+            {/* Subtle arrow — communicates interactivity without text */}
+            <svg
+              ref={arrowRef}
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ opacity: 0.4, flexShrink: 0 }}
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
 
         {/* Transport controls — only prev/next, NO play/pause (use native embed controls) */}
