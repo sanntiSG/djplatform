@@ -1,24 +1,28 @@
 import type { Request, Response } from 'express'
 import mongoose from 'mongoose'
 import { SavedMedia } from '../models/SavedMedia.js'
+import { ContentLike } from '../models/ContentLike.js'
 import { ProfileLike } from '../models/ProfileLike.js'
 import { Profile } from '../models/Profile.js'
 
 async function getUserGenres(userId: mongoose.Types.ObjectId): Promise<{
   genres: string[]
-  savedMediaIds: mongoose.Types.ObjectId[]
+  likedMediaIds: mongoose.Types.ObjectId[]
   likedProfileIds: mongoose.Types.ObjectId[]
 }> {
-  // Limite para que usuarios con cientos de guardados no generen payloads gigantes
-  const [savedMedia, likedProfiles] = await Promise.all([
+  // Limite para que usuarios con cientos de interacciones no generen payloads gigantes
+  const [savedMedia, likedProfiles, likedMedia] = await Promise.all([
     SavedMedia.find({ userId }).limit(500).lean(),
     ProfileLike.find({ userId }).limit(500).lean(),
+    // Canciones que el usuario dio me gusta — criterio de exclusion en recomendaciones
+    ContentLike.find({ userId, targetKind: 'media' }).limit(500).lean(),
   ])
 
-  const savedMediaIds = savedMedia.map((s) => s.mediaId)
+  const likedMediaIds = likedMedia.map((l) => l.targetId)
   const likedProfileIds = likedProfiles.map((l) => l.profileId)
   const savedProfileIds = [...new Set(savedMedia.map((s) => s.profileId.toString()))]
 
+  // Derivan generos de: perfiles likeados + perfiles cuyos tracks guardo
   const allProfileIds = [
     ...new Set([...likedProfileIds.map((id) => id.toString()), ...savedProfileIds]),
   ]
@@ -34,6 +38,8 @@ async function getUserGenres(userId: mongoose.Types.ObjectId): Promise<{
     p.media?.forEach((m) => m.genres?.forEach((g) => { if (g) genreSet.add(g) }))
   })
 
+  // Tambien derivan generos de las medias especificas guardadas
+  const savedMediaIds = savedMedia.map((s) => s.mediaId)
   const mediaProfileIds = savedMedia.map((s) => s.profileId)
   const savedOnProfile = await Profile.find(
     { _id: { $in: mediaProfileIds } },
@@ -50,7 +56,7 @@ async function getUserGenres(userId: mongoose.Types.ObjectId): Promise<{
 
   return {
     genres: Array.from(genreSet),
-    savedMediaIds,
+    likedMediaIds,
     likedProfileIds,
   }
 }
@@ -60,7 +66,7 @@ export async function recommendSongs(req: Request, res: Response) {
     const userId = new mongoose.Types.ObjectId(req.user!.id)
     const limit = Math.min(20, parseInt(String(req.query.limit ?? '5'), 10) || 5)
 
-    const [{ genres, savedMediaIds }, ownProfile] = await Promise.all([
+    const [{ genres, likedMediaIds }, ownProfile] = await Promise.all([
       getUserGenres(userId),
       Profile.findOne({ userId: req.user!.id }, { _id: 1 }).lean(),
     ])
@@ -74,6 +80,27 @@ export async function recommendSongs(req: Request, res: Response) {
       baseMatch._id = { $ne: ownProfile._id }
     }
 
+    // Exclusion filter applied in both branches: no mostrar canciones que el usuario ya likeo
+    const likedExclusionMatch = {
+      'media._id': { $nin: likedMediaIds },
+    }
+
+    const finalProject = {
+      $project: {
+        _id: 0,
+        profileId: '$_id',
+        mediaId: '$media._id',
+        artistName: 1,
+        avatar: 1,
+        title: '$media.title',
+        platform: '$media.platform',
+        thumbnailUrl: '$media.thumbnailUrl',
+        embedId: '$media.embedId',
+        type: '$media.type',
+        genres: '$media.genres',
+      },
+    }
+
     const pipeline: mongoose.PipelineStage[] = []
 
     if (genres.length > 0) {
@@ -84,47 +111,20 @@ export async function recommendSongs(req: Request, res: Response) {
         {
           $match: {
             'media.genres': { $in: genres },
-            'media._id': { $nin: savedMediaIds },
+            ...likedExclusionMatch,
           },
         },
         { $sample: { size: limit } },
-        {
-          $project: {
-            _id: 0,
-            profileId: '$_id',
-            mediaId: '$media._id',
-            artistName: 1,
-            avatar: 1,
-            title: '$media.title',
-            platform: '$media.platform',
-            thumbnailUrl: '$media.thumbnailUrl',
-            embedId: '$media.embedId',
-            type: '$media.type',
-            genres: '$media.genres',
-          },
-        },
+        finalProject,
       )
     } else {
       pipeline.push(
         { $match: baseMatch },
         { $project: { artistName: 1, avatar: 1, media: 1 } },
         { $unwind: '$media' },
+        { $match: likedExclusionMatch },
         { $sample: { size: limit } },
-        {
-          $project: {
-            _id: 0,
-            profileId: '$_id',
-            mediaId: '$media._id',
-            artistName: 1,
-            avatar: 1,
-            title: '$media.title',
-            platform: '$media.platform',
-            thumbnailUrl: '$media.thumbnailUrl',
-            embedId: '$media.embedId',
-            type: '$media.type',
-            genres: '$media.genres',
-          },
-        },
+        finalProject,
       )
     }
 
