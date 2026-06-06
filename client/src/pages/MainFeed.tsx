@@ -28,7 +28,10 @@ import { RecommendationsSection } from '../components/feed/RecommendationsSectio
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
 import { useTrending } from '../hooks/useTrending.js'
+import { useProgressFeed } from '../hooks/useProjects.js'
 import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
+import { ProgressIcon } from '../components/projects/ProjectProgressIcons.js'
+import { PROJECT_PHASE_LABELS } from '@dj/shared'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { OnboardingGate } from '../components/onboarding/OnboardingOverlay.js'
 import type { ReactNode } from 'react'
@@ -601,7 +604,8 @@ export default function MainFeed() {
   const djsRef = useRef<HTMLElement>(null)
   const forYouRef = useRef<HTMLElement>(null)
   const trendingRef = useRef<HTMLElement>(null)
-  const collabsRef = useRef<HTMLElement>(null)
+  const collabsRef    = useRef<HTMLElement>(null)
+  const projectsInProgressRef = useRef<HTMLElement>(null)
   const topDJsRef = useRef<HTMLElement>(null)
   const editorialRef = useRef<HTMLElement>(null)
   const genreCardsRef = useRef<HTMLElement>(null)
@@ -653,6 +657,8 @@ export default function MainFeed() {
   const forYouItems = forYouQuery.data ?? []
   const trendingCollabsQuery = useTrendingCollabs()
   const trendingCollabs = (trendingCollabsQuery.data ?? []).slice(0, 8)
+  const progressFeedQuery = useProgressFeed()
+  const progressFeedItems = progressFeedQuery.data ?? []
 
   const activityItems = activityQuery.data ?? []
   const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
@@ -1120,6 +1126,99 @@ export default function MainFeed() {
 
           {/* Recomendaciones por genero — arriba de Trending */}
           <RecommendationsSection />
+
+          {/* Proyectos en marcha — posts de avance de proyectos (TTL 4h) */}
+          {progressFeedItems.length > 0 && (
+            <section ref={projectsInProgressRef}>
+              <SectionHead kicker="En progreso" title="Proyectos en marcha" href="/oportunidades?tab=projects" />
+              <HScroll className="mt-5">
+                {progressFeedItems.map((post) => {
+                  // Calcula tiempo restante aproximado
+                  const msLeft = post.expiresAt ? new Date(post.expiresAt).getTime() - Date.now() : 0
+                  const hLeft  = Math.max(0, Math.ceil(msLeft / 3_600_000))
+                  return (
+                    <a
+                      key={post.id}
+                      href={`/proyectos/${post.projectId}`}
+                      className="group flex-shrink-0 relative overflow-hidden rounded-[22px] block"
+                      style={{
+                        width: 'clamp(200px, 60vw, 260px)',
+                        height: 320,
+                        background: 'var(--surface)',
+                        textDecoration: 'none',
+                        scrollSnapAlign: 'start',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 12,
+                        padding: '24px 20px',
+                        border: '1px solid var(--border)',
+                        transition: 'border-color 0.2s ease',
+                      }}
+                    >
+                      {/* Accent background glow */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'radial-gradient(ellipse at center top, rgba(167,139,250,0.08), transparent 70%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      {/* SVG Icon */}
+                      <div style={{ color: 'var(--c-purple, #a78bfa)', position: 'relative', zIndex: 1 }}>
+                        <ProgressIcon svgKey={post.svgKey} size={64} />
+                      </div>
+                      {/* Phase badge */}
+                      <span style={{
+                        fontFamily: 'Satoshi, sans-serif', fontSize: 10, fontWeight: 700,
+                        letterSpacing: '0.1em', textTransform: 'uppercase',
+                        padding: '3px 10px', borderRadius: 'var(--radius-xl)',
+                        background: 'rgba(167,139,250,0.12)', color: 'var(--c-purple, #a78bfa)',
+                        position: 'relative', zIndex: 1,
+                      }}>
+                        {PROJECT_PHASE_LABELS[post.phase as keyof typeof PROJECT_PHASE_LABELS] ?? post.phase}
+                      </span>
+                      {/* Project title */}
+                      <p style={{
+                        fontFamily: "'Clash Display', sans-serif", fontSize: 15, fontWeight: 700,
+                        color: 'var(--text)', margin: 0, textAlign: 'center', lineHeight: 1.2,
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden', position: 'relative', zIndex: 1,
+                      }}>
+                        {post.projectTitle}
+                      </p>
+                      {/* Creator */}
+                      <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: 0, position: 'relative', zIndex: 1 }}>
+                        {post.artistName}
+                      </p>
+                      {/* Message if exists */}
+                      {post.message && (
+                        <p style={{
+                          fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)',
+                          margin: 0, textAlign: 'center', lineHeight: 1.4,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden', position: 'relative', zIndex: 1,
+                        }}>
+                          "{post.message}"
+                        </p>
+                      )}
+                      {/* Expiry badge */}
+                      {hLeft > 0 && (
+                        <span style={{
+                          position: 'absolute', bottom: 12, right: 12,
+                          fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'var(--text-muted)',
+                        }}>
+                          {hLeft}h restantes
+                        </span>
+                      )}
+                    </a>
+                  )
+                })}
+              </HScroll>
+            </section>
+          )}
 
           {/* Trending — eventos y canciones ordenados por me gustas */}
           {trendingItems.length > 0 && (

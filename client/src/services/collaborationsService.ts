@@ -10,8 +10,9 @@ export interface CollaborationItem {
   toAvatar?: string
   title: string
   year?: number
-  type?: 'track' | 'event' | 'visual' | 'other' | 'opportunity'
+  type?: 'track' | 'event' | 'visual' | 'other' | 'opportunity' | 'project'
   opportunityId?: string
+  projectId?: string
   confirmedByA: boolean
   confirmedByB: boolean
   isConfirmed: boolean

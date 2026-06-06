@@ -12,6 +12,7 @@ const TYPE_LABEL: Record<string, string> = {
   visual: 'Visual',
   other: 'Otro',
   opportunity: 'Oportunidad',
+  project: 'Proyecto',
 }
 
 function CollabCard({ collab, myProfileId, onRemove, removing }: {
@@ -55,7 +56,7 @@ function CollabCard({ collab, myProfileId, onRemove, removing }: {
           {collab.title}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
-          {collab.type && collab.type !== 'opportunity' && (
+          {collab.type && collab.type !== 'opportunity' && collab.type !== 'project' && (
             <span
               className="font-sans text-[10px] font-medium px-2 py-0.5 rounded-full"
               style={{ background: 'rgba(212,255,0,0.08)', color: 'var(--accent)' }}
@@ -70,6 +71,15 @@ function CollabCard({ collab, myProfileId, onRemove, removing }: {
               style={{ background: 'rgba(212,255,0,0.08)', color: 'var(--accent)' }}
             >
               via Oportunidad
+            </Link>
+          )}
+          {collab.type === 'project' && (collab as any).projectId && (
+            <Link
+              to={`/proyectos/${(collab as any).projectId}`}
+              className="font-sans text-[10px] font-medium px-2 py-0.5 rounded-full transition-opacity hover:opacity-70"
+              style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--c-purple, #a78bfa)' }}
+            >
+              Proyecto
             </Link>
           )}
           {collab.year && (

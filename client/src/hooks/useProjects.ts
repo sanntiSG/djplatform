@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { useToastStore } from '../store/useToastStore.js'
-import { projectService } from '../services/projectService.js'
+import { projectService, type PublishProgressInput } from '../services/projectService.js'
 import type { CreateProjectInput, UpdateProjectInput, ApplyProjectInput } from '../types/index.js'
 
 const errToast = (msg = 'Algo salio mal. Intenta de nuevo.') =>
@@ -43,6 +43,15 @@ export function useProject(id: string) {
     queryFn:  () => projectService.getById(id),
     enabled:  Boolean(id),
     staleTime: 30_000,
+  })
+}
+
+export function useProgressFeed() {
+  return useQuery({
+    queryKey: ['projects', 'progress-feed'],
+    queryFn:  () => projectService.getProgressFeed(),
+    staleTime: 2 * 60_000,
+    refetchInterval: 2 * 60_000,
   })
 }
 
@@ -111,5 +120,52 @@ export function useRemoveMember(projectId: string) {
     mutationFn: (memberId: string) => projectService.removeMember(projectId, memberId),
     onSuccess:  () => { qc.invalidateQueries({ queryKey: ['project', projectId] }) },
     onError:    errToast(),
+  })
+}
+
+export function usePublishProgress(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: PublishProgressInput) => projectService.publishProgress(projectId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', 'progress-feed'] })
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+    },
+    onError: errToast('No se pudo publicar el avance.'),
+  })
+}
+
+export function useDeleteProgress(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (postId: string) => projectService.deleteProgress(projectId, postId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', 'progress-feed'] })
+    },
+    onError: errToast(),
+  })
+}
+
+export function useMemberShareProgress(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (postId: string) => projectService.memberShareProgress(projectId, postId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+    },
+    onError: errToast('No se pudo compartir el avance.'),
+  })
+}
+
+export function useCompleteProject(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => projectService.completeProject(projectId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['projects', 'progress-feed'] })
+    },
+    onError: errToast('No se pudo finalizar el proyecto.'),
   })
 }

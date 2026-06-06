@@ -5,12 +5,17 @@
  * - Miembro: ve la lista de miembros activos y puede salir.
  * Incluye ProjectPhaseBar para visualizar la fase actual.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import gsap from 'gsap'
-import { useProject, useApplyToProject, useCancelApply, useAcceptMember, useRemoveMember, useUpdateProject } from '../hooks/useProjects.js'
+import {
+  useProject, useApplyToProject, useCancelApply, useAcceptMember,
+  useRemoveMember, useUpdateProject, usePublishProgress, useDeleteProgress,
+  useMemberShareProgress, useCompleteProject, useProgressFeed,
+} from '../hooks/useProjects.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { ProjectPhaseBar } from '../components/projects/ProjectPhaseBar.js'
+import { ProjectPublishSheet } from '../components/projects/ProjectPublishSheet.js'
 import { Button } from '../components/ui/Button.js'
 import { profilePath, toSlug } from '../utils/slug.js'
 import { DURATION, EASE, prefersReducedMotion } from '../utils/motion.js'
@@ -96,18 +101,29 @@ export default function ProjectDetail() {
   const { user }  = useAuthStore()
 
   const { data: project, isLoading } = useProject(projectId)
-  const { mutate: applyMutation,  isPending: applying    } = useApplyToProject(projectId)
-  const { mutate: cancelMutation, isPending: cancelling  } = useCancelApply(projectId)
-  const { mutate: acceptMutation, isPending: accepting   } = useAcceptMember(projectId)
-  const { mutate: kickMutation                           } = useRemoveMember(projectId)
-  const { mutate: updateMutation                         } = useUpdateProject(projectId)
+  // Find active progress post for this project (for member share button)
+  const { data: progressFeed }       = useProgressFeed()
+  const { mutate: applyMutation,       isPending: applying   } = useApplyToProject(projectId)
+  const { mutate: cancelMutation,      isPending: cancelling } = useCancelApply(projectId)
+  const { mutate: acceptMutation,      isPending: accepting  } = useAcceptMember(projectId)
+  const { mutate: kickMutation                               } = useRemoveMember(projectId)
+  const { mutate: updateMutation                             } = useUpdateProject(projectId)
+  const { mutate: deleteProg                                 } = useDeleteProgress(projectId)
+  const { mutate: memberShare,         isPending: sharing    } = useMemberShareProgress(projectId)
+  const { mutate: completeProj,        isPending: completing } = useCompleteProject(projectId)
 
-  const [applyMsg, setApplyMsg] = useState('')
+  const [applyMsg, setApplyMsg]           = useState('')
   const [showApplyForm, setShowApplyForm] = useState(false)
+  const [showPublishSheet, setShowPublishSheet] = useState(false)
+  const [activePostId, setActivePostId]   = useState<string | null>(null)
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
   const pageRef = useRef<HTMLDivElement>(null)
 
   const isOwner  = Boolean(user && project?.userId === user.id)
   const isMember = Boolean(project?.isMember)
+
+  // Active progress post for this project (used by member share button)
+  const activeProgressPost = progressFeed?.find((p) => p.projectId === projectId)
 
   useEffect(() => {
     if (!pageRef.current || prefersReducedMotion()) return
@@ -183,16 +199,85 @@ export default function ProjectDetail() {
         {/* Phase bar */}
         <ProjectPhaseBar phase={project.phase} />
 
-        {/* Creator: phase selector */}
+        {/* Creator: phase selector + publish progress */}
         {isOwner && (
-          <div style={{ marginTop: 16 }}>
-            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
-              Actualizar fase
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+                Actualizar fase
+              </p>
+              <PhaseSelector
+                current={project.phase}
+                onChange={(p) => updateMutation({ phase: p })}
+              />
+            </div>
+
+            {/* Publish progress button + active post indicator */}
+            {activePostId ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 'var(--radius-md)', background: 'var(--accent-muted)', border: '1px solid rgba(212,255,0,0.2)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--accent)', flex: 1 }}>
+                  Avance publicado (4h)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { deleteProg(activePostId); setActivePostId(null) }}
+                  style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Eliminar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowPublishSheet(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600,
+                  padding: '8px 16px', borderRadius: 'var(--radius-xl)',
+                  border: '1px solid var(--border)', background: 'transparent',
+                  color: 'var(--text-muted)', cursor: 'pointer',
+                  alignSelf: 'flex-start', transition: 'border-color 180ms, color 180ms',
+                }}
+                onPointerEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+                onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                Publicar progreso actual
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Member: share to profile button (visible when creator published an active post) */}
+        {!isOwner && isMember && activeProgressPost && (
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => memberShare(activeProgressPost.id)}
+              disabled={sharing}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600,
+                padding: '8px 16px', borderRadius: 'var(--radius-xl)',
+                border: '1px solid rgba(167,139,250,0.4)',
+                background: 'rgba(167,139,250,0.10)',
+                color: 'var(--c-purple, #a78bfa)', cursor: sharing ? 'wait' : 'pointer',
+                transition: 'opacity 150ms', opacity: sharing ? 0.6 : 1,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              {sharing ? 'Compartiendo...' : 'Compartir avance en mi perfil'}
+            </button>
+            <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+              Aparecera en tu seccion de Collabs
             </p>
-            <PhaseSelector
-              current={project.phase}
-              onChange={(p) => updateMutation({ phase: p })}
-            />
           </div>
         )}
       </div>
@@ -367,33 +452,87 @@ export default function ProjectDetail() {
 
       {/* Owner controls */}
       {isOwner && (
-        <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Link
-            to={`/proyectos/${projectId}/editar`}
-            style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', color: 'var(--text-muted)', textDecoration: 'none', transition: 'border-color 180ms, color 180ms' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-          >
-            Editar
-          </Link>
-          {project.status === 'open' ? (
-            <button
-              type="button"
-              onClick={() => updateMutation({ status: 'closed' })}
-              style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+        <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link
+              to={`/proyectos/${projectId}/editar`}
+              style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', color: 'var(--text-muted)', textDecoration: 'none', transition: 'border-color 180ms, color 180ms' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
             >
-              Cerrar convocatoria
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => updateMutation({ status: 'open' })}
-              style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(212,255,0,0.3)', background: 'var(--accent-muted)', color: 'var(--accent)', cursor: 'pointer' }}
-            >
-              Reabrir convocatoria
-            </button>
+              Editar
+            </Link>
+            {project.status === 'open' ? (
+              <button
+                type="button"
+                onClick={() => updateMutation({ status: 'closed' })}
+                style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                Cerrar convocatoria
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => updateMutation({ status: 'open' })}
+                style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(212,255,0,0.3)', background: 'var(--accent-muted)', color: 'var(--accent)', cursor: 'pointer' }}
+              >
+                Reabrir convocatoria
+              </button>
+            )}
+          </div>
+
+          {/* Finalize project button (only when phase is 'released') */}
+          {project.phase === 'released' && project.status !== 'closed' && (
+            !showCompleteConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowCompleteConfirm(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 'var(--radius-xl)', border: 'none', background: 'var(--accent)', color: 'var(--bg)', cursor: 'pointer', alignSelf: 'flex-start' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                Marcar como finalizado
+              </button>
+            ) : (
+              <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(212,255,0,0.3)', background: 'var(--accent-muted)' }}>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text)', margin: '0 0 12px', fontWeight: 600 }}>
+                  Confirmar finalizacion del proyecto
+                </p>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+                  Se crearan colaboraciones verificadas para todos los miembros y aparecera en el feed.
+                </p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => { completeProj(); setShowCompleteConfirm(false) }}
+                    disabled={completing}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: 'none', background: 'var(--accent)', color: 'var(--bg)', cursor: 'pointer' }}
+                  >
+                    {completing ? 'Finalizando...' : 'Confirmar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCompleteConfirm(false)}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, padding: '8px 14px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )
           )}
         </div>
+      )}
+
+      {/* Publish progress sheet */}
+      {showPublishSheet && (
+        <ProjectPublishSheet
+          projectId={projectId}
+          phase={project.phase}
+          onClose={() => setShowPublishSheet(false)}
+          onPublished={(postId) => setActivePostId(postId)}
+        />
       )}
     </div>
   )
