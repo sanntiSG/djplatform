@@ -28,4 +28,8 @@ export type {
   UploadSignatureInput,
   UploadSignatureOutput,
   CatalogItem,
+  TrendingEvent,
+  TrendingSong,
+  TrendingItem,
+  TrendingResponse,
 } from '@dj/shared'

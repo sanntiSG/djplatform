@@ -27,6 +27,7 @@ const GenreDetail    = lazy(() => import('./pages/GenreDetail.js'))
 const Opportunities  = lazy(() => import('./pages/Opportunities.js'))
 const OpportunityDetail = lazy(() => import('./pages/OpportunityDetail.js'))
 const Activity       = lazy(() => import('./pages/Activity.js'))
+const Trending       = lazy(() => import('./pages/Trending.js'))
 
 // Paginas de usuario autenticado — solo se cargan cuando el usuario las visita
 const Me                      = lazy(() => import('./pages/Me.js'))
@@ -115,6 +116,7 @@ export default function App() {
           <Route path="/events" element={<EventsFeed />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/actividad" element={<Activity />} />
+          <Route path="/trending" element={<Trending />} />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
           <Route path="/oportunidades/nueva" element={<RequireAuth><OpportunityNew /></RequireAuth>} />

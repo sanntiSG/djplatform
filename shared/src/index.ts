@@ -1,4 +1,5 @@
 export * from './schemas/auth.js'
+export * from './schemas/trending.js'
 export * from './schemas/user.js'
 export * from './schemas/profile.js'
 export * from './schemas/event.js'

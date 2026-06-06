@@ -8,7 +8,7 @@ import { useEventsFeed } from '../hooks/useEvents.js'
 import { useActivityFeed } from '../hooks/useActivityFeed.js'
 import { useGenresByPopularity } from '../hooks/useCatalogs.js'
 import type { ActivityEvent } from '../services/activityService.js'
-import { profilePath, eventPath, genrePath } from '../utils/slug.js'
+import { profilePath, eventPath, genrePath, toSlug } from '../utils/slug.js'
 import { cn } from '../utils/cn.js'
 import { prefersReducedMotion, magneticHover, tiltCard } from '../utils/motion.js'
 import { genreToColor, stringToColor, COLOR_VAR } from '../utils/colors.js'
@@ -27,10 +27,12 @@ import { CollabPoster } from '../components/feed/CollabPoster.js'
 import { RecommendationsSection } from '../components/feed/RecommendationsSection.js'
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
+import { useTrending } from '../hooks/useTrending.js'
+import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { OnboardingGate } from '../components/onboarding/OnboardingOverlay.js'
 import type { ReactNode } from 'react'
-import type { ProfileResponse, EventResponse } from '../types/index.js'
+import type { ProfileResponse, EventResponse, TrendingItem } from '../types/index.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -284,18 +286,38 @@ function HScroll({ children, className = '' }: { children: ReactNode; className?
   )
 }
 
-function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
-  const color = stringToColor(event.title)
+function TrendingCard({ item, rank }: { item: TrendingItem; rank: number }) {
+  const isEvent = item.kind === 'event'
+
+  // Cover image: event cover or song thumbnail
+  const cover = isEvent
+    ? item.cover
+    : getMediaThumbnail(item.platform, item.embedId, item.thumbnailUrl)
+
+  // Title for display
+  const title = isEvent ? item.title : (item.title ?? item.platform)
+
+  // Sub-label below title
+  const sub = isEvent ? item.location : item.artistName
+
+  // Fallback gradient color based on title
+  const color = stringToColor(title)
+
+  // Navigation target
+  const href = isEvent
+    ? eventPath(item.slug, item.id)
+    : `${profilePath(toSlug(item.artistName), item.profileId)}#${item.mediaId}`
+
   return (
     <Link
-      to={eventPath(event.slug, event.id)}
+      to={href}
       className="trending-card group relative overflow-hidden rounded-[var(--radius-md)] block"
       style={{ height: 148 }}
     >
-      {event.cover ? (
+      {cover ? (
         <img
-          src={event.cover}
-          alt={event.title}
+          src={cover}
+          alt={title}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           style={{ filter: 'brightness(0.52) contrast(1.12)' }}
         />
@@ -313,6 +335,7 @@ function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.75))' }}
       />
       <div className="relative z-10 h-full flex flex-col justify-between p-3">
+        {/* Rank number — ghost large in top-left */}
         <span
           className="font-display font-bold leading-none select-none"
           style={{
@@ -323,14 +346,40 @@ function TrendingCard({ event, rank }: { event: EventResponse; rank: number }) {
         >
           {rank}
         </span>
+        {/* Bottom info: title + sub + likes */}
         <div>
           <p className="font-display font-semibold text-white text-sm leading-tight tracking-tight line-clamp-2">
-            {event.title}
+            {title}
           </p>
-          {event.location && (
-            <p className="font-sans text-[10px] text-white/50 mt-0.5 truncate">{event.location}</p>
+          {sub && (
+            <p className="font-sans text-[10px] text-white/50 mt-0.5 truncate">{sub}</p>
+          )}
+          {/* Like count — shown when > 0 */}
+          {item.likeCount > 0 && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.45)" stroke="none" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span className="font-sans text-[10px] text-white/45 font-semibold">{item.likeCount}</span>
+            </div>
           )}
         </div>
+      </div>
+      {/* Kind badge: top-right corner */}
+      <div className="absolute top-2.5 right-2.5">
+        <span
+          className="font-sans font-bold uppercase"
+          style={{
+            fontSize: 9,
+            letterSpacing: '0.08em',
+            padding: '2px 6px',
+            borderRadius: 'var(--radius-xl)',
+            background: isEvent ? 'rgba(96,165,250,0.18)' : 'rgba(244,114,182,0.18)',
+            color: isEvent ? '#60a5fa' : '#f472b6',
+          }}
+        >
+          {isEvent ? 'Ev' : 'Ca'}
+        </span>
       </div>
     </Link>
   )
@@ -589,7 +638,10 @@ export default function MainFeed() {
     return ha - hb
   }).slice(0, 28)
 
-  const trendingEvents = featuredEvents.slice(0, 8)
+  // Unified trending: events + songs merged by likeCount desc
+  const trendingQuery = useTrending(8)
+  const trendingItems = trendingQuery.items
+
   const newsEvents = featuredEvents.slice(1, 5)
   const forYouQuery = useOpportunitiesForYou(6)
   const forYouItems = forYouQuery.data ?? []
@@ -745,7 +797,7 @@ export default function MainFeed() {
         )
       }
 
-      /* Trending grid — solo eventos */
+      /* Trending grid — eventos y canciones por likes */
       if (trendingRef.current && !reduced) {
         gsap.fromTo(
           '.trending-card',
@@ -1063,13 +1115,17 @@ export default function MainFeed() {
           {/* Recomendaciones por genero — arriba de Trending */}
           <RecommendationsSection />
 
-          {/* Trending — solo eventos */}
-          {trendingEvents.length > 0 && (
+          {/* Trending — eventos y canciones ordenados por me gustas */}
+          {trendingItems.length > 0 && (
             <section ref={trendingRef}>
-              <SectionHead kicker="Esta semana" title="Trending" href="/events" />
+              <SectionHead kicker="Esta semana" title="Trending" href="/trending" />
               <div className="mt-5 px-4 md:px-6 grid grid-cols-2 gap-3">
-                {trendingEvents.map((event, i) => (
-                  <TrendingCard key={event.id} event={event} rank={i + 1} />
+                {trendingItems.map((item, i) => (
+                  <TrendingCard
+                    key={item.kind === 'event' ? `e-${item.id}` : `s-${item.mediaId}`}
+                    item={item}
+                    rank={i + 1}
+                  />
                 ))}
               </div>
             </section>
