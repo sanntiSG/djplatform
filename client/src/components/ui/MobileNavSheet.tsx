@@ -16,7 +16,6 @@ const NAV_LINKS = [
   { to: '/profiles', label: 'Artistas' },
   { to: '/events', label: 'Eventos' },
   { to: '/oportunidades', label: 'Oportunidades' },
-  { to: '/proyectos', label: 'Proyectos' },
 ]
 
 const AUTH_NAV_LINKS = [

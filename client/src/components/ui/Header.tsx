@@ -71,13 +71,6 @@ export function Header() {
                 </Button>
               )}
             </NavLink>
-            <NavLink to="/proyectos" state={MENU_STATE}>
-              {({ isActive }) => (
-                <Button variant="ghost" size="sm" className={isActive ? 'text-[var(--accent)]' : ''}>
-                  Proyectos
-                </Button>
-              )}
-            </NavLink>
             {user && (
               <NavLink to="/biblioteca" state={MENU_STATE}>
                 {({ isActive }) => (

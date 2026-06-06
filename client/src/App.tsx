@@ -31,6 +31,7 @@ const Trending        = lazy(() => import('./pages/Trending.js'))
 const Projects        = lazy(() => import('./pages/Projects.js'))
 const ProjectDetail   = lazy(() => import('./pages/ProjectDetail.js'))
 const ProjectNew      = lazy(() => import('./pages/ProjectNew.js'))
+const ProjectEdit     = lazy(() => import('./pages/ProjectEdit.js'))
 
 // Paginas de usuario autenticado — solo se cargan cuando el usuario las visita
 const Me                      = lazy(() => import('./pages/Me.js'))
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="/proyectos" element={<Projects />} />
           <Route path="/proyectos/:id" element={<ProjectDetail />} />
           <Route path="/proyectos/nueva" element={<RequireAuth><ProjectNew /></RequireAuth>} />
+          <Route path="/proyectos/:id/editar" element={<RequireAuth><ProjectEdit /></RequireAuth>} />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
           <Route path="/oportunidades/nueva" element={<RequireAuth><OpportunityNew /></RequireAuth>} />
