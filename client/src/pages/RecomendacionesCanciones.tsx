@@ -12,7 +12,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useRecommendedSongs, type RecommendedSong } from '../hooks/useRecommendations.js'
 import { DURATION, EASE, revealStagger, prefersReducedMotion } from '../utils/motion.js'
 import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
@@ -225,6 +225,7 @@ function SongCard({
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default function RecomendacionesCanciones() {
+  const navigate = useNavigate()
   const { data: songs, isLoading } = useRecommendedSongs(20)
   const { close: closePlayer } = usePlayerStore()
   const pageRef = useRef<HTMLDivElement>(null)
@@ -267,6 +268,34 @@ export default function RecomendacionesCanciones() {
         minHeight: '100dvh',
       }}
     >
+      {/* Back navigation — visible en mobile donde no hay back button obvio */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontFamily: 'Satoshi, sans-serif',
+          fontSize: 13,
+          fontWeight: 600,
+          color: 'var(--text-muted)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px 0',
+          marginBottom: 24,
+          transition: 'color 180ms',
+        }}
+        onPointerEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
+        onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Volver
+      </button>
+
       <h1
         style={{
           fontFamily: "'Clash Display', sans-serif",

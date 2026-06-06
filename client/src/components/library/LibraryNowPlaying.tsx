@@ -153,11 +153,13 @@ export function LibraryNowPlaying() {
   const item = current()
   const navigate = useNavigate()
 
-  const bgRef      = useRef<HTMLDivElement>(null)
-  const chromeRef  = useRef<HTMLDivElement>(null)
-  const artistRef  = useRef<HTMLButtonElement>(null)
-  const arrowRef   = useRef<SVGSVGElement>(null)
-  const closingRef = useRef(false)
+  const bgRef            = useRef<HTMLDivElement>(null)
+  const chromeRef        = useRef<HTMLDivElement>(null)
+  const artistRef        = useRef<HTMLButtonElement>(null)
+  const arrowRef         = useRef<SVGSVGElement>(null)
+  const closingRef       = useRef(false)
+  /** Tracks whether we pushed a history entry that hasn't been consumed by popstate yet */
+  const hasHistoryEntry  = useRef(false)
 
   /** Animate out and optionally run a callback after the exit (e.g., navigate) */
   const animateClose = useCallback(
@@ -245,16 +247,31 @@ export function LibraryNowPlaying() {
   }, [expanded])
 
   // Escape + popstate to close
+  // Also manages the history entry: pushState on open, back() if closed by chevron
+  // so the native "back" gesture only needs ONE press to leave the page.
   useEffect(() => {
     if (!expanded) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.history.pushState({ nowPlaying: true }, '')
-    const onPop = () => handleClose()
+    hasHistoryEntry.current = true
+
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    const onPop = () => {
+      // Popstate = native back consumed the entry; no need to call history.back() on cleanup
+      hasHistoryEntry.current = false
+      handleClose()
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('popstate', onPop)
+
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('popstate', onPop)
+      // If the view was closed by chevron/Escape (not by popstate), the pushState entry
+      // is still in the history stack. Pop it so one back gesture exits the page.
+      if (hasHistoryEntry.current) {
+        hasHistoryEntry.current = false
+        window.history.back()
+      }
     }
   }, [expanded, handleClose])
 

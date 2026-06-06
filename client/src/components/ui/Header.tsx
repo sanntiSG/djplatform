@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore.js'
+import { usePlayerStore } from '../../store/usePlayerStore.js'
 import { useConversationUnread } from '../../hooks/useConversations.js'
 import { Button } from './Button.js'
 import { MobileNavSheet } from './MobileNavSheet.js'
@@ -23,6 +24,8 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const { data: unread } = useConversationUnread()
   const unreadCount = unread?.total ?? 0
+  // Ocultar los pills flotantes mobile cuando el player esta maximizado (z-90 > z-65)
+  const { expanded: playerExpanded } = usePlayerStore()
 
   function handleLogout() {
     clearAuth()
@@ -112,7 +115,7 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile floating wordmark pill — top-left, hidden on md+ */}
+      {/* Mobile floating wordmark pill — top-left, hidden on md+ and when player is maximized */}
       <Link
         to="/"
         state={MENU_STATE}
@@ -125,13 +128,16 @@ export function Header() {
           top: 'max(env(safe-area-inset-top), 12px)',
           left: 'max(env(safe-area-inset-left), 16px)',
           fontSize: 15,
+          // Hide behind the maximized player so the minimize button (chevron) is reachable
+          display: playerExpanded ? 'none' : undefined,
         }}
         aria-label="Inicio"
+        aria-hidden={playerExpanded}
       >
         RE<span className="text-[var(--accent)]">sonar</span>
       </Link>
 
-      {/* Mobile floating hamburger pill — hidden on md+ */}
+      {/* Mobile floating hamburger pill — hidden on md+ and when player is maximized */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -144,8 +150,11 @@ export function Header() {
         style={{
           top: 'max(env(safe-area-inset-top), 12px)',
           right: 'max(env(safe-area-inset-right), 16px)',
+          // Hide behind the maximized player so the minimize button is reachable
+          display: playerExpanded ? 'none' : undefined,
         }}
         aria-label={open ? 'Cerrar menu' : 'Abrir menu'}
+        aria-hidden={playerExpanded}
       >
         {/* Unread indicator dot on hamburger */}
         {unreadCount > 0 && !open && (
