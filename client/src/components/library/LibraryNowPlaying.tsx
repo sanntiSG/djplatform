@@ -18,9 +18,15 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
+import { useAuthStore } from '../../store/useAuthStore.js'
 import { prefersReducedMotion, DURATION, EASE } from '../../utils/motion.js'
 import { useTapAnim } from '../../hooks/useTapAnim.js'
 import { profilePath, toSlug } from '../../utils/slug.js'
+import { LikeButton } from '../ui/LikeButton.js'
+import { SaveButton } from '../ui/SaveButton.js'
+import { useProfileContentSocial, useToggleContentLike } from '../../hooks/useContentSocial.js'
+import { useIsSaved, useToggleSaveMedia } from '../../hooks/useSavedMedia.js'
+import type { SavedMediaItem } from '../../services/savedMediaService.js'
 
 /* ── Icons ────────────────────────────────────────────────── */
 
@@ -83,10 +89,67 @@ function CtrlBtn({ onClick, label, children }: {
   )
 }
 
+/* ── Like + Save buttons — only shown in recommendations context ── */
+
+/**
+ * Renders Me gusta and Guardar for the currently playing song.
+ * Uses the same hooks and components as the artist profile, so state is
+ * automatically synced across the app via React Query's cache.
+ *
+ * Rendered only when source === 'recommendations' (see Tarea 4 plan).
+ * NOT rendered in Biblioteca context — songs there are already saved.
+ */
+function RecommendationsPlayerActions({ item }: { item: SavedMediaItem }) {
+  const { user } = useAuthStore()
+  const { data: socialMap } = useProfileContentSocial(item.profileId)
+  const socialEntry = socialMap?.[`media:${item.mediaId}`]
+
+  const isLiked    = socialEntry?.isLiked ?? false
+  const likeCount  = socialEntry?.likeCount ?? 0
+  const isSaved    = useIsSaved(item.mediaId)
+
+  const { mutate: toggleLike, isPending: liking } = useToggleContentLike(
+    item.profileId, 'media', item.mediaId,
+  )
+  const { mutate: toggleSave, isPending: saving } = useToggleSaveMedia(
+    item.profileId, item.mediaId,
+  )
+
+  if (!user) return null
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 32,
+        padding: '6px 28px 14px',
+      }}
+    >
+      <LikeButton
+        isLiked={isLiked}
+        likeCount={likeCount}
+        onToggle={() => toggleLike()}
+        disabled={liking}
+        size="md"
+        layout="column"
+      />
+      <SaveButton
+        isSaved={isSaved}
+        onToggle={() => toggleSave()}
+        disabled={saving}
+        size="md"
+        layout="column"
+      />
+    </div>
+  )
+}
+
 /* ── Main component ───────────────────────────────────────── */
 
 export function LibraryNowPlaying() {
-  const { expanded, current, next, prev, setExpanded } = usePlayerStore()
+  const { expanded, current, next, prev, setExpanded, source } = usePlayerStore()
   const item = current()
   const navigate = useNavigate()
 
@@ -364,11 +427,18 @@ export function LibraryNowPlaying() {
           justifyContent: 'center',
           gap: 24,
           padding: '8px 28px',
-          paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: source === 'recommendations' ? '8px' : 'calc(28px + env(safe-area-inset-bottom, 0px))',
         }}>
           <CtrlBtn label="Anterior" onClick={prev}><PrevIcon /></CtrlBtn>
           <CtrlBtn label="Siguiente" onClick={next}><NextIcon /></CtrlBtn>
         </div>
+
+        {/* Me gusta / Guardar — solo en contexto de canciones recomendadas */}
+        {source === 'recommendations' && (
+          <div style={{ paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))' }}>
+            <RecommendationsPlayerActions item={item} />
+          </div>
+        )}
       </div>
     </div>
   )

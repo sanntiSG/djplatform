@@ -1,15 +1,20 @@
 import { create } from 'zustand'
 import type { SavedMediaItem } from '../services/savedMediaService.js'
 
+/** Where the player was launched from — controls which UI chrome is visible */
+export type PlayerSource = 'library' | 'recommendations'
+
 interface PlayerState {
   queue: SavedMediaItem[]
   index: number
   isPlaying: boolean
   expanded: boolean
+  /** Context that opened the player. Drives conditional UI in the maximized view. */
+  source: PlayerSource
   // Derived: current item
   current: () => SavedMediaItem | null
   // Actions
-  playQueue: (queue: SavedMediaItem[], index: number) => void
+  playQueue: (queue: SavedMediaItem[], index: number, source?: PlayerSource) => void
   togglePlay: () => void
   next: () => void
   prev: () => void
@@ -22,6 +27,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   index: 0,
   isPlaying: false,
   expanded: false,
+  source: 'library',
 
   current: () => {
     const { queue, index } = get()
@@ -29,8 +35,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     return queue[index] ?? null
   },
 
-  playQueue: (queue, index) => {
-    set({ queue, index, isPlaying: true, expanded: false })
+  playQueue: (queue, index, source = 'library') => {
+    set({ queue, index, isPlaying: true, expanded: false, source })
   },
 
   togglePlay: () => {
@@ -56,6 +62,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   close: () => {
-    set({ queue: [], index: 0, isPlaying: false, expanded: false })
+    set({ queue: [], index: 0, isPlaying: false, expanded: false, source: 'library' })
   },
 }))

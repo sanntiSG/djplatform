@@ -92,7 +92,7 @@ function SongCard({
     if (isActive) {
       togglePlay()
     } else {
-      playQueue(queue, queueIndex)
+      playQueue(queue, queueIndex, 'recommendations')
     }
   }, [isActive, canPlay, togglePlay, playQueue, queue, queueIndex])
 
