@@ -3,6 +3,8 @@ import { z } from 'zod'
 import mongoose from 'mongoose'
 import { Project } from '../models/Project.js'
 import { ProjectMember } from '../models/ProjectMember.js'
+import { ProjectProgressPost } from '../models/ProjectProgressPost.js'
+import { Collaboration } from '../models/Collaboration.js'
 import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
@@ -515,6 +517,298 @@ export async function myProjects(req: Request, res: Response, next: NextFunction
     )
 
     res.json(results)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/* ── Progress publishing ──────────────────────────────────── */
+
+const PublishProgressSchema = z.object({
+  svgKey:             z.string().min(1).max(30),
+  message:            z.string().max(280).optional(),
+  publishedToFeed:    z.boolean().default(false),
+  publishedToProfile: z.boolean().default(false),
+})
+
+/** Crear un post de avance del proyecto (solo el creador) */
+export async function publishProgress(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = PublishProgressSchema.parse(req.body)
+    const project = await Project.findById(parseObjectId(req.params.id))
+    if (!project || !project.isVisible) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    if (project.userId.toString() !== req.user!.id) {
+      res.status(403).json({ error: 'Solo el creador puede publicar avances' })
+      return
+    }
+
+    const creatorProfile = await Profile.findOne({ userId: req.user!.id }).lean()
+    if (!creatorProfile) {
+      res.status(403).json({ error: 'Necesitas un perfil' })
+      return
+    }
+
+    const FOUR_HOURS = 4 * 60 * 60 * 1000
+    const post = await ProjectProgressPost.create({
+      projectId:          project._id,
+      creatorProfileId:   creatorProfile._id,
+      creatorUserId:      req.user!.id,
+      projectTitle:       project.title,
+      artistName:         project.artistName,
+      artistSlug:         project.artistSlug,
+      phase:              project.phase,
+      svgKey:             data.svgKey,
+      message:            data.message,
+      publishedToFeed:    data.publishedToFeed,
+      publishedToProfile: data.publishedToProfile,
+      memberShareEnabled: true,
+      isCompletion:       false,
+      expiresAt:          new Date(Date.now() + FOUR_HOURS),
+    })
+
+    // Si se publica en el feed global, registrar actividad
+    if (data.publishedToFeed) {
+      createActivity({
+        type: 'project_progress',
+        actorProfileId: creatorProfile._id.toString(),
+        actorName:      project.artistName,
+        actorAvatar:    project.avatar,
+        targetTitle:    project.title,
+        targetUrl:      `/proyectos/${project._id}`,
+      }).catch(() => { })
+    }
+
+    // Si se publica en el perfil del creador, crear Collaboration de tipo 'project'
+    if (data.publishedToProfile) {
+      Collaboration.create({
+        fromProfileId: creatorProfile._id,
+        toProfileId:   creatorProfile._id,
+        fromUserId:    req.user!.id,
+        toUserId:      req.user!.id,
+        title:         `${project.title} — Fase: ${project.phase}`,
+        type:          'project',
+        projectId:     project._id,
+        confirmedByA:  true,
+        confirmedByB:  true,
+        confirmedAt:   new Date(),
+      }).catch(() => { })
+    }
+
+    // Notificar a todos los miembros activos
+    const members = await ProjectMember.find({
+      projectId: project._id,
+      status: 'member',
+      isCreator: false,
+    }).lean()
+
+    members.forEach((m) => {
+      createNotification(m.userId.toString(), 'project_progress', {
+        actorId: req.user!.id,
+        payload: { title: project.title },
+        url: `/proyectos/${project._id}`,
+      }).catch((err: unknown) => logger.error('progress notif error', err))
+    })
+
+    res.status(201).json({
+      id: post._id.toString(),
+      phase: post.phase,
+      svgKey: post.svgKey,
+      message: post.message,
+      publishedToFeed: post.publishedToFeed,
+      publishedToProfile: post.publishedToProfile,
+      expiresAt: post.expiresAt?.toISOString(),
+      memberShareEnabled: post.memberShareEnabled,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/** Eliminar un post de avance (solo el creador) */
+export async function deleteProgress(req: Request, res: Response, next: NextFunction) {
+  try {
+    const post = await ProjectProgressPost.findById(parseObjectId(req.params.postId))
+    if (!post) {
+      res.status(404).json({ error: 'Post no encontrado' })
+      return
+    }
+    if (post.creatorUserId.toString() !== req.user!.id) {
+      res.status(403).json({ error: 'Solo el creador puede eliminar el avance' })
+      return
+    }
+    await post.deleteOne()
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+/** Un miembro comparte el avance en su propio perfil (aparece en Collabs) */
+export async function memberShareProgress(req: Request, res: Response, next: NextFunction) {
+  try {
+    const post = await ProjectProgressPost.findById(parseObjectId(req.params.postId))
+    if (!post || !post.memberShareEnabled) {
+      res.status(404).json({ error: 'El post de avance no esta disponible' })
+      return
+    }
+
+    const memberProfile = await Profile.findOne({ userId: req.user!.id }).lean()
+    if (!memberProfile) {
+      res.status(403).json({ error: 'Necesitas un perfil' })
+      return
+    }
+
+    // Verificar que sea miembro del proyecto
+    const membership = await ProjectMember.findOne({
+      projectId: post.projectId,
+      userId:    req.user!.id,
+      status:    'member',
+    })
+    if (!membership) {
+      res.status(403).json({ error: 'Solo los miembros pueden compartir el avance' })
+      return
+    }
+
+    // Verificar que no haya compartido ya
+    if (post.memberSharedBy.some((id) => id.toString() === memberProfile._id.toString())) {
+      res.status(400).json({ error: 'Ya compartiste este avance' })
+      return
+    }
+
+    // Crear Collaboration de tipo 'project' para el miembro
+    await Collaboration.create({
+      fromProfileId: memberProfile._id,
+      toProfileId:   post.creatorProfileId,
+      fromUserId:    req.user!.id,
+      toUserId:      post.creatorUserId,
+      title:         `${post.projectTitle} — Fase: ${post.phase}`,
+      type:          'project',
+      projectId:     post.projectId,
+      confirmedByA:  true,
+      confirmedByB:  true,
+      confirmedAt:   new Date(),
+    })
+
+    // Registrar en el post
+    post.memberSharedBy.push(memberProfile._id as any)
+    await post.save()
+
+    res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/** Feed de avances activos para la sección MainFeed "Proyectos en marcha" */
+export async function getProgressFeed(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const now = new Date()
+    const posts = await ProjectProgressPost.find({
+      publishedToFeed: true,
+      isCompletion:    false,
+      expiresAt:       { $gt: now },
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean()
+
+    res.json(posts.map((p) => ({
+      id:           p._id.toString(),
+      projectId:    p.projectId.toString(),
+      projectTitle: p.projectTitle,
+      artistName:   p.artistName,
+      artistSlug:   p.artistSlug,
+      phase:        p.phase,
+      svgKey:       p.svgKey,
+      message:      p.message,
+      expiresAt:    p.expiresAt?.toISOString(),
+      createdAt:    p.createdAt.toISOString(),
+    })))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/** Finalizar el proyecto — flujo de completion */
+export async function completeProject(req: Request, res: Response, next: NextFunction) {
+  try {
+    const project = await Project.findById(parseObjectId(req.params.id))
+    if (!project || !project.isVisible) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    if (project.userId.toString() !== req.user!.id) {
+      res.status(403).json({ error: 'Solo el creador puede finalizar el proyecto' })
+      return
+    }
+
+    // Marcar como finalizado
+    project.phase  = 'released'
+    project.status = 'closed'
+    await project.save()
+
+    const creatorProfile = await Profile.findOne({ userId: req.user!.id }).lean()
+
+    // Crear post de completion (sin expiración, aparece en feed)
+    const completionPost = await ProjectProgressPost.create({
+      projectId:          project._id,
+      creatorProfileId:   creatorProfile?._id ?? project.profileId,
+      creatorUserId:      req.user!.id,
+      projectTitle:       project.title,
+      artistName:         project.artistName,
+      artistSlug:         project.artistSlug,
+      phase:              'released',
+      svgKey:             'star',
+      message:            undefined,
+      publishedToFeed:    true,
+      publishedToProfile: false,
+      memberShareEnabled: true,
+      isCompletion:       true,
+      expiresAt:          undefined,
+    })
+
+    // Registrar actividad de finalización
+    createActivity({
+      type: 'project_completed',
+      actorProfileId: (creatorProfile?._id ?? project.profileId).toString(),
+      actorName:      project.artistName,
+      actorAvatar:    project.avatar,
+      targetTitle:    project.title,
+      targetUrl:      `/proyectos/${project._id}`,
+    }).catch(() => { })
+
+    // Crear Collaboration tipo 'project' para cada miembro activo
+    const members = await ProjectMember.find({
+      projectId: project._id,
+      status:    'member',
+    }).lean()
+
+    for (const m of members) {
+      if (m.isCreator) continue
+      Collaboration.create({
+        fromProfileId: project.profileId,
+        toProfileId:   m.profileId,
+        fromUserId:    project.userId,
+        toUserId:      m.userId,
+        title:         project.title,
+        type:          'project',
+        projectId:     project._id,
+        confirmedByA:  true,
+        confirmedByB:  true,
+        confirmedAt:   new Date(),
+      }).catch(() => { })
+
+      createNotification(m.userId.toString(), 'project_completed', {
+        actorId: req.user!.id,
+        payload: { title: project.title },
+        url: `/proyectos/${project._id}`,
+      }).catch((err: unknown) => logger.error('completion notif error', err))
+    }
+
+    res.json({ id: completionPost._id.toString(), ok: true })
   } catch (err) {
     next(err)
   }

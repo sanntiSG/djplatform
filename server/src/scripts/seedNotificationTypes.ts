@@ -30,6 +30,8 @@ const TYPES: Array<{
   { key: 'opportunity_cancelled',          label: 'Oportunidad cancelada',      description: 'El creador cerro o elimino la oportunidad',                     category: 'profile' },
   { key: 'project_new_application',       label: 'Solicitud de ingreso',        description: 'Alguien quiere unirse a tu proyecto',                            category: 'profile' },
   { key: 'project_application_accepted',  label: 'Ingreso aceptado',            description: 'Tu solicitud para unirte al proyecto fue aceptada',               category: 'profile' },
+  { key: 'project_progress',             label: 'Avance de proyecto',           description: 'El creador publico el estado actual del proyecto',                 category: 'profile' },
+  { key: 'project_completed',            label: 'Proyecto finalizado',          description: 'Un proyecto en el que participas fue marcado como finalizado',     category: 'profile' },
 ]
 
 async function seed() {

@@ -13,9 +13,17 @@ import {
   acceptMember,
   removeMember,
   myProjects,
+  publishProgress,
+  deleteProgress,
+  memberShareProgress,
+  getProgressFeed,
+  completeProject,
 } from '../controllers/projectController.js'
 
 const router = Router()
+
+// Feed de avances (publica, no requiere auth)
+router.get('/progress-feed',  optionalAuth, getProgressFeed)
 
 // Explorar proyectos
 router.get('/',           optionalAuth, list)
@@ -27,6 +35,14 @@ router.get('/:id',        optionalAuth, getById)
 router.post('/',          requireAuth,  create)
 router.patch('/:id',      requireAuth,  update)
 router.delete('/:id',     requireAuth,  remove)
+
+// Completion
+router.post('/:id/complete', requireAuth, completeProject)
+
+// Progress publishing
+router.post('/:id/progress',                    requireAuth, publishProgress)
+router.delete('/:id/progress/:postId',          requireAuth, deleteProgress)
+router.post('/:id/progress/:postId/share',      requireAuth, memberShareProgress)
 
 // Membership
 router.post('/:id/apply',                   requireAuth, apply)

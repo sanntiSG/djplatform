@@ -34,6 +34,8 @@ const TYPE_LABELS: Record<string, { title: (actorName?: string) => string; body:
   opportunity_cancelled:          { title: () => 'La oportunidad se cerro', body: (p) => String(p?.title ?? '') },
   project_new_application:        { title: (a) => `${a ?? 'Alguien'} quiere unirse a tu proyecto`, body: (p) => String(p?.title ?? '') },
   project_application_accepted:   { title: (a) => `${a ?? 'Alguien'} te acepto en el proyecto`, body: (p) => String(p?.title ?? '') },
+  project_progress:               { title: (a) => `${a ?? 'El creador'} publico un avance`, body: (p) => String(p?.title ?? '') },
+  project_completed:              { title: () => 'Proyecto finalizado', body: (p) => String(p?.title ?? '') },
 }
 
 export async function create(
