@@ -1157,17 +1157,19 @@ export default function MainFeed() {
                         transition: 'border-color 0.2s ease',
                       }}
                     >
-                      {/* Accent background glow */}
+                      {/* Accent background glow — verde acento para completados, púrpura para en progreso */}
                       <div
                         style={{
                           position: 'absolute',
                           inset: 0,
-                          background: 'radial-gradient(ellipse at center top, rgba(167,139,250,0.08), transparent 70%)',
+                          background: post.isCompletion
+                            ? 'radial-gradient(ellipse at center top, rgba(212,255,0,0.08), transparent 70%)'
+                            : 'radial-gradient(ellipse at center top, rgba(167,139,250,0.08), transparent 70%)',
                           pointerEvents: 'none',
                         }}
                       />
-                      {/* SVG Icon */}
-                      <div style={{ color: 'var(--c-purple, #a78bfa)', position: 'relative', zIndex: 1 }}>
+                      {/* SVG Icon — acento según tipo */}
+                      <div style={{ color: post.isCompletion ? 'var(--accent)' : 'var(--c-purple, #a78bfa)', position: 'relative', zIndex: 1 }}>
                         <ProgressIcon svgKey={post.svgKey} size={64} />
                       </div>
                       {/* Phase badge */}
@@ -1204,8 +1206,16 @@ export default function MainFeed() {
                           "{post.message}"
                         </p>
                       )}
-                      {/* Expiry badge */}
-                      {hLeft > 0 && (
+                      {/* Expiry / completion badge */}
+                      {post.isCompletion ? (
+                        <span style={{
+                          position: 'absolute', bottom: 12, right: 12,
+                          fontFamily: 'Satoshi, sans-serif', fontSize: 10, fontWeight: 700,
+                          color: 'var(--accent)', letterSpacing: '0.06em',
+                        }}>
+                          Finalizado
+                        </span>
+                      ) : hLeft > 0 && (
                         <span style={{
                           position: 'absolute', bottom: 12, right: 12,
                           fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'var(--text-muted)',

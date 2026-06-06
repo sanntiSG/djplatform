@@ -447,11 +447,27 @@ export async function acceptMember(req: Request, res: Response, next: NextFuncti
     membership.joinedAt = new Date()
     await membership.save()
 
+    // Notificar al nuevo miembro que fue aceptado
     createNotification(membership.userId.toString(), 'project_application_accepted', {
       actorId: req.user!.id,
       payload: { title: project.title },
       url: `/proyectos/${project._id}`,
     }).catch((err: unknown) => logger.error('project accept notif error', err))
+
+    // Notificar a los miembros existentes que hay un nuevo integrante
+    const existingMembers = await ProjectMember.find({
+      projectId:  project._id,
+      status:     'member',
+      userId:     { $nin: [membership.userId, new mongoose.Types.ObjectId(req.user!.id)] },
+    }).lean()
+
+    existingMembers.forEach((m) => {
+      createNotification(m.userId.toString(), 'project_new_application', {
+        actorId:  membership.userId.toString(),
+        payload:  { title: `Nuevo miembro en ${project.title}` },
+        url:      `/proyectos/${project._id}`,
+      }).catch(() => { })
+    })
 
     res.json({ ok: true })
   } catch (err) {
@@ -702,14 +718,17 @@ export async function memberShareProgress(req: Request, res: Response, next: Nex
   }
 }
 
-/** Feed de avances activos para la sección MainFeed "Proyectos en marcha" */
+/** Feed de avances activos para la sección MainFeed "Proyectos en marcha".
+ *  Incluye posts regulares (no expirados) Y posts de finalización (permanentes). */
 export async function getProgressFeed(_req: Request, res: Response, next: NextFunction) {
   try {
     const now = new Date()
     const posts = await ProjectProgressPost.find({
       publishedToFeed: true,
-      isCompletion:    false,
-      expiresAt:       { $gt: now },
+      $or: [
+        { isCompletion: false, expiresAt: { $gt: now } },
+        { isCompletion: true },
+      ],
     })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -724,6 +743,7 @@ export async function getProgressFeed(_req: Request, res: Response, next: NextFu
       phase:        p.phase,
       svgKey:       p.svgKey,
       message:      p.message,
+      isCompletion: p.isCompletion,
       expiresAt:    p.expiresAt?.toISOString(),
       createdAt:    p.createdAt.toISOString(),
     })))

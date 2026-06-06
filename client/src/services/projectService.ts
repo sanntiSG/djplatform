@@ -13,6 +13,7 @@ export interface ProjectProgressResponse {
   publishedToFeed: boolean
   publishedToProfile: boolean
   expiresAt?: string
+  isCompletion?: boolean
   memberShareEnabled?: boolean
   createdAt?: string
 }
