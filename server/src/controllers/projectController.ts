@@ -509,6 +509,35 @@ export async function removeMember(req: Request, res: Response, next: NextFuncti
   }
 }
 
+/** Lista los proyectos visibles de un perfil público (como miembro o creador) */
+export async function getByProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const profileId = new mongoose.Types.ObjectId(parseObjectId(req.params.profileId))
+    const memberships = await ProjectMember.find({
+      profileId,
+      status: 'member',
+    }).lean()
+
+    const projectIds = memberships.map((m) => m.projectId)
+    const items = await Project.find({ _id: { $in: projectIds }, isVisible: true })
+      .sort({ updatedAt: -1 })
+      .limit(20)
+      .lean()
+
+    const results = await Promise.all(
+      items.map(async (p) => {
+        const { memberCount, pendingCount, isApplied, isMember } = await getMemberStats(
+          p._id.toString(), req.user?.id,
+        )
+        return serialize(p as any, memberCount, pendingCount, req.user?.id, isApplied, isMember)
+      }),
+    )
+    res.json(results)
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function myProjects(req: Request, res: Response, next: NextFunction) {
   try {
     // Proyectos donde el usuario es miembro o creador

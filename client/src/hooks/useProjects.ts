@@ -46,6 +46,15 @@ export function useProject(id: string) {
   })
 }
 
+export function useProfileProjects(profileId: string) {
+  return useQuery({
+    queryKey: ['projects', 'profile', profileId],
+    queryFn:  () => projectService.getByProfile(profileId),
+    enabled:  Boolean(profileId),
+    staleTime: 2 * 60_000,
+  })
+}
+
 export function useProgressFeed() {
   return useQuery({
     queryKey: ['projects', 'progress-feed'],

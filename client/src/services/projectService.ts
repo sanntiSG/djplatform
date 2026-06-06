@@ -80,4 +80,8 @@ export const projectService = {
   // Complete project
   completeProject: (projectId: string) =>
     apiClient.post<{ id: string; ok: boolean }>(`/projects/${projectId}/complete`, {}),
+
+  // Projects visible on a public profile
+  getByProfile: (profileId: string) =>
+    apiClient.get<ProjectResponse[]>(`/projects/profile/${profileId}`),
 }

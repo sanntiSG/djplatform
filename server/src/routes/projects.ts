@@ -4,6 +4,7 @@ import { optionalAuth } from '../middleware/optionalAuth.js'
 import {
   list,
   forMe,
+  getByProfile,
   getById,
   create,
   update,
@@ -26,10 +27,11 @@ const router = Router()
 router.get('/progress-feed',  optionalAuth, getProgressFeed)
 
 // Explorar proyectos
-router.get('/',           optionalAuth, list)
-router.get('/for-me',     requireAuth,  forMe)
-router.get('/mine',       requireAuth,  myProjects)
-router.get('/:id',        optionalAuth, getById)
+router.get('/',                    optionalAuth, list)
+router.get('/for-me',              requireAuth,  forMe)
+router.get('/mine',                requireAuth,  myProjects)
+router.get('/profile/:profileId',  optionalAuth, getByProfile)
+router.get('/:id',                 optionalAuth, getById)
 
 // CRUD (solo creador)
 router.post('/',          requireAuth,  create)
