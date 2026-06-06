@@ -229,6 +229,39 @@ function genreSlug(name: string) {
   return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
+function ProfileProjectsSection({ profileId }: { profileId: string }) {
+  const { data: projects, isLoading } = useProfileProjects(profileId)
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <span className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!projects || projects.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--text-muted)]">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        <p className="font-sans text-sm text-[var(--text-muted)]">Sin proyectos publicados.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {projects.map((p: any) => (
+        <ProjectCard key={p.id} project={p} />
+      ))}
+    </div>
+  )
+}
+
 export default function PublicProfile() {
   const navigate = useNavigate()
   const location = useLocation()
