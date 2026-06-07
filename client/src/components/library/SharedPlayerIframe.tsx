@@ -19,19 +19,28 @@
  * • Collapse → iframe goes back to hidden 1×1 px. Audio keeps playing
  *   uninterrupted — no pause, no restart.
  *
- * YouTube bidirectional sync
- * ──────────────────────────
- * Listens for the YouTube IFrame API onReady & onStateChange postMessages.
- * - onReady: fires any queued play command.
- * - onStateChange: syncs usePlayerStore.isPlaying with the real video state
- *   so native YouTube controls (inside expanded view) stay in sync with
- *   the mini-player buttons.
+ * YouTube bidirectional sync + handshake
+ * ──────────────────────────────────────
+ * YouTube only emits onReady/onStateChange postMessages AFTER the host page
+ * sends {event:'listening'} to the iframe. Without this handshake, strict
+ * browsers (Safari iOS, Chrome Android, desktop, PWA) never deliver those
+ * events — isReadyRef stays false and all play/pause/next/prev commands are
+ * silently dropped. Instagram's in-app browser happened to work without it.
  *
- * Spotify note
- * ─────────────
- * Spotify embeds lack a public pause/seek API in direct-embed mode.
- * We keep the existing "remount on play" behaviour (returns null when
- * !isPlaying && !expanded) to trigger autoplay on mount.
+ * Fix: poll every 250 ms (up to 4 s) sending {event:'listening'} until
+ * onReady is received. Also include &origin= in the embed URL so YouTube
+ * accepts postMessages from this origin.
+ *
+ * Spotify limitation
+ * ───────────────────
+ * Spotify embeds have no public pause/seek API in direct-embed mode.
+ * We keep "remount on play" (returns null when !isPlaying && !expanded)
+ * to trigger autoplay on mount. Controls are limited by Spotify's API.
+ *
+ * SoundCloud limitation
+ * ──────────────────────
+ * SoundCloud Widget API is not integrated; the embed plays autonomously.
+ * The mini-player excludes SoundCloud from canPlay for this reason.
  */
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -134,6 +143,26 @@ export function SharedPlayerIframe() {
     if (!item || item.platform !== 'youtube') return
     isReadyRef.current = false
 
+    // Handshake: YouTube only emits onReady/onStateChange after the host sends
+    // {event:'listening'}. Poll every 250 ms until onReady or timeout (4 s).
+    let handshakeTimer: ReturnType<typeof setInterval> | null = null
+    let attempts = 0
+    const MAX_ATTEMPTS = 16
+    const listeningMsg = JSON.stringify({
+      event: 'listening',
+      id: `${item.profileId}-${item.mediaId}`,
+      channel: 'widget',
+    })
+
+    const sendListening = () => {
+      const iframe = containerRef.current?.querySelector('iframe')
+      iframe?.contentWindow?.postMessage(listeningMsg, '*')
+    }
+
+    const stopHandshake = () => {
+      if (handshakeTimer) { clearInterval(handshakeTimer); handshakeTimer = null }
+    }
+
     const handleMessage = (e: MessageEvent) => {
       try {
         const raw = typeof e.data === 'string' ? e.data : ''
@@ -142,8 +171,9 @@ export function SharedPlayerIframe() {
 
         if (data.event === 'onReady') {
           isReadyRef.current = true
-          // Bug A/B fix: si el store quiere reproducir, enviar playVideo ahora que el
-          // player esta listo (el autoplay=1 puede ser bloqueado por el navegador)
+          stopHandshake()
+          // Si el store quiere reproducir, enviar playVideo ahora que el player
+          // esta listo (autoplay=1 puede ser bloqueado por el navegador nativo)
           if (isPlayingRef.current) {
             const iframe = containerRef.current?.querySelector('iframe')
             iframe?.contentWindow?.postMessage(
@@ -170,7 +200,19 @@ export function SharedPlayerIframe() {
     }
 
     window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
+
+    // Disparar el primer intento inmediatamente y luego seguir polling
+    sendListening()
+    handshakeTimer = setInterval(() => {
+      if (isReadyRef.current || attempts >= MAX_ATTEMPTS) { stopHandshake(); return }
+      sendListening()
+      attempts++
+    }, 250)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      stopHandshake()
+    }
   }, [item?.mediaId]) // re-run when track changes
 
   /* ── YouTube: play / pause control ───────────────────────── */
@@ -210,7 +252,7 @@ export function SharedPlayerIframe() {
 
   let embedSrc: string | null = null
   if (platform === 'youtube') {
-    embedSrc = `https://www.youtube.com/embed/${item.embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`
+    embedSrc = `https://www.youtube.com/embed/${item.embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
   } else if (platform === 'spotify') {
     // autoplay=1 funciona en embeds de Spotify y resuelve el bug de doble-click
     embedSrc = `https://open.spotify.com/embed/track/${item.embedId}?utm_source=generator&theme=0&autoplay=1`
