@@ -36,8 +36,14 @@ export function useSendProjectMessage(projectId: string) {
 }
 
 export function useMarkProjectChatRead(projectId: string) {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: () => projectChatService.markRead(projectId),
+    onSuccess: () => {
+      // Actualizar el badge del nav y la lista de inbox en tiempo real
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['conversations-unread'] })
+    },
   })
 }
 
@@ -74,8 +80,19 @@ export function useProjectChatSocket(projectId: string, conversationId: string |
   useEffect(() => {
     const socket = getSocket()
     socket.on('project:message:new', onMessage)
-    return () => { socket.off('project:message:new', onMessage) }
-  }, [onMessage])
+
+    // Re-sincronizar tras una reconexion del socket (pueden haber llegado
+    // mensajes mientras el cliente estuvo desconectado)
+    function onReconnect() {
+      qc.invalidateQueries({ queryKey: ['project-chat', projectId] })
+    }
+    socket.on('connect', onReconnect)
+
+    return () => {
+      socket.off('project:message:new', onMessage)
+      socket.off('connect', onReconnect)
+    }
+  }, [onMessage, projectId, qc])
 
   // Presence: avisar al servidor que estamos viendo este chat
   useEffect(() => {

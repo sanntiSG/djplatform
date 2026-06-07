@@ -24,3 +24,12 @@ export function disconnectSocket() {
   socket?.disconnect()
   socket = null
 }
+
+// Auto-desconectar cuando el usuario cierra sesion, para que el proximo login
+// cree un socket nuevo con el JWT actualizado. Los componentes de listeners
+// se desmontan con el usuario y se remontan al re-loguear, re-creando getSocket().
+useAuthStore.subscribe((state, prevState) => {
+  if (prevState.token && !state.token) {
+    disconnectSocket()
+  }
+})

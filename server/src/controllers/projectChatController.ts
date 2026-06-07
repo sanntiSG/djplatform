@@ -11,7 +11,7 @@ import {
   markProjectConversationRead,
   enrichProjectMessages,
 } from '../services/projectChatService.js'
-import { create as createNotification } from '../services/notificationService.js'
+import { create as createNotification, markChatNotificationsRead } from '../services/notificationService.js'
 import { io } from '../realtime/io.js'
 import { logger } from '../utils/logger.js'
 
@@ -83,7 +83,7 @@ export async function postMessage(req: Request, res: Response, next: NextFunctio
       if (!isViewing) {
         createNotification(rid, 'chat_message_new', {
           actorId: req.user!.id,
-          payload: { preview: body.slice(0, 80), title: project?.title ?? '' },
+          payload: { preview: body.slice(0, 80), title: project?.title ?? '', conversationId: convId },
           url:     `/proyectos/${projectId}?tab=chat`,
         }).catch((err: unknown) => logger.error('project chat notif error', err))
       }
@@ -104,13 +104,17 @@ export async function readMessages(req: Request, res: Response, next: NextFuncti
       return
     }
 
+    const userId = req.user!.id
     const conv = await getOrCreateProjectConversation(projectId)
-    await markProjectConversationRead(conv._id.toString(), req.user!.id)
+    await markProjectConversationRead(conv._id.toString(), userId)
 
-    io.to(`user:${req.user!.id}`).emit('project:conversation:read', {
+    io.to(`user:${userId}`).emit('project:conversation:read', {
       conversationId: conv._id.toString(),
       projectId,
     })
+
+    // Auto-limpiar notificaciones de chat de proyecto (espejo del DM)
+    markChatNotificationsRead(userId, conv._id.toString()).catch(() => {})
 
     res.json({ ok: true })
   } catch (err) {

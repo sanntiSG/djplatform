@@ -116,12 +116,13 @@ export function ProjectChat({ projectId }: Props) {
     markRead()
   }, [projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scroll to bottom when new messages arrive
+  // Scroll to bottom y re-marcar leido cuando llegan mensajes nuevos
+  // (limpia el badge en tiempo real mientras el chat esta visible)
   useEffect(() => {
     const el = scrollRef.current
-    if (!el) return
-    el.scrollTop = el.scrollHeight
-  }, [allMessages.length])
+    if (el) el.scrollTop = el.scrollHeight
+    if (allMessages.length > 0) markRead()
+  }, [allMessages.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSend(body: string) {
     if (!body.trim()) return

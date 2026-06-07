@@ -29,18 +29,25 @@ export function useChatSocket(conversationId?: string) {
     const socket = getSocket()
 
     function onMessageNew({ conversationId: cid, message }: { conversationId: string; message: MessageItem }) {
-      // Add message to the most-recent page (pages[0] in raw cache = initial fetch)
-      qc.setQueryData<{ pages: MessageItem[][]; pageParams: unknown[] }>(
-        ['messages', cid],
-        old => {
-          if (!old) return old
-          const pages = [...old.pages]
-          if (!pages[0]) return old
-          if (pages[0].some(m => m._id === message._id)) return old
-          pages[0] = [...pages[0], message]
-          return { ...old, pages }
-        },
-      )
+      // Si el cache todavia no tiene datos (carga inicial en progreso), forzar
+      // un refetch para que el mensaje no se pierda silenciosamente.
+      const existing = qc.getQueryData(['messages', cid])
+      if (!existing) {
+        qc.invalidateQueries({ queryKey: ['messages', cid] })
+      } else {
+        // Add message to the most-recent page (pages[0] in raw cache = initial fetch)
+        qc.setQueryData<{ pages: MessageItem[][]; pageParams: unknown[] }>(
+          ['messages', cid],
+          old => {
+            if (!old) return old
+            const pages = [...old.pages]
+            if (!pages[0]) return old
+            if (pages[0].some(m => m._id === message._id)) return old
+            pages[0] = [...pages[0], message]
+            return { ...old, pages }
+          },
+        )
+      }
 
       if (conversationId === cid) {
         // Viewing this conversation: mark as read immediately
