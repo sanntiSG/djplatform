@@ -15,7 +15,7 @@ import {
   useMarkProjectChatRead,
   useProjectChatSocket,
 } from '../../hooks/useProjectChat.js'
-import { socket } from '../../services/socket.js'
+import { getSocket } from '../../services/socket.js'
 import type { ProjectMessageItem } from '../../services/projectChatService.js'
 import { cn } from '../../utils/cn.js'
 
@@ -94,6 +94,7 @@ export function ProjectChat({ projectId }: Props) {
 
   // Typing socket listeners
   useEffect(() => {
+    const socket = getSocket()
     function onTypingStart({ userId }: { userId: string }) {
       if (userId === user?.id) return
       setIsTyping(true)
@@ -129,12 +130,12 @@ export function ProjectChat({ projectId }: Props) {
 
   function handleTypingStart() {
     if (!conversationId) return
-    socket.emit('project:typing:start', { conversationId })
+    getSocket().emit('project:typing:start', { conversationId })
   }
 
   function handleTypingStop() {
     if (!conversationId) return
-    socket.emit('project:typing:stop', { conversationId })
+    getSocket().emit('project:typing:stop', { conversationId })
   }
 
   return (
