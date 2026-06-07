@@ -47,17 +47,17 @@ export default function ProjectEdit() {
   const { data: project, isLoading } = useProject(projectId)
   const { mutateAsync: updateProject } = useUpdateProject(projectId)
 
-  const [title, setTitle]             = useState('')
-  const [description, setDescription]  = useState('')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [lookingForRoles, setLookingForRoles] = useState<string[]>([])
-  const [genres, setGenres]           = useState<string[]>([])
-  const [location, setLocation]       = useState('')
-  const [phase, setPhase]             = useState<ProjectPhase>('idea')
-  const [coverSvgKey, setCoverSvgKey]  = useState<string>('')
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
+  const [genres, setGenres] = useState<string[]>([])
+  const [location, setLocation] = useState('')
+  const [phase, setPhase] = useState<ProjectPhase>('idea')
+  const [coverSvgKey, setCoverSvgKey] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [titleFocused, setTitleFocused] = useState(false)
-  const [descFocused, setDescFocused]   = useState(false)
+  const [descFocused, setDescFocused] = useState(false)
 
   // Pre-fill form when project data loads
   useEffect(() => {
@@ -86,13 +86,13 @@ export default function ProjectEdit() {
     setLoading(true)
     try {
       await updateProject({
-        title:           title.trim(),
-        description:     description.trim() || undefined,
+        title: title.trim(),
+        description: description.trim() || undefined,
         lookingForRoles,
         genres,
-        location:        location.trim() || undefined,
+        location: location.trim() || undefined,
         phase,
-        coverSvgKey:     coverSvgKey || undefined,
+        coverSvgKey: coverSvgKey || undefined,
       })
       navigate(`/proyectos/${projectId}`)
     } catch (err: any) {

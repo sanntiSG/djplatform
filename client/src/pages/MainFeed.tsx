@@ -397,9 +397,9 @@ const ACTIVITY_PILL: Record<string, { label: string; bg: string; text: string }>
   profile_updated: { label: 'Actualizo perfil', bg: 'rgba(212,255,0,0.1)', text: 'var(--accent)' },
   collab_verified: { label: 'Colaboracion', bg: 'rgba(212,255,0,0.12)', text: 'var(--accent)' },
   opportunity_posted: { label: 'Nueva oportunidad', bg: 'rgba(212,255,0,0.12)', text: 'var(--accent)' },
-  project_created:   { label: 'Nuevo proyecto',   bg: 'rgba(167,139,250,0.12)', text: 'var(--c-purple, #a78bfa)' },
-  project_progress:  { label: 'Avance',           bg: 'rgba(167,139,250,0.12)', text: 'var(--c-purple, #a78bfa)' },
-  project_completed: { label: 'Completado',       bg: 'var(--accent-muted)', text: 'var(--accent)' },
+  project_created: { label: 'Nuevo proyecto', bg: 'rgba(167,139,250,0.12)', text: 'var(--c-purple, #a78bfa)' },
+  project_progress: { label: 'Avance', bg: 'rgba(167,139,250,0.12)', text: 'var(--c-purple, #a78bfa)' },
+  project_completed: { label: 'Completado', bg: 'var(--accent-muted)', text: 'var(--accent)' },
   trending_track: { label: 'En tendencia', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
   trending_artist: { label: 'Artista popular', bg: 'rgba(239,68,68,0.12)', text: '#f87171' },
   news_article: { label: 'Internacional', bg: 'rgba(148,163,184,0.12)', text: '#94a3b8' },
@@ -415,8 +415,8 @@ const ACTIVITY_DESC: Record<string, (a: ActivityEvent) => string> = {
     ? `${a.actorName} colaboró con ${a.partnerName}${a.targetTitle ? ` en ${a.targetTitle}` : ''}`
     : `${a.actorName} confirmo una colaboracion "${a.targetTitle ?? ''}"`,
   opportunity_posted: (a) => `${a.actorName} publicó una oportunidad`,
-  project_created:   (a) => `${a.actorName} inicio un proyecto: ${a.targetTitle ?? ''}`,
-  project_progress:  (a) => `${a.actorName} publico el avance de "${a.targetTitle ?? 'su proyecto'}"`,
+  project_created: (a) => `${a.actorName} inicio un proyecto: ${a.targetTitle ?? ''}`,
+  project_progress: (a) => `${a.actorName} publico el avance de "${a.targetTitle ?? 'su proyecto'}"`,
   project_completed: (a) => `"${a.targetTitle ?? 'Un proyecto'}" fue completado por ${a.actorName}`,
   trending_track: (a) => a.targetTitle ?? 'Track en tendencia',
   trending_artist: (a) => `${a.actorName} en tendencia`,
@@ -605,7 +605,7 @@ export default function MainFeed() {
   const djsRef = useRef<HTMLElement>(null)
   const forYouRef = useRef<HTMLElement>(null)
   const trendingRef = useRef<HTMLElement>(null)
-  const collabsRef    = useRef<HTMLElement>(null)
+  const collabsRef = useRef<HTMLElement>(null)
   const projectsInProgressRef = useRef<HTMLElement>(null)
   const recommendedProjectsRef = useRef<HTMLElement>(null)
   const topDJsRef = useRef<HTMLElement>(null)
@@ -1155,7 +1155,7 @@ export default function MainFeed() {
           {/* Proyectos para vos — recomendaciones personalizadas por perfil */}
           {user && recommendedProjects.length > 0 && (
             <section ref={recommendedProjectsRef}>
-              <SectionHead kicker="Networking" title="Proyectos para vos" href="/oportunidades?tab=projects" />
+              <SectionHead kicker="Para vos" title="Proyectos para vos" href="/oportunidades?tab=projects" />
               <div
                 className="mt-5 px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               >
@@ -1196,7 +1196,7 @@ export default function MainFeed() {
                 {progressFeedItems.map((post) => {
                   // Calcula tiempo restante aproximado
                   const msLeft = post.expiresAt ? new Date(post.expiresAt).getTime() - Date.now() : 0
-                  const hLeft  = Math.max(0, Math.ceil(msLeft / 3_600_000))
+                  const hLeft = Math.max(0, Math.ceil(msLeft / 3_600_000))
                   return (
                     <a
                       key={post.id}
