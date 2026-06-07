@@ -6,7 +6,7 @@
  * Incluye ProjectPhaseBar para visualizar la fase actual.
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import gsap from 'gsap'
 import {
   useProject, useApplyToProject, useCancelApply, useAcceptMember,
@@ -99,6 +99,9 @@ export default function ProjectDetail() {
   const projectId = parseProjectId(rawId ?? '')
   const navigate  = useNavigate()
   const { user }  = useAuthStore()
+  const [searchParams] = useSearchParams()
+  const focusMembers  = searchParams.get('focus') === 'members'
+  const highlightProfileId = searchParams.get('highlight') ?? null
 
   const { data: project, isLoading } = useProject(projectId)
   // Find active progress post for this project (for member share button)
@@ -117,7 +120,8 @@ export default function ProjectDetail() {
   const [showPublishSheet, setShowPublishSheet] = useState(false)
   const [activePostId, setActivePostId]   = useState<string | null>(null)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
-  const pageRef = useRef<HTMLDivElement>(null)
+  const pageRef       = useRef<HTMLDivElement>(null)
+  const membersPanelRef = useRef<HTMLDivElement>(null)
 
   const isOwner  = Boolean(user && project?.userId === user.id)
   const isMember = Boolean(project?.isMember)
@@ -129,6 +133,32 @@ export default function ProjectDetail() {
     if (!pageRef.current || prefersReducedMotion()) return
     gsap.fromTo(pageRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DURATION.enter, ease: EASE.softOut })
   }, [])
+
+  // Scroll al panel de miembros y resaltar el postulante si viene de un attachment de chat
+  useEffect(() => {
+    if (!focusMembers || !membersPanelRef.current) return
+    const timeout = setTimeout(() => {
+      membersPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      if (highlightProfileId) {
+        const row = membersPanelRef.current?.querySelector(`[data-profile-id="${highlightProfileId}"]`) as HTMLElement | null
+        if (row && !prefersReducedMotion()) {
+          gsap.fromTo(
+            row,
+            { boxShadow: '0 0 0 2px var(--accent)', background: 'rgba(212,255,0,0.08)' },
+            {
+              boxShadow: '0 0 0 0px transparent',
+              background: 'transparent',
+              duration: 2.4,
+              ease: 'power2.out',
+              delay: 0.4,
+            },
+          )
+        }
+      }
+    }, 600)
+    return () => clearTimeout(timeout)
+  }, [focusMembers, highlightProfileId])
 
   if (isLoading) {
     return (
@@ -324,13 +354,13 @@ export default function ProjectDetail() {
 
       {/* Members panel */}
       {project.members && project.members.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
+        <div ref={membersPanelRef} style={{ marginBottom: 28 }}>
           <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 12px' }}>
             Miembros
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {project.members.filter((m) => m.status === 'member').map((m) => (
-              <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div key={m.id} data-profile-id={m.profileId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderRadius: 'var(--radius-md)', padding: '4px 6px', transition: 'background 0.3s ease' }}>
                 <MemberAvatar member={m} />
                 {isOwner && !m.isCreator && (
                   <button
@@ -362,7 +392,7 @@ export default function ProjectDetail() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {project.members.filter((m) => m.status === 'pending').map((m) => (
-                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div key={m.id} data-profile-id={m.profileId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderRadius: 'var(--radius-md)', padding: '4px 6px', transition: 'background 0.3s ease' }}>
                     <MemberAvatar member={m} />
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button

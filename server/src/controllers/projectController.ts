@@ -401,8 +401,13 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
     const messageBody = customMessage?.trim()
       || `Hola ${project.artistName}, vi tu proyecto "${project.title}" en REsonar y me gustaria sumarme. Cuales son los proximos pasos?`
 
-    // Note: no attachment (IMessageAttachment is typed for opportunities only; project messages are plain)
-    const { message: sentMessage, recipientId } = await sendMessage(convId, req.user!.id, messageBody)
+    const { message: sentMessage, recipientId } = await sendMessage(convId, req.user!.id, messageBody, undefined, {
+      type: 'project',
+      projectId: project._id.toString(),
+      title: project.title,
+      cover: project.cover ?? undefined,
+      applicantProfileId: applicantProfile._id.toString(),
+    })
 
     io.to(`user:${req.user!.id}`).emit('message:new', { conversationId: convId, message: sentMessage })
     if (recipientId) {

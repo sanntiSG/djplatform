@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import gsap from 'gsap'
 import { cn } from '../../utils/cn.js'
@@ -114,6 +114,45 @@ function OpportunityCard({ opportunityId, title, status, senderUserId, isOwn }: 
   )
 }
 
+function ProjectApplicationCard({ projectId, title, cover, applicantProfileId }: {
+  projectId: string
+  title: string
+  cover?: string
+  applicantProfileId: string
+}) {
+  const navigate = useNavigate()
+
+  function handleViewMembers() {
+    navigate(`/proyectos/${projectId}?focus=members&highlight=${applicantProfileId}`)
+  }
+
+  return (
+    <div
+      className="rounded-xl border border-white/10 overflow-hidden mb-2"
+      style={{ background: 'var(--surface)', maxWidth: 260 }}
+    >
+      {cover ? (
+        <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
+          <img src={cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7)' }} />
+        </div>
+      ) : (
+        <div style={{ width: '100%', aspectRatio: '16/7', background: 'linear-gradient(135deg, var(--c-purple, #a78bfa)22, var(--surface-elevated) 70%)' }} />
+      )}
+      <div className="p-3">
+        <p className="font-sans text-xs font-medium text-[var(--text)] truncate mb-2.5">{title}</p>
+        <button
+          type="button"
+          onClick={handleViewMembers}
+          className="w-full py-1.5 rounded-lg font-sans text-xs font-semibold transition-colors"
+          style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid rgba(212,255,0,0.2)' }}
+        >
+          Ver participantes
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ReadTicks({ isOwn, isRead }: { isOwn: boolean; isRead: boolean }) {
   if (!isOwn) return null
   return (
@@ -176,6 +215,14 @@ export function MessageBubble({ message, isOwn, isRead, onReply, replyMessage }:
           status={message.attachment.status}
           senderUserId={message.senderId}
           isOwn={isOwn}
+        />
+      )}
+      {message.attachment?.type === 'project' && (
+        <ProjectApplicationCard
+          projectId={message.attachment.projectId}
+          title={message.attachment.title}
+          cover={message.attachment.cover}
+          applicantProfileId={message.attachment.applicantProfileId}
         />
       )}
       <div

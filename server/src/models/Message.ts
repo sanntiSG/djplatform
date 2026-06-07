@@ -1,13 +1,23 @@
 import mongoose, { type Document, type Types } from 'mongoose'
 import DOMPurify from 'isomorphic-dompurify'
 
-export interface IMessageAttachment {
+export interface IMessageAttachmentOpportunity {
   type: 'opportunity'
   opportunityId: string
   title: string
   cover?: string
   status: 'open' | 'closed' | 'filled'
 }
+
+export interface IMessageAttachmentProject {
+  type: 'project'
+  projectId: string
+  title: string
+  cover?: string
+  applicantProfileId: string
+}
+
+export type IMessageAttachment = IMessageAttachmentOpportunity | IMessageAttachmentProject
 
 export interface IMessage extends Document {
   _id: Types.ObjectId
@@ -35,12 +45,17 @@ const messageSchema = new mongoose.Schema<IMessage>(
     attachment: {
       type: {
         type: String,
-        enum: ['opportunity'],
+        enum: ['opportunity', 'project'],
       },
+      // opportunity fields
       opportunityId: String,
+      status: { type: String, enum: ['open', 'closed', 'filled'] },
+      // project fields
+      projectId: String,
+      applicantProfileId: String,
+      // shared
       title: String,
       cover: String,
-      status: { type: String, enum: ['open', 'closed', 'filled'] },
     },
   },
   { timestamps: { createdAt: true, updatedAt: false } },

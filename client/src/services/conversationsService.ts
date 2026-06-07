@@ -15,13 +15,23 @@ export interface ConversationItem {
   unreadCount: number
 }
 
-export interface MessageAttachment {
+export interface MessageAttachmentOpportunity {
   type: 'opportunity'
   opportunityId: string
   title: string
   cover?: string
   status: 'open' | 'closed' | 'filled'
 }
+
+export interface MessageAttachmentProject {
+  type: 'project'
+  projectId: string
+  title: string
+  cover?: string
+  applicantProfileId: string
+}
+
+export type MessageAttachment = MessageAttachmentOpportunity | MessageAttachmentProject
 
 export interface MessageItem {
   _id: string
