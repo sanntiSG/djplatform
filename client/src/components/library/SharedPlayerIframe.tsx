@@ -142,6 +142,15 @@ export function SharedPlayerIframe() {
 
         if (data.event === 'onReady') {
           isReadyRef.current = true
+          // Bug A/B fix: si el store quiere reproducir, enviar playVideo ahora que el
+          // player esta listo (el autoplay=1 puede ser bloqueado por el navegador)
+          if (isPlayingRef.current) {
+            const iframe = containerRef.current?.querySelector('iframe')
+            iframe?.contentWindow?.postMessage(
+              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+              '*',
+            )
+          }
         }
 
         // Sync isPlaying with native YouTube player state
@@ -165,12 +174,15 @@ export function SharedPlayerIframe() {
   }, [item?.mediaId]) // re-run when track changes
 
   /* ── YouTube: play / pause control ───────────────────────── */
-  // No isReadyRef guard — commands sent before YouTube loads are silently
-  // ignored; autoplay=1 handles the initial play. By the time the user can
-  // tap pause the player is always ready.
+  // Cuando el track cambia (next/prev), isPlaying puede no cambiar (sigue siendo true)
+  // pero item cambia y el iframe se remonta. El onReady handler se encarga de enviar
+  // playVideo cuando el player nuevo este listo. Aqui solo manejamos el caso en que
+  // el player YA esta listo y el usuario pausa/reanuda manualmente.
   useEffect(() => {
     if (suppressSyncRef.current) return
     if (!item || item.platform !== 'youtube') return
+    // Si el player no esta listo aun, el onReady handler enviara el comando
+    if (!isReadyRef.current) return
     const iframe = containerRef.current?.querySelector('iframe')
     if (!iframe?.contentWindow) return
     iframe.contentWindow.postMessage(
@@ -200,7 +212,8 @@ export function SharedPlayerIframe() {
   if (platform === 'youtube') {
     embedSrc = `https://www.youtube.com/embed/${item.embedId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`
   } else if (platform === 'spotify') {
-    embedSrc = `https://open.spotify.com/embed/track/${item.embedId}?utm_source=generator&theme=0`
+    // autoplay=1 funciona en embeds de Spotify y resuelve el bug de doble-click
+    embedSrc = `https://open.spotify.com/embed/track/${item.embedId}?utm_source=generator&theme=0&autoplay=1`
   } else if (platform === 'soundcloud') {
     // SoundCloud widget embed
     const scUrl = item.embedId || ''

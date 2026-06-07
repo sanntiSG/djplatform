@@ -9,7 +9,7 @@
  * se accede desde la vista maximizada del reproductor (Tarea 3).
  */
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Link, useNavigate } from 'react-router-dom'
@@ -231,8 +231,12 @@ export default function RecomendacionesCanciones() {
   const pageRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // Build the queue once songs are loaded (memoized by reference stability of songs array)
-  const queue: SavedMediaItem[] = (songs ?? []).map(toSavedMediaItem)
+  // Memoizar la queue para que la referencia sea estable entre renders
+  // (evita que SongCard.handleClick vea una queue diferente en cada render y rompa isActive)
+  const queue: SavedMediaItem[] = useMemo(
+    () => (songs ?? []).map(toSavedMediaItem),
+    [songs],
+  )
 
   // Page enter animation
   useEffect(() => {
