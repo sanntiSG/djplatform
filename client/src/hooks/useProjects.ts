@@ -91,8 +91,23 @@ export function useRemoveProject(id: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => projectService.remove(id),
-    onSuccess:  () => { qc.invalidateQueries({ queryKey: ['projects'] }) },
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['project', id] })
+    },
     onError:    errToast('No se pudo eliminar el proyecto.'),
+  })
+}
+
+export function useLeaveProject(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => projectService.leaveProject(id),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['project', id] })
+    },
+    onError:    errToast('No se pudo salir del proyecto.'),
   })
 }
 

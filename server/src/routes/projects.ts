@@ -9,6 +9,7 @@ import {
   create,
   update,
   remove,
+  leaveProject,
   apply,
   cancelApply,
   acceptMember,
@@ -37,6 +38,9 @@ router.get('/:id',                 optionalAuth, getById)
 router.post('/',          requireAuth,  create)
 router.patch('/:id',      requireAuth,  update)
 router.delete('/:id',     requireAuth,  remove)
+
+// Salir del proyecto (miembro no-creador)
+router.delete('/:id/leave', requireAuth, leaveProject)
 
 // Completion
 router.post('/:id/complete', requireAuth, completeProject)

@@ -29,7 +29,7 @@ import { highlightItem } from '../utils/highlightItem.js'
 import { genreToColor } from '../utils/colors.js'
 import { RainbowPill } from '../components/ui/RainbowPill.js'
 import { CollaborationsTab } from '../components/profile/CollaborationsTab.js'
-import { useProfileProjects } from '../hooks/useProjects.js'
+import { useProfileProjects, useRemoveProject, useLeaveProject } from '../hooks/useProjects.js'
 import { ProjectCard } from '../components/projects/ProjectCard.js'
 import type { Availability, ProfileTheme } from '../types/index.js'
 
@@ -229,7 +229,73 @@ function genreSlug(name: string) {
   return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
-function ProfileProjectsSection({ profileId }: { profileId: string }) {
+function ProjectCardWithActions({ project, isOwnProfile, currentUserId }: {
+  project: any
+  isOwnProfile: boolean
+  currentUserId?: string
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const isCreator = currentUserId && project.userId === currentUserId
+  const isMemberOnly = isOwnProfile && !isCreator && project.isMember
+
+  const { mutate: removeProject, isPending: removing } = useRemoveProject(project.id)
+  const { mutate: leaveProject,  isPending: leaving  } = useLeaveProject(project.id)
+
+  function handleAction() {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      setTimeout(() => setConfirmDelete(false), 3000)
+      return
+    }
+    if (isCreator) removeProject()
+    else leaveProject()
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <ProjectCard project={project} />
+      {isOwnProfile && (isCreator || isMemberOnly) && (
+        <div style={{ position: 'absolute', top: 10, left: 10 }}>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAction() }}
+            disabled={removing || leaving}
+            style={{
+              fontFamily: 'Satoshi, sans-serif',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase',
+              padding: '3px 9px',
+              borderRadius: 'var(--radius-xl)',
+              border: 'none',
+              cursor: 'pointer',
+              backdropFilter: 'blur(8px)',
+              transition: 'all 150ms',
+              background: confirmDelete
+                ? 'rgba(255,59,48,0.85)'
+                : 'rgba(0,0,0,0.55)',
+              color: confirmDelete ? '#fff' : 'rgba(255,255,255,0.7)',
+              opacity: removing || leaving ? 0.5 : 1,
+            }}
+          >
+            {removing || leaving
+              ? '...'
+              : confirmDelete
+                ? 'Confirmar'
+                : isCreator ? 'Eliminar' : 'Quitar'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProfileProjectsSection({ profileId, isOwn, currentUserId }: {
+  profileId: string
+  isOwn: boolean
+  currentUserId?: string
+}) {
   const { data: projects, isLoading } = useProfileProjects(profileId)
 
   if (isLoading) {
@@ -256,7 +322,12 @@ function ProfileProjectsSection({ profileId }: { profileId: string }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {projects.map((p: any) => (
-        <ProjectCard key={p.id} project={p} />
+        <ProjectCardWithActions
+          key={p.id}
+          project={p}
+          isOwnProfile={isOwn}
+          currentUserId={currentUserId}
+        />
       ))}
     </div>
   )
@@ -1012,7 +1083,11 @@ export default function PublicProfile() {
           )}
 
           {tab === 'proyectos' && profile && (
-            <ProfileProjectsSection profileId={profile.id} />
+            <ProfileProjectsSection
+              profileId={profile.id}
+              isOwn={isOwner}
+              currentUserId={user?.id}
+            />
           )}
         </div>
 

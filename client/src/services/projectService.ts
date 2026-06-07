@@ -81,6 +81,10 @@ export const projectService = {
   completeProject: (projectId: string) =>
     apiClient.post<{ id: string; ok: boolean }>(`/projects/${projectId}/complete`, {}),
 
+  // Salir del proyecto como miembro (no-creador)
+  leaveProject: (projectId: string) =>
+    apiClient.delete<void>(`/projects/${projectId}/leave`),
+
   // Projects visible on a public profile
   getByProfile: (profileId: string) =>
     apiClient.get<ProjectResponse[]>(`/projects/profile/${profileId}`),

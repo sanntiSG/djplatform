@@ -347,8 +347,46 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
       return
     }
 
-    project.isVisible = false
-    await project.save()
+    const projectId = project._id
+
+    // Borrado en cascada completo: libera toda la memoria asociada
+    await Promise.all([
+      project.deleteOne(),
+      ProjectMember.deleteMany({ projectId }),
+      ProjectProgressPost.deleteMany({ projectId }),
+      Collaboration.deleteMany({ projectId }),
+    ])
+
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+/** Un miembro (no creador) abandona el proyecto desde su perfil */
+export async function leaveProject(req: Request, res: Response, next: NextFunction) {
+  try {
+    const project = await Project.findById(parseObjectId(req.params.id))
+    if (!project || !project.isVisible) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    if (project.userId.toString() === req.user!.id) {
+      res.status(400).json({ error: 'El creador no puede abandonar el proyecto. Usa eliminar en su lugar.' })
+      return
+    }
+
+    const deleted = await ProjectMember.deleteOne({
+      projectId: project._id,
+      userId:    req.user!.id,
+      isCreator: false,
+    })
+
+    if (deleted.deletedCount === 0) {
+      res.status(404).json({ error: 'No sos miembro de este proyecto' })
+      return
+    }
+
     res.status(204).send()
   } catch (err) {
     next(err)
