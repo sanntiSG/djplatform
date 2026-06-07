@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { PROJECT_PHASE_LABELS } from '@dj/shared'
 import { useTapAnim } from '../../hooks/useTapAnim.js'
 import { ProgressIcon, PHASE_SVG_MAP } from './ProjectProgressIcons.js'
+import { getPuzzleCoverUrl } from './projectCoverAssets.js'
 import type { ProjectResponse } from '../../types/index.js'
 
 /* ── Phase accent colors ─────────────────────────────────── */
@@ -49,14 +50,17 @@ export function ProjectCard({ project }: { project: ProjectResponse }) {
             background: 'linear-gradient(135deg, var(--surface-elevated), var(--surface))',
           }}
         >
-          {project.cover ? (
-            <img
-              src={project.cover}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75)' }}
-              loading="lazy"
-            />
-          ) : (
+          {/* Cloudinary cover o ilustracion puzzle → imagen full-bleed */}
+          {(() => {
+            const coverUrl = project.cover ?? getPuzzleCoverUrl(project.coverSvgKey)
+            return coverUrl ? (
+              <img
+                src={coverUrl}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75)' }}
+                loading="lazy"
+              />
+            ) : (
             <>
               {/* Gradiente de fondo siempre visible */}
               <div
@@ -66,7 +70,7 @@ export function ProjectCard({ project }: { project: ProjectResponse }) {
                   background: `linear-gradient(135deg, ${phaseColor}22, var(--surface) 70%)`,
                 }}
               />
-              {/* SVG de portada centrado si existe, sino omitir */}
+              {/* Icono monocromatico centrado (solo para keys sin prefijo puzzle:) */}
               {(project.coverSvgKey || PHASE_SVG_MAP[project.phase]) && (
                 <div
                   style={{
@@ -83,7 +87,8 @@ export function ProjectCard({ project }: { project: ProjectResponse }) {
                 </div>
               )}
             </>
-          )}
+            )
+          })()}
 
           {/* Phase pill + icon — top-right */}
           <div

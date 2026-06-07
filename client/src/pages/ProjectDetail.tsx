@@ -21,6 +21,7 @@ import { Button } from '../components/ui/Button.js'
 import { profilePath, toSlug } from '../utils/slug.js'
 import { DURATION, EASE, prefersReducedMotion } from '../utils/motion.js'
 import { PROJECT_PHASES, PROJECT_PHASE_LABELS } from '@dj/shared'
+import { getPuzzleCoverUrl } from '../components/projects/projectCoverAssets.js'
 import type { ProjectMember, ProjectPhase } from '../types/index.js'
 
 function parseProjectId(param: string): string {
@@ -200,12 +201,15 @@ export default function ProjectDetail() {
         Proyectos
       </button>
 
-      {/* Cover */}
-      {project.cover && (
-        <div style={{ width: '100%', aspectRatio: '16/6', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 24 }}>
-          <img src={project.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
+      {/* Cover — Cloudinary URL o ilustracion puzzle */}
+      {(() => {
+        const coverUrl = project.cover ?? getPuzzleCoverUrl(project.coverSvgKey)
+        return coverUrl ? (
+          <div style={{ width: '100%', aspectRatio: '16/6', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 24 }}>
+            <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        ) : null
+      })()}
 
       {/* Header */}
       <div style={{ marginBottom: 20 }}>

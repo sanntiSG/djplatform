@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/Button.js'
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
 import { ProgressIcon, PROGRESS_SVGS } from '../components/projects/ProjectProgressIcons.js'
+import { PUZZLE_COVERS } from '../components/projects/projectCoverAssets.js'
 import { useProject, useUpdateProject } from '../hooks/useProjects.js'
 import { PROJECT_PHASES, PROJECT_PHASE_LABELS, ROLE_OPTIONS } from '@dj/shared'
 import type { ProjectPhase } from '../types/index.js'
@@ -285,12 +286,17 @@ export default function ProjectEdit() {
           />
         </div>
 
-        {/* Icono de portada */}
+        {/* Portada del proyecto */}
         <div>
           <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            Icono de portada
+            Portada del proyecto
           </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8 }}>
+
+          {/* Grupo: Iconos */}
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px', opacity: 0.6 }}>
+            Iconos
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8, marginBottom: 20 }}>
             {PROGRESS_SVGS.map(({ key, label }) => (
               <button
                 key={key}
@@ -310,6 +316,37 @@ export default function ProjectEdit() {
                 <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>
                   {label}
                 </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Grupo: Ilustraciones del puzzle */}
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px', opacity: 0.6 }}>
+            Ilustraciones
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 8 }}>
+            {PUZZLE_COVERS.map(({ key, url, label }) => (
+              <button
+                key={key}
+                type="button"
+                title={label}
+                onClick={() => setCoverSvgKey(key)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: 4, borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  border: coverSvgKey === key ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  background: coverSvgKey === key ? 'var(--accent-muted)' : 'var(--surface)',
+                  transition: 'all 150ms',
+                  aspectRatio: '1',
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src={url}
+                  alt={label}
+                  loading="lazy"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'calc(var(--radius-md) - 4px)', display: 'block' }}
+                />
               </button>
             ))}
           </div>
