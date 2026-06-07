@@ -4,6 +4,8 @@ import mongoose from 'mongoose'
 import { Project } from '../models/Project.js'
 import { ProjectMember } from '../models/ProjectMember.js'
 import { ProjectProgressPost } from '../models/ProjectProgressPost.js'
+import { ProjectConversation } from '../models/ProjectConversation.js'
+import { ProjectMessage } from '../models/ProjectMessage.js'
 import { Collaboration } from '../models/Collaboration.js'
 import { Profile } from '../models/Profile.js'
 import { parseObjectId } from '../utils/parseId.js'
@@ -350,11 +352,16 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     const projectId = project._id
 
     // Borrado en cascada completo: libera toda la memoria asociada
+    // Primero obtener el ID del chat para borrar los mensajes
+    const projectConv = await ProjectConversation.findOne({ projectId }).lean()
+
     await Promise.all([
       project.deleteOne(),
       ProjectMember.deleteMany({ projectId }),
       ProjectProgressPost.deleteMany({ projectId }),
       Collaboration.deleteMany({ projectId }),
+      ProjectConversation.deleteMany({ projectId }),
+      projectConv ? ProjectMessage.deleteMany({ conversationId: projectConv._id }) : Promise.resolve(),
     ])
 
     res.status(204).send()

@@ -21,6 +21,11 @@ import {
   getProgressFeed,
   completeProject,
 } from '../controllers/projectController.js'
+import {
+  getMessages as getChatMessages,
+  postMessage as postChatMessage,
+  readMessages as readChatMessages,
+} from '../controllers/projectChatController.js'
 
 const router = Router()
 
@@ -55,5 +60,10 @@ router.post('/:id/apply',                   requireAuth, apply)
 router.delete('/:id/apply',                 requireAuth, cancelApply)
 router.post('/:id/accept/:memberId',        requireAuth, acceptMember)
 router.delete('/:id/members/:memberId',     requireAuth, removeMember)
+
+// Chat interno grupal
+router.get('/:id/chat/messages',            requireAuth, getChatMessages)
+router.post('/:id/chat/messages',           requireAuth, postChatMessage)
+router.patch('/:id/chat/read',              requireAuth, readChatMessages)
 
 export default router

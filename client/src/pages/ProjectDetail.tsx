@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '../store/useAuthStore.js'
 import { ProjectPhaseBar } from '../components/projects/ProjectPhaseBar.js'
 import { ProjectPublishSheet } from '../components/projects/ProjectPublishSheet.js'
+import { ProjectChat } from '../components/projects/ProjectChat.js'
 import { Button } from '../components/ui/Button.js'
 import { profilePath, toSlug } from '../utils/slug.js'
 import { DURATION, EASE, prefersReducedMotion } from '../utils/motion.js'
@@ -552,6 +553,16 @@ export default function ProjectDetail() {
               </div>
             )
           )}
+        </div>
+      )}
+
+      {/* Chat interno del equipo (solo miembros activos o creador) */}
+      {(isOwner || isMember) && (
+        <div style={{ marginTop: 40 }}>
+          <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            Chat del equipo
+          </p>
+          <ProjectChat projectId={projectId} />
         </div>
       )}
 

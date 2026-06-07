@@ -53,6 +53,26 @@ export function initIO(httpServer: HttpServer): Server {
       void socket.leave(`conv:${conversationId}`)
     })
 
+    // Chat de proyecto: presence tracking en sala conv:project:<convId>
+    socket.on('project:chat:viewing', ({ conversationId }: { conversationId: string }) => {
+      if (!viewingMap.has(userId)) viewingMap.set(userId, new Set())
+      viewingMap.get(userId)!.add(`project:${conversationId}`)
+      void socket.join(`conv:project:${conversationId}`)
+    })
+
+    socket.on('project:chat:leave', ({ conversationId }: { conversationId: string }) => {
+      viewingMap.get(userId)?.delete(`project:${conversationId}`)
+      void socket.leave(`conv:project:${conversationId}`)
+    })
+
+    socket.on('project:typing:start', ({ conversationId }: { conversationId: string }) => {
+      socket.to(`conv:project:${conversationId}`).emit('project:typing:start', { userId, conversationId })
+    })
+
+    socket.on('project:typing:stop', ({ conversationId }: { conversationId: string }) => {
+      socket.to(`conv:project:${conversationId}`).emit('project:typing:stop', { userId, conversationId })
+    })
+
     socket.on('disconnect', () => {
       viewingMap.delete(userId)
     })
