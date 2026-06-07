@@ -26,10 +26,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 204) return undefined as T
 
-  const data = (await res.json()) as T & { error?: string }
+  const data = (await res.json()) as T & { error?: string; details?: Record<string, string[]> }
 
   if (!res.ok) {
-    throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`)
+    const errData = data as { error?: string; details?: Record<string, string[]> }
+    // Surface Zod field errors when present so the UI shows which field failed
+    if (errData.details && typeof errData.details === 'object') {
+      const fieldMsgs = Object.entries(errData.details)
+        .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
+        .join(' · ')
+      throw new Error(fieldMsgs || errData.error || `HTTP ${res.status}`)
+    }
+    throw new Error(errData.error ?? `HTTP ${res.status}`)
   }
 
   return data

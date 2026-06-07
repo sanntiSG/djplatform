@@ -50,17 +50,28 @@ export default function ProjectNew() {
   const [titleFocused, setTitleFocused] = useState(false)
   const [descFocused, setDescFocused]   = useState(false)
 
+  const MAX_ROLES  = 6
+  const MAX_GENRES = 10
+
   function toggleRole(id: string) {
-    setLookingForRoles((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id])
+    setLookingForRoles((prev) => {
+      if (prev.includes(id)) return prev.filter((r) => r !== id)
+      if (prev.length >= MAX_ROLES) return prev
+      return [...prev, id]
+    })
   }
 
   function toggleGenre(g: string) {
-    setGenres((prev) => prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g])
+    setGenres((prev) => {
+      if (prev.includes(g)) return prev.filter((x) => x !== g)
+      if (prev.length >= MAX_GENRES) return prev
+      return [...prev, g]
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim()) { setError('El titulo es obligatorio'); return }
+    if (title.trim().length < 3) { setError('El titulo debe tener al menos 3 caracteres'); return }
     setError('')
     setLoading(true)
     try {
@@ -129,6 +140,7 @@ export default function ProjectNew() {
             onFocus={() => setTitleFocused(true)}
             onBlur={() => setTitleFocused(false)}
             placeholder="Dale un nombre que lo identifique"
+            minLength={3}
             maxLength={120}
             style={inputStyle(titleFocused)}
           />
@@ -185,15 +197,20 @@ export default function ProjectNew() {
         <div>
           <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Roles que buscas
+            <span style={{ fontWeight: 400, marginLeft: 6, textTransform: 'none', letterSpacing: 0 }}>
+              ({lookingForRoles.length}/{MAX_ROLES})
+            </span>
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {Array.from(ROLE_OPTIONS).map((r) => {
-              const active = lookingForRoles.includes(r.id)
+              const active   = lookingForRoles.includes(r.id)
+              const capped   = !active && lookingForRoles.length >= MAX_ROLES
               return (
                 <button
                   key={r.id}
                   type="button"
                   onClick={() => toggleRole(r.id)}
+                  disabled={capped}
                   style={{
                     fontFamily: 'Satoshi, sans-serif',
                     fontSize: 12,
@@ -203,7 +220,8 @@ export default function ProjectNew() {
                     border: active ? 'none' : '1px solid var(--border)',
                     background: active ? 'var(--accent-muted)' : 'transparent',
                     color: active ? 'var(--accent)' : 'var(--text-muted)',
-                    cursor: 'pointer',
+                    cursor: capped ? 'not-allowed' : 'pointer',
+                    opacity: capped ? 0.35 : 1,
                     transition: 'all 150ms',
                     outline: active ? '1px solid rgba(212,255,0,0.3)' : 'none',
                   }}
@@ -219,15 +237,20 @@ export default function ProjectNew() {
         <div>
           <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Generos musicales
+            <span style={{ fontWeight: 400, marginLeft: 6, textTransform: 'none', letterSpacing: 0 }}>
+              ({genres.length}/{MAX_GENRES})
+            </span>
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {GENRE_OPTIONS.map((g) => {
               const active = genres.includes(g)
+              const capped = !active && genres.length >= MAX_GENRES
               return (
                 <button
                   key={g}
                   type="button"
                   onClick={() => toggleGenre(g)}
+                  disabled={capped}
                   style={{
                     fontFamily: 'Satoshi, sans-serif',
                     fontSize: 12,
@@ -237,7 +260,8 @@ export default function ProjectNew() {
                     border: active ? 'none' : '1px solid var(--border)',
                     background: active ? 'var(--accent-muted)' : 'transparent',
                     color: active ? 'var(--accent)' : 'var(--text-muted)',
-                    cursor: 'pointer',
+                    cursor: capped ? 'not-allowed' : 'pointer',
+                    opacity: capped ? 0.35 : 1,
                     transition: 'all 150ms',
                     outline: active ? '1px solid rgba(212,255,0,0.3)' : 'none',
                   }}
