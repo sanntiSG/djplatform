@@ -1,11 +1,12 @@
 /**
  * ProjectCard — tarjeta de un proyecto para el listado.
- * Muestra cover/avatar del creador, título, fase, estado de miembros y roles buscados.
+ * Muestra cover/avatar del creador, título, fase con ícono SVG, estado de miembros y roles buscados.
  */
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { PROJECT_PHASE_LABELS } from '@dj/shared'
 import { useTapAnim } from '../../hooks/useTapAnim.js'
+import { ProgressIcon, PHASE_SVG_MAP } from './ProjectProgressIcons.js'
 import type { ProjectResponse } from '../../types/index.js'
 
 /* ── Phase accent colors ─────────────────────────────────── */
@@ -65,26 +66,37 @@ export function ProjectCard({ project }: { project: ProjectResponse }) {
             />
           )}
 
-          {/* Phase pill — top-right */}
-          <span
+          {/* Phase pill + icon — top-right */}
+          <div
             style={{
               position: 'absolute',
               top: 10,
               right: 10,
-              fontFamily: 'Satoshi, sans-serif',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              padding: '3px 9px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
               borderRadius: 'var(--radius-xl)',
               background: `${phaseColor}22`,
-              color: phaseColor,
               backdropFilter: 'blur(8px)',
+              padding: '3px 9px 3px 7px',
             }}
           >
-            {PROJECT_PHASE_LABELS[project.phase]}
-          </span>
+            <span style={{ color: phaseColor, lineHeight: 0, flexShrink: 0 }}>
+              <ProgressIcon svgKey={PHASE_SVG_MAP[project.phase] ?? 'note'} size={13} />
+            </span>
+            <span
+              style={{
+                fontFamily: 'Satoshi, sans-serif',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: phaseColor,
+              }}
+            >
+              {PROJECT_PHASE_LABELS[project.phase]}
+            </span>
+          </div>
 
           {/* Open/closed badge — top-left */}
           {project.status === 'closed' && (

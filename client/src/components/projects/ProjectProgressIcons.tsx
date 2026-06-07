@@ -7,6 +7,8 @@ interface SvgIconProps {
   size?: number
 }
 
+// ─── Iconos originales ────────────────────────────────────────────────────────
+
 function NoteIcon({ size = 40 }: SvgIconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -76,33 +78,192 @@ function FireIcon({ size = 40 }: SvgIconProps) {
 function HandsIcon({ size = 40 }: SvgIconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m6 9 6 6 6-6"/>
-      <path d="M18 5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5l1 1h1l1-1z"/>
+      <path d="m6 9 6 6 6-6" />
+      <path d="M18 5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5l1 1h1l1-1z" />
     </svg>
   )
 }
 
+// ─── Iconos nuevos ────────────────────────────────────────────────────────────
+
+function SparklesIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+      <path d="M20 3v4" />
+      <path d="M22 5h-4" />
+      <path d="M4 17v2" />
+      <path d="M5 18H3" />
+    </svg>
+  )
+}
+
+function ZapIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+    </svg>
+  )
+}
+
+function WandIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 4V2" />
+      <path d="M15 16v-2" />
+      <path d="M8 9h2" />
+      <path d="M20 9h2" />
+      <path d="M17.8 11.8 19 13" />
+      <path d="M15 9h.01" />
+      <path d="M17.8 6.2 19 5" />
+      <path d="m3 21 9-9" />
+      <path d="M12.2 6.2 11 5" />
+    </svg>
+  )
+}
+
+function GlobeIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  )
+}
+
+function TrophyIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
+    </svg>
+  )
+}
+
+function PulseIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  )
+}
+
+function DiamondIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.57a2.41 2.41 0 0 0 3.41 0l7.59-7.57a2.41 2.41 0 0 0 0-3.41L13.7 2.71a2.41 2.41 0 0 0-3.41 0z" />
+    </svg>
+  )
+}
+
+function InfinityIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 12c-2-2.5-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1.5 6-4z" />
+      <path d="M12 12c2 2.5 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.5-6 4z" />
+    </svg>
+  )
+}
+
+function CrownIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21 5.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5.5l4.094 3.664a1 1 0 0 0 1.516-.294z" />
+    </svg>
+  )
+}
+
+function EyeIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function MagnetIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m6 15-4-4 6.75-6.77a7.79 7.79 0 0 1 11 11L13 22l-4-4 6.39-6.36a2.14 2.14 0 0 0-3-3z" />
+      <path d="m5 8 4 4" />
+      <path d="m12 15 4 4" />
+    </svg>
+  )
+}
+
+function SunIcon({ size = 40 }: SvgIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  )
+}
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
+
 /** Map de todos los SVG icons disponibles */
 export const PROGRESS_SVG_MAP: Record<string, (size?: number) => JSX.Element> = {
-  note:       (size) => <NoteIcon size={size} />,
-  mic:        (size) => <MicIcon size={size} />,
-  wave:       (size) => <WaveIcon size={size} />,
+  // Originales
+  note: (size) => <NoteIcon size={size} />,
+  mic: (size) => <MicIcon size={size} />,
+  wave: (size) => <WaveIcon size={size} />,
   headphones: (size) => <HeadphonesIcon size={size} />,
-  rocket:     (size) => <RocketIcon size={size} />,
-  star:       (size) => <StarIcon size={size} />,
-  fire:       (size) => <FireIcon size={size} />,
-  hands:      (size) => <HandsIcon size={size} />,
+  rocket: (size) => <RocketIcon size={size} />,
+  star: (size) => <StarIcon size={size} />,
+  fire: (size) => <FireIcon size={size} />,
+  hands: (size) => <HandsIcon size={size} />,
+  // Nuevos
+  sparkles: (size) => <SparklesIcon size={size} />,
+  zap: (size) => <ZapIcon size={size} />,
+  wand: (size) => <WandIcon size={size} />,
+  globe: (size) => <GlobeIcon size={size} />,
+  trophy: (size) => <TrophyIcon size={size} />,
+  pulse: (size) => <PulseIcon size={size} />,
+  diamond: (size) => <DiamondIcon size={size} />,
+  infinity: (size) => <InfinityIcon size={size} />,
+  crown: (size) => <CrownIcon size={size} />,
+  eye: (size) => <EyeIcon size={size} />,
+  magnet: (size) => <MagnetIcon size={size} />,
+  sun: (size) => <SunIcon size={size} />,
 }
 
 export const PROGRESS_SVGS: Array<{ key: string; label: string }> = [
-  { key: 'note',       label: 'Musical' },
-  { key: 'mic',        label: 'Grabando' },
-  { key: 'wave',       label: 'Audio' },
+  // Originales
+  { key: 'note', label: 'Musical' },
+  { key: 'mic', label: 'Grabando' },
+  { key: 'wave', label: 'Audio' },
   { key: 'headphones', label: 'Escuchando' },
-  { key: 'rocket',     label: 'Lanzamiento' },
-  { key: 'star',       label: 'Destacado' },
-  { key: 'fire',       label: 'En llamas' },
-  { key: 'hands',      label: 'Colaborando' },
+  { key: 'rocket', label: 'Lanzamiento' },
+  { key: 'star', label: 'Destacado' },
+  { key: 'fire', label: 'En llamas' },
+  { key: 'hands', label: 'Colaborando' },
+  // Nuevos
+  { key: 'sparkles', label: 'Brillante' },
+  { key: 'zap', label: 'Energía' },
+  { key: 'wand', label: 'Magia' },
+  { key: 'globe', label: 'Global' },
+  { key: 'trophy', label: 'Logro' },
+  { key: 'pulse', label: 'Pulso' },
+  { key: 'diamond', label: 'Premium' },
+  { key: 'infinity', label: 'Continuo' },
+  { key: 'crown', label: 'Corona' },
+  { key: 'eye', label: 'Visión' },
+  { key: 'magnet', label: 'Atracción' },
+  { key: 'sun', label: 'Shine' },
 ]
 
 /** Renderiza el icon de un svgKey */
@@ -110,4 +271,13 @@ export function ProgressIcon({ svgKey, size = 40 }: { svgKey: string; size?: num
   const renderer = PROGRESS_SVG_MAP[svgKey]
   if (!renderer) return <StarIcon size={size} />
   return <>{renderer(size)}</>
+}
+
+/** Mapeo de fase del proyecto a svgKey representativo */
+export const PHASE_SVG_MAP: Record<string, string> = {
+  idea:      'note',
+  progress:  'wave',
+  recording: 'mic',
+  mixing:    'headphones',
+  released:  'rocket',
 }
