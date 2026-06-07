@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectChatService, type ProjectMessageItem } from '../services/projectChatService.js'
-import { socket } from '../services/socket.js'
+import { getSocket } from '../services/socket.js'
 
 /* ── Queries & mutations ─────────────────────────────────────── */
 
@@ -72,6 +72,7 @@ export function useProjectChatSocket(projectId: string, conversationId: string |
   }, [projectId, qc])
 
   useEffect(() => {
+    const socket = getSocket()
     socket.on('project:message:new', onMessage)
     return () => { socket.off('project:message:new', onMessage) }
   }, [onMessage])
@@ -79,6 +80,7 @@ export function useProjectChatSocket(projectId: string, conversationId: string |
   // Presence: avisar al servidor que estamos viendo este chat
   useEffect(() => {
     if (!conversationId) return
+    const socket = getSocket()
     socket.emit('project:chat:viewing', { conversationId })
     return () => {
       socket.emit('project:chat:leave', { conversationId })
