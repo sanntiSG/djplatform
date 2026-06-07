@@ -12,6 +12,7 @@ import { parseObjectId } from '../utils/parseId.js'
 import { createActivity } from '../services/activityService.js'
 import { findOrCreateConversation, sendMessage } from '../services/conversationService.js'
 import { create as createNotification } from '../services/notificationService.js'
+import { destroyAsset } from '../services/cloudinaryService.js'
 import { io } from '../realtime/io.js'
 import { logger } from '../utils/logger.js'
 import { CreateProjectSchema, UpdateProjectSchema, ApplyProjectSchema } from '@dj/shared'
@@ -452,6 +453,7 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     }
 
     const projectId = project._id
+    const coverUrl  = project.cover   // URL Cloudinary a liberar (undefined si es portada puzzle o sin portada)
 
     // Borrado en cascada completo: libera toda la memoria asociada
     // Primero obtener el ID del chat para borrar los mensajes
@@ -464,6 +466,8 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
       Collaboration.deleteMany({ projectId }),
       ProjectConversation.deleteMany({ projectId }),
       projectConv ? ProjectMessage.deleteMany({ conversationId: projectConv._id }) : Promise.resolve(),
+      // Liberar la portada de Cloudinary si existe (las portadas puzzle son solo keys, sin asset)
+      coverUrl ? destroyAsset(coverUrl) : Promise.resolve(),
     ])
 
     res.status(204).send()

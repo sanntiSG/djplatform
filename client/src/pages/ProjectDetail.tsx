@@ -11,7 +11,7 @@ import gsap from 'gsap'
 import {
   useProject, useApplyToProject, useCancelApply, useAcceptMember,
   useRemoveMember, useUpdateProject, usePublishProgress, useDeleteProgress,
-  useMemberShareProgress, useCompleteProject, useProgressFeed,
+  useMemberShareProgress, useCompleteProject, useProgressFeed, useRemoveProject,
 } from '../hooks/useProjects.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { ProjectPhaseBar } from '../components/projects/ProjectPhaseBar.js'
@@ -116,12 +116,14 @@ export default function ProjectDetail() {
   const { mutate: deleteProg                                 } = useDeleteProgress(projectId)
   const { mutate: memberShare,         isPending: sharing    } = useMemberShareProgress(projectId)
   const { mutate: completeProj,        isPending: completing } = useCompleteProject(projectId)
+  const { mutate: removeProject,       isPending: removing   } = useRemoveProject(projectId)
 
   const [applyMsg, setApplyMsg]           = useState('')
   const [showApplyForm, setShowApplyForm] = useState(false)
   const [showPublishSheet, setShowPublishSheet] = useState(false)
   const [activePostId, setActivePostId]   = useState<string | null>(null)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm]     = useState(false)
   const pageRef       = useRef<HTMLDivElement>(null)
   const membersPanelRef = useRef<HTMLDivElement>(null)
 
@@ -565,6 +567,57 @@ export default function ProjectDetail() {
               </div>
             )
           )}
+
+          {/* Zona destructiva: eliminar proyecto */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 4 }}>
+            {!showDeleteConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 600,
+                  padding: '7px 16px', borderRadius: 'var(--radius-xl)',
+                  border: '1px solid rgba(255,59,48,0.3)', background: 'transparent',
+                  color: 'rgba(255,59,48,0.7)', cursor: 'pointer',
+                  transition: 'border-color 180ms, color 180ms',
+                }}
+                onPointerEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#ff3b30'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,59,48,0.6)' }}
+                onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,59,48,0.7)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,59,48,0.3)' }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                Eliminar proyecto
+              </button>
+            ) : (
+              <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,0.3)', background: 'rgba(255,59,48,0.06)' }}>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, color: 'var(--text)', margin: '0 0 8px', fontWeight: 600 }}>
+                  Eliminar proyecto definitivamente
+                </p>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                  Se eliminaran el chat, todos los avances y la portada del proyecto, y todos los miembros seran removidos. Esta accion es irreversible.
+                </p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => removeProject(undefined, { onSuccess: () => navigate('/proyectos') })}
+                    disabled={removing}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 'var(--radius-xl)', border: 'none', background: '#ff3b30', color: '#fff', cursor: removing ? 'wait' : 'pointer', opacity: removing ? 0.6 : 1, transition: 'opacity 150ms' }}
+                  >
+                    {removing ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, padding: '8px 14px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
