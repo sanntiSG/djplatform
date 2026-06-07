@@ -305,8 +305,28 @@ export async function update(req: Request, res: Response, next: NextFunction) {
       return
     }
 
+    // Detectar cambio de fase antes de aplicar el update
+    const prevPhase = project.phase
+
     Object.assign(project, data)
     await project.save()
+
+    // Si la fase cambio, notificar a todos los miembros activos
+    if (data.phase && data.phase !== prevPhase) {
+      const members = await ProjectMember.find({
+        projectId:  project._id,
+        status:     'member',
+        isCreator:  false,
+      }).lean()
+
+      members.forEach((m) => {
+        createNotification(m.userId.toString(), 'project_phase_changed', {
+          actorId: req.user!.id,
+          payload: { title: project.title, phase: data.phase },
+          url: `/proyectos/${project._id}`,
+        }).catch((err: unknown) => logger.error('phase change notif error', err))
+      })
+    }
 
     const { memberCount, pendingCount } = await getMemberStats(project._id.toString())
     res.json(serialize(project, memberCount, pendingCount, req.user!.id, false, true))
@@ -500,6 +520,15 @@ export async function removeMember(req: Request, res: Response, next: NextFuncti
     if (isCreatorSlot) {
       res.status(400).json({ error: 'El creador no puede abandonar su propio proyecto' })
       return
+    }
+
+    // Si el creador rechaza una postulacion pendiente, notificar al postulante
+    if (isOwner && !isSelf && membership.status === 'pending') {
+      createNotification(membership.userId.toString(), 'project_application_rejected', {
+        actorId: req.user!.id,
+        payload: { title: project.title },
+        url: `/proyectos/${project._id}`,
+      }).catch((err: unknown) => logger.error('project reject notif error', err))
     }
 
     await membership.deleteOne()

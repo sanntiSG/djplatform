@@ -6,20 +6,31 @@ import { cn } from '../../utils/cn.js'
 import type { NotificationItem } from '../../services/notificationsService.js'
 
 const TYPE_ICONS: Record<string, () => JSX.Element> = {
-  follow_new: () => <FollowIcon />,
-  profile_like: () => <HeartIcon />,
-  profile_comment: () => <CommentIcon />,
-  content_like: () => <HeartIcon />,
-  content_comment: () => <CommentIcon />,
-  media_like: () => <MusicIcon />,
-  event_new_followed_profile: () => <CalendarIcon />,
-  event_new_genre_match: () => <MusicIcon />,
-  chat_message_new: () => <MessageIcon />,
-  chat_message_reply: () => <MessageIcon />,
-  opportunity_new_application: () => <BriefcaseIcon />,
-  opportunity_closed: () => <CloseIcon />,
-  collab_confirmed: () => <HandshakeIcon />,
-  collab_request: () => <HandshakeIcon />,
+  follow_new:                       () => <FollowIcon />,
+  profile_like:                     () => <HeartIcon />,
+  profile_comment:                  () => <CommentIcon />,
+  content_like:                     () => <HeartIcon />,
+  content_comment:                  () => <CommentIcon />,
+  media_like:                       () => <MusicIcon />,
+  event_new_followed_profile:       () => <CalendarIcon />,
+  event_new_genre_match:            () => <MusicIcon />,
+  event_attend:                     () => <CalendarIcon />,
+  chat_message_new:                 () => <MessageIcon />,
+  chat_message_reply:               () => <MessageIcon />,
+  opportunity_new_application:      () => <BriefcaseIcon />,
+  opportunity_closed:               () => <CloseIcon />,
+  opportunity_application_accepted: () => <CheckCircleIcon />,
+  opportunity_application_cancelled: () => <CloseIcon />,
+  opportunity_filled_other:         () => <BriefcaseIcon />,
+  opportunity_cancelled:            () => <CloseIcon />,
+  collab_confirmed:                 () => <HandshakeIcon />,
+  collab_request:                   () => <HandshakeIcon />,
+  project_new_application:          () => <ProjectIcon />,
+  project_application_accepted:     () => <CheckCircleIcon />,
+  project_application_rejected:     () => <CloseIcon />,
+  project_phase_changed:            () => <ProjectIcon />,
+  project_progress:                 () => <ProjectIcon />,
+  project_completed:                () => <CheckCircleIcon />,
 }
 
 function relativeTime(iso: string): string {
@@ -182,20 +193,31 @@ function NotifCard({ item, onClick, onDelete }: {
 
 function getTypeDescription(type: string): string {
   const map: Record<string, string> = {
-    follow_new: 'te siguio',
-    profile_like: 'le dio me gusta a tu perfil',
-    profile_comment: 'comento en tu perfil',
-    content_like: 'reacciono a tu contenido',
-    content_comment: 'comento en tu evento',
-    media_like: 'reacciono a tu musica',
-    event_new_followed_profile: 'publico un nuevo evento',
-    event_new_genre_match: 'Nuevo evento de tu genero',
-    chat_message_new: 'te envio un mensaje',
-    chat_message_reply: 'respondio tu mensaje',
-    opportunity_new_application: 'se postuló a tu oportunidad',
-    collab_confirmed: 'aceptó colaborar con vos',
-    opportunity_closed: 'oportunidad cerrada',
-    collab_request: 'te propuso una colaboración',
+    follow_new:                        'te siguio',
+    profile_like:                      'le dio me gusta a tu perfil',
+    profile_comment:                   'comento en tu perfil',
+    content_like:                      'reacciono a tu contenido',
+    content_comment:                   'comento en tu evento',
+    media_like:                        'reacciono a tu musica',
+    event_new_followed_profile:        'publico un nuevo evento',
+    event_new_genre_match:             'nuevo evento de tu genero',
+    event_attend:                      'confirmo asistencia a tu evento',
+    chat_message_new:                  'te envio un mensaje',
+    chat_message_reply:                'respondio tu mensaje',
+    collab_request:                    'te propuso una colaboracion',
+    collab_confirmed:                  'acepto colaborar con vos',
+    opportunity_new_application:       'se postulo a tu oportunidad',
+    opportunity_closed:                'oportunidad cerrada',
+    opportunity_application_accepted:  'acepto tu postulacion',
+    opportunity_application_cancelled: 'cancelo su postulacion',
+    opportunity_filled_other:          'otro artista fue seleccionado',
+    opportunity_cancelled:             'la oportunidad se cerro',
+    project_new_application:           'quiere unirse a tu proyecto',
+    project_application_accepted:      'te acepto en el proyecto',
+    project_application_rejected:      'rechazo tu solicitud de ingreso',
+    project_phase_changed:             'el proyecto cambio de fase',
+    project_progress:                  'publico un avance del proyecto',
+    project_completed:                 'el proyecto fue finalizado',
   }
   return map[type] ?? 'nueva actividad'
 }
@@ -316,6 +338,22 @@ function HandshakeIcon() {
       <path d="m14 14 2.5 2.5a2.12 2.12 0 1 0 3-3L14.5 8.5a2.12 2.12 0 1 0-3 3l2.5 2.5" />
       <path d="m7 17-2 2a1 1 0 1 1-3-3" />
       <path d="m10 14-2.5 2.5a2.12 2.12 0 1 1-3-3L9.5 8.5a2.12 2.12 0 1 1 3 3l-2.5 2.5" />
+    </svg>
+  )
+}
+function CheckCircleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  )
+}
+function ProjectIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
     </svg>
   )
 }
