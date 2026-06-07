@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/Button.js'
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
 import { ProjectPhaseBar } from '../components/projects/ProjectPhaseBar.js'
+import { ProgressIcon, PROGRESS_SVGS } from '../components/projects/ProjectProgressIcons.js'
 import { useCreateProject } from '../hooks/useProjects.js'
 import { PROJECT_PHASES, PROJECT_PHASE_LABELS, ROLE_OPTIONS } from '@dj/shared'
 import type { ProjectPhase } from '../types/index.js'
@@ -44,6 +45,7 @@ export default function ProjectNew() {
   const [genres, setGenres]         = useState<string[]>([])
   const [location, setLocation]     = useState('')
   const [phase, setPhase]           = useState<ProjectPhase>('idea')
+  const [coverSvgKey, setCoverSvgKey] = useState<string>('')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
 
@@ -72,6 +74,7 @@ export default function ProjectNew() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (title.trim().length < 3) { setError('El titulo debe tener al menos 3 caracteres'); return }
+    if (!coverSvgKey) { setError('Elige un icono de portada para tu proyecto'); return }
     setError('')
     setLoading(true)
     try {
@@ -82,6 +85,7 @@ export default function ProjectNew() {
         genres,
         location:        location.trim() || undefined,
         phase,
+        coverSvgKey,
       })
       navigate(`/proyectos/${project.id}`)
     } catch (err: any) {
@@ -282,6 +286,39 @@ export default function ProjectNew() {
             value={location}
             onChange={(name) => setLocation(name)}
           />
+        </div>
+
+        {/* Icono de portada */}
+        <div>
+          <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Icono de portada *
+            <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 6 }}>
+              — aparecera en el listado y en recomendados
+            </span>
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8 }}>
+            {PROGRESS_SVGS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                title={label}
+                onClick={() => setCoverSvgKey(key)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 4, padding: '10px 4px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  border: coverSvgKey === key ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  background: coverSvgKey === key ? 'var(--accent-muted)' : 'var(--surface)',
+                  color: coverSvgKey === key ? 'var(--accent)' : 'var(--text-muted)',
+                  transition: 'all 150ms',
+                }}
+              >
+                <ProgressIcon svgKey={key} size={22} />
+                <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>
+                  {label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (

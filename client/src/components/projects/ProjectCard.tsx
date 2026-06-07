@@ -57,13 +57,32 @@ export function ProjectCard({ project }: { project: ProjectResponse }) {
               loading="lazy"
             />
           ) : (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: `linear-gradient(135deg, ${phaseColor}22, var(--surface) 70%)`,
-              }}
-            />
+            <>
+              {/* Gradiente de fondo siempre visible */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: `linear-gradient(135deg, ${phaseColor}22, var(--surface) 70%)`,
+                }}
+              />
+              {/* SVG de portada centrado si existe, sino omitir */}
+              {(project.coverSvgKey || PHASE_SVG_MAP[project.phase]) && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: phaseColor,
+                    opacity: 0.35,
+                  }}
+                >
+                  <ProgressIcon svgKey={project.coverSvgKey ?? PHASE_SVG_MAP[project.phase] ?? 'note'} size={52} />
+                </div>
+              )}
+            </>
           )}
 
           {/* Phase pill + icon — top-right */}

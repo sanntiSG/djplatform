@@ -11,6 +11,7 @@ export interface IProject extends Document {
   title: string
   description?: string
   cover?: string
+  coverSvgKey?: string
   genres: string[]
   location?: string
   lookingForRoles: string[]
@@ -31,6 +32,7 @@ const projectSchema = new mongoose.Schema<IProject>(
     title:           { type: String, required: true, trim: true, maxlength: 120 },
     description:     { type: String, maxlength: 2000 },
     cover:           { type: String },
+    coverSvgKey:     { type: String },
     genres:          [{ type: String }],
     location:        { type: String, maxlength: 100 },
     lookingForRoles: [{ type: String }],

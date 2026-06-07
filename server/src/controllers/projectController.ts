@@ -50,6 +50,7 @@ function serialize(
     title: project.title,
     description: project.description,
     cover: project.cover,
+    coverSvgKey: project.coverSvgKey,
     genres: project.genres,
     location: project.location,
     lookingForRoles: project.lookingForRoles,
@@ -566,6 +567,12 @@ export async function apply(req: Request, res: Response, next: NextFunction) {
       url: `/proyectos/${project._id}?focus=members`,
     }).catch((err: unknown) => logger.error('project notif error', err))
 
+    // Evento socket dedicado para toast en vivo en el creador
+    io.to(`user:${project.userId.toString()}`).emit('project:new_application', {
+      projectId: project._id.toString(),
+      title:     project.title,
+    })
+
     res.json({ conversationId: convId })
   } catch (err) {
     next(err)
@@ -625,6 +632,12 @@ export async function acceptMember(req: Request, res: Response, next: NextFuncti
       url: `/proyectos/${project._id}`,
     }).catch((err: unknown) => logger.error('project accept notif error', err))
 
+    // Evento socket dedicado para toast en vivo en el aceptado
+    io.to(`user:${membership.userId.toString()}`).emit('project:application_accepted', {
+      projectId: project._id.toString(),
+      title:     project.title,
+    })
+
     // Notificar a los miembros existentes que hay un nuevo integrante
     const existingMembers = await ProjectMember.find({
       projectId:  project._id,
@@ -680,6 +693,12 @@ export async function removeMember(req: Request, res: Response, next: NextFuncti
         payload: { title: project.title },
         url: `/proyectos/${project._id}`,
       }).catch((err: unknown) => logger.error('project reject notif error', err))
+
+      // Evento socket dedicado para toast en vivo en el rechazado
+      io.to(`user:${membership.userId.toString()}`).emit('project:application_rejected', {
+        projectId: project._id.toString(),
+        title:     project.title,
+      })
     }
 
     await membership.deleteOne()

@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useConversations } from '../../hooks/useConversations.js'
 import { useChatSocket } from '../../hooks/useChatSocket.js'
 import { revealStagger, prefersReducedMotion, DURATION, EASE } from '../../utils/motion.js'
+import { ProgressIcon, PHASE_SVG_MAP } from '../../components/projects/ProjectProgressIcons.js'
 import { cn } from '../../utils/cn.js'
 import gsap from 'gsap'
+import type { DMConversationItem, ProjectConversationItem } from '../../services/conversationsService.js'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -16,12 +18,138 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d`
 }
 
+function DMRow({ conv }: { conv: DMConversationItem }) {
+  return (
+    <Link
+      to={`/me/mensajes/${conv._id}`}
+      data-conv
+      className={cn(
+        'flex items-center gap-3 px-4 py-4 rounded-[var(--radius-md)]',
+        'hover:bg-[var(--surface)] active:scale-[0.98] transition-all duration-150',
+        'group relative',
+      )}
+    >
+      {/* Avatar */}
+      <div className={cn(
+        'shrink-0 rounded-full',
+        'ring-2 transition-all duration-200',
+        conv.unreadCount > 0 ? 'ring-[var(--accent)]/40' : 'ring-white/5',
+      )}>
+        <div className={cn(
+          'w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden',
+          conv.unreadCount > 0 ? 'bg-[var(--accent)]/10' : 'bg-[var(--surface)]',
+        )} style={{ aspectRatio: '1/1' }}>
+          {conv.otherUser.avatar
+            ? <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover block" />
+            : (
+              <div className="w-full h-full flex items-center justify-center text-sm font-display font-semibold text-[var(--text-muted)]">
+                {conv.otherUser.artistName.charAt(0).toUpperCase()}
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className={cn(
+            'font-display font-semibold text-sm truncate',
+            conv.unreadCount > 0 ? 'text-[var(--text)]' : 'text-[var(--text-muted)]',
+          )}>
+            {conv.otherUser.artistName}
+          </span>
+          <span className="text-[10px] text-[var(--text-muted)] shrink-0 tabular-nums">{timeAgo(conv.lastMessageAt)}</span>
+        </div>
+        <p className={cn(
+          'text-xs truncate mt-0.5 leading-relaxed',
+          conv.unreadCount > 0 ? 'text-[var(--text)] font-medium' : 'text-[var(--text-muted)]',
+        )}>
+          {conv.lastMessagePreview || 'Sin mensajes'}
+        </p>
+      </div>
+
+      {/* Unread badge */}
+      {conv.unreadCount > 0 && (
+        <div className="shrink-0 min-w-[20px] h-[20px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold flex items-center justify-center px-1.5"
+          style={{ boxShadow: '0 0 8px rgba(212,255,0,0.3)' }}
+        >
+          {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+        </div>
+      )}
+    </Link>
+  )
+}
+
+function ProjectRow({ conv }: { conv: ProjectConversationItem }) {
+  const svgKey = conv.coverSvgKey ?? PHASE_SVG_MAP[conv.phase] ?? 'note'
+  return (
+    <Link
+      to={`/proyectos/${conv.projectId}?tab=chat`}
+      data-conv
+      className={cn(
+        'flex items-center gap-3 px-4 py-4 rounded-[var(--radius-md)]',
+        'hover:bg-[var(--surface)] active:scale-[0.98] transition-all duration-150',
+        'group relative',
+      )}
+    >
+      {/* Project icon avatar */}
+      <div className={cn(
+        'shrink-0 rounded-full',
+        'ring-2 transition-all duration-200',
+        conv.unreadCount > 0 ? 'ring-[var(--accent)]/40' : 'ring-white/5',
+      )}>
+        <div className={cn(
+          'w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden flex items-center justify-center',
+          conv.unreadCount > 0 ? 'bg-[var(--accent)]/10' : 'bg-[var(--surface)]',
+        )} style={{ color: 'var(--accent)' }}>
+          <ProgressIcon svgKey={svgKey} size={20} />
+        </div>
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={cn(
+              'font-display font-semibold text-sm truncate',
+              conv.unreadCount > 0 ? 'text-[var(--text)]' : 'text-[var(--text-muted)]',
+            )}>
+              {conv.title}
+            </span>
+            {/* Pill that marks this as a project group chat */}
+            <span className="shrink-0 font-sans text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+              style={{ background: 'rgba(167,139,250,0.14)', color: 'var(--c-purple, #a78bfa)' }}>
+              grupo
+            </span>
+          </div>
+          <span className="text-[10px] text-[var(--text-muted)] shrink-0 tabular-nums">{timeAgo(conv.lastMessageAt)}</span>
+        </div>
+        <p className={cn(
+          'text-xs truncate mt-0.5 leading-relaxed',
+          conv.unreadCount > 0 ? 'text-[var(--text)] font-medium' : 'text-[var(--text-muted)]',
+        )}>
+          {conv.lastMessagePreview || 'Sin mensajes'}
+        </p>
+      </div>
+
+      {/* Unread badge */}
+      {conv.unreadCount > 0 && (
+        <div className="shrink-0 min-w-[20px] h-[20px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold flex items-center justify-center px-1.5"
+          style={{ boxShadow: '0 0 8px rgba(212,255,0,0.3)' }}
+        >
+          {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+        </div>
+      )}
+    </Link>
+  )
+}
+
 export default function Inbox() {
   const { data: convs, isLoading } = useConversations()
   useChatSocket()
   const listRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
-  const navigate = useNavigate()
 
   // Title entrance animation
   useEffect(() => {
@@ -73,7 +201,7 @@ export default function Inbox() {
             </div>
             <div>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                No tienes conversaciones aún.
+                No tienes conversaciones aun.
               </p>
               <p className="text-xs text-[var(--text-muted)] mt-1 opacity-60">
                 Visita un perfil para enviar un mensaje.
@@ -84,67 +212,9 @@ export default function Inbox() {
 
         <div ref={listRef} className="flex flex-col gap-1">
           {convs?.map(conv => (
-            <Link
-              key={conv._id}
-              to={`/me/mensajes/${conv._id}`}
-              data-conv
-              className={cn(
-                'flex items-center gap-3 px-4 py-4 rounded-[var(--radius-md)]',
-                'hover:bg-[var(--surface)] active:scale-[0.98] transition-all duration-150',
-                'group relative',
-              )}
-            >
-              {/* Avatar — ring on outer wrapper, overflow-hidden on inner */}
-              <div className={cn(
-                'shrink-0 rounded-full',
-                'ring-2 transition-all duration-200',
-                conv.unreadCount > 0
-                  ? 'ring-[var(--accent)]/40'
-                  : 'ring-white/5',
-              )}>
-                <div className={cn(
-                  'w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden',
-                  conv.unreadCount > 0 ? 'bg-[var(--accent)]/10' : 'bg-[var(--surface)]',
-                )} style={{ aspectRatio: '1/1' }}>
-                  {conv.otherUser.avatar
-                    ? <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover block" />
-                    : (
-                      <div className="w-full h-full flex items-center justify-center text-sm font-display font-semibold text-[var(--text-muted)]">
-                        {conv.otherUser.artistName.charAt(0).toUpperCase()}
-                      </div>
-                    )
-                  }
-                </div>
-              </div>
-
-              {/* Text */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className={cn(
-                    'font-display font-semibold text-sm truncate',
-                    conv.unreadCount > 0 ? 'text-[var(--text)]' : 'text-[var(--text-muted)]',
-                  )}>
-                    {conv.otherUser.artistName}
-                  </span>
-                  <span className="text-[10px] text-[var(--text-muted)] shrink-0 tabular-nums">{timeAgo(conv.lastMessageAt)}</span>
-                </div>
-                <p className={cn(
-                  'text-xs truncate mt-0.5 leading-relaxed',
-                  conv.unreadCount > 0 ? 'text-[var(--text)] font-medium' : 'text-[var(--text-muted)]',
-                )}>
-                  {conv.lastMessagePreview || 'Sin mensajes'}
-                </p>
-              </div>
-
-              {/* Unread badge */}
-              {conv.unreadCount > 0 && (
-                <div className="shrink-0 min-w-[20px] h-[20px] rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-bold flex items-center justify-center px-1.5"
-                  style={{ boxShadow: '0 0 8px rgba(212,255,0,0.3)' }}
-                >
-                  {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
-                </div>
-              )}
-            </Link>
+            conv.type === 'project'
+              ? <ProjectRow key={`project-${conv._id}`} conv={conv} />
+              : <DMRow key={`dm-${conv._id}`} conv={conv} />
           ))}
         </div>
       </div>

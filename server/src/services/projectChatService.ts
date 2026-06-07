@@ -133,6 +133,42 @@ export async function getTotalProjectUnread(userId: string): Promise<number> {
   }, 0)
 }
 
+/** Devuelve la lista de chats de proyecto del usuario en forma de inbox item */
+export async function listProjectConversationsForUser(userId: string) {
+  const { Project } = await import('../models/Project.js')
+
+  const convs = await ProjectConversation.find({
+    participants: new mongoose.Types.ObjectId(userId),
+  }).sort({ lastMessageAt: -1 }).lean()
+
+  if (!convs.length) return []
+
+  // Enriquecer con datos del proyecto (título, fase, coverSvgKey)
+  const projectIds = convs.map((c) => c.projectId)
+  const projects = await Project.find({ _id: { $in: projectIds } }).select('title phase coverSvgKey').lean()
+  const projectMap = new Map(projects.map((p) => [p._id.toString(), p]))
+
+  return convs.map((conv) => {
+    const project = projectMap.get(conv.projectId.toString())
+    const myUnread = (conv.unreadCount instanceof Map
+      ? conv.unreadCount.get(userId)
+      : (conv.unreadCount as Record<string, number>)[userId]) ?? 0
+
+    return {
+      _id:                  conv._id.toString(),
+      type:                 'project' as const,
+      projectId:            conv.projectId.toString(),
+      title:                project?.title ?? 'Proyecto',
+      phase:                (project?.phase as string | undefined) ?? 'idea',
+      coverSvgKey:          (project as any)?.coverSvgKey as string | undefined,
+      lastMessageAt:        conv.lastMessageAt?.toISOString() ?? (conv as any).createdAt?.toISOString() ?? new Date().toISOString(),
+      lastMessagePreview:   conv.lastMessagePreview ?? '',
+      lastMessageSenderId:  conv.lastMessageSenderId?.toString() ?? null,
+      unreadCount:          myUnread,
+    }
+  })
+}
+
 /** Enriquece los mensajes con info del sender (artistName, avatar) */
 export async function enrichProjectMessages(messages: Awaited<ReturnType<typeof getProjectMessages>>) {
   if (!messages.length) return []

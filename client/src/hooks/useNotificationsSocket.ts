@@ -70,12 +70,29 @@ export function useNotificationsSocket() {
       qc.invalidateQueries({ queryKey: ['opportunities'] })
     }
 
+    function onProjectNewApplication({ projectId, title }: { projectId: string; title: string }) {
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+      showToast(`Alguien quiere unirse a "${title}"`, 'success')
+    }
+
+    function onProjectApplicationAccepted({ projectId, title }: { projectId: string; title: string }) {
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+      showToast(`Te aceptaron en "${title}"`, 'success')
+    }
+
+    function onProjectApplicationRejected({ title }: { projectId: string; title: string }) {
+      showToast(`Tu solicitud para "${title}" fue rechazada`, 'error')
+    }
+
     socket.on('notification:new', onNew)
     socket.on('notification:read', onRead)
     socket.on('notification:read-all', onReadAll)
     socket.on('notification:removed', onRemoved)
     socket.on('opportunity:application_accepted', onApplicationAccepted)
     socket.on('opportunity:closed', onOpportunityClosed)
+    socket.on('project:new_application', onProjectNewApplication)
+    socket.on('project:application_accepted', onProjectApplicationAccepted)
+    socket.on('project:application_rejected', onProjectApplicationRejected)
 
     return () => {
       socket.off('notification:new', onNew)
@@ -84,6 +101,9 @@ export function useNotificationsSocket() {
       socket.off('notification:removed', onRemoved)
       socket.off('opportunity:application_accepted', onApplicationAccepted)
       socket.off('opportunity:closed', onOpportunityClosed)
+      socket.off('project:new_application', onProjectNewApplication)
+      socket.off('project:application_accepted', onProjectApplicationAccepted)
+      socket.off('project:application_rejected', onProjectApplicationRejected)
     }
   }, [qc, showToast])
 }

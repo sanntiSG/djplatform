@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { usePlayerStore } from '../../store/usePlayerStore.js'
 import { useConversationUnread } from '../../hooks/useConversations.js'
+import { useQueryClient } from '@tanstack/react-query'
+import { getSocket } from '../../services/socket.js'
 import { Button } from './Button.js'
 import { MobileNavSheet } from './MobileNavSheet.js'
 import { cn } from '../../utils/cn.js'
@@ -24,8 +26,33 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const { data: unread } = useConversationUnread()
   const unreadCount = unread?.total ?? 0
+  const qc = useQueryClient()
   // Ocultar los pills flotantes mobile cuando el player esta maximizado (z-90 > z-65)
   const { expanded: playerExpanded } = usePlayerStore()
+
+  // Listener global de socket para mantener el badge de mensajes actualizado
+  // en tiempo real sin importar en qué página está el usuario.
+  useEffect(() => {
+    if (!user) return
+    const socket = getSocket()
+
+    function invalidateUnread() {
+      qc.invalidateQueries({ queryKey: ['conversations-unread'] })
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+    }
+
+    socket.on('message:new', invalidateUnread)
+    socket.on('project:message:new', invalidateUnread)
+    socket.on('conversation:read', invalidateUnread)
+    socket.on('project:conversation:read', invalidateUnread)
+
+    return () => {
+      socket.off('message:new', invalidateUnread)
+      socket.off('project:message:new', invalidateUnread)
+      socket.off('conversation:read', invalidateUnread)
+      socket.off('project:conversation:read', invalidateUnread)
+    }
+  }, [user, qc])
 
   function handleLogout() {
     clearAuth()

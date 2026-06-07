@@ -8,6 +8,7 @@ import {
   markConversationRead,
   getTotalUnread,
 } from '../services/conversationService.js'
+import { listProjectConversationsForUser, getTotalProjectUnread } from '../services/projectChatService.js'
 import { create as createNotification, markChatNotificationsRead } from '../services/notificationService.js'
 import { io, isUserViewingConversation } from '../realtime/io.js'
 import { logger } from '../utils/logger.js'
@@ -26,8 +27,22 @@ export async function startConversation(req: Request, res: Response) {
 
 export async function listConversations(req: Request, res: Response) {
   const userId = req.user!.id
-  const convs = await listConversationsForUser(userId)
-  return res.json(convs)
+  const [dmConvs, projectConvs] = await Promise.all([
+    listConversationsForUser(userId),
+    listProjectConversationsForUser(userId),
+  ])
+
+  // Agregar discriminador type:'dm' a los DMs
+  const dmItems = dmConvs.map((c) => ({ ...c, type: 'dm' as const }))
+
+  // Merge ordenado por lastMessageAt desc
+  const all = [...dmItems, ...projectConvs].sort((a, b) => {
+    const tA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0
+    const tB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0
+    return tB - tA
+  })
+
+  return res.json(all)
 }
 
 export async function getConversationMessages(req: Request, res: Response) {
@@ -82,6 +97,9 @@ export async function readConversation(req: Request, res: Response) {
 
 export async function getUnreadTotal(req: Request, res: Response) {
   const userId = req.user!.id
-  const total = await getTotalUnread(userId)
-  return res.json({ total })
+  const [dmTotal, projectTotal] = await Promise.all([
+    getTotalUnread(userId),
+    getTotalProjectUnread(userId),
+  ])
+  return res.json({ total: dmTotal + projectTotal })
 }

@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/Button.js'
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete.js'
+import { ProgressIcon, PROGRESS_SVGS } from '../components/projects/ProjectProgressIcons.js'
 import { useProject, useUpdateProject } from '../hooks/useProjects.js'
 import { PROJECT_PHASES, PROJECT_PHASE_LABELS, ROLE_OPTIONS } from '@dj/shared'
 import type { ProjectPhase } from '../types/index.js'
@@ -51,6 +52,7 @@ export default function ProjectEdit() {
   const [genres, setGenres]           = useState<string[]>([])
   const [location, setLocation]       = useState('')
   const [phase, setPhase]             = useState<ProjectPhase>('idea')
+  const [coverSvgKey, setCoverSvgKey]  = useState<string>('')
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
   const [titleFocused, setTitleFocused] = useState(false)
@@ -65,6 +67,7 @@ export default function ProjectEdit() {
     setGenres(project.genres)
     setLocation(project.location ?? '')
     setPhase(project.phase)
+    setCoverSvgKey(project.coverSvgKey ?? '')
   }, [project])
 
   function toggleRole(id: string) {
@@ -88,6 +91,7 @@ export default function ProjectEdit() {
         genres,
         location:        location.trim() || undefined,
         phase,
+        coverSvgKey:     coverSvgKey || undefined,
       })
       navigate(`/proyectos/${projectId}`)
     } catch (err: any) {
@@ -279,6 +283,36 @@ export default function ProjectEdit() {
             value={location}
             onChange={(name) => setLocation(name)}
           />
+        </div>
+
+        {/* Icono de portada */}
+        <div>
+          <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Icono de portada
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8 }}>
+            {PROGRESS_SVGS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                title={label}
+                onClick={() => setCoverSvgKey(key)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 4, padding: '10px 4px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  border: coverSvgKey === key ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  background: coverSvgKey === key ? 'var(--accent-muted)' : 'var(--surface)',
+                  color: coverSvgKey === key ? 'var(--accent)' : 'var(--text-muted)',
+                  transition: 'all 150ms',
+                }}
+              >
+                <ProgressIcon svgKey={key} size={22} />
+                <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>
+                  {label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (

@@ -12,6 +12,7 @@ import { generalLimiter, authLimiter, uploadLimiter } from './middleware/rateLim
 import { logger } from './utils/logger.js'
 import { initIO } from './realtime/io.js'
 import { startTrendingCron } from './jobs/trendingCron.js'
+import { ensureNotificationTypes } from './services/notificationTypeSeed.js'
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason)
@@ -84,6 +85,7 @@ initIO(httpServer)
 connectDB()
   .then(() => {
     startTrendingCron()
+    ensureNotificationTypes().catch(() => {})
     httpServer.listen(Number(env.PORT), () => {
       logger.info(`Servidor corriendo en http://localhost:${env.PORT}`)
     })

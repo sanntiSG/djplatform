@@ -359,28 +359,36 @@ export default function ProjectDetail() {
           <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 12px' }}>
             Miembros
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
             {project.members.filter((m) => m.status === 'member').map((m) => (
-              <div key={m.id} data-profile-id={m.profileId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderRadius: 'var(--radius-md)', padding: '4px 6px', transition: 'background 0.3s ease' }}>
+              <div
+                key={m.id}
+                data-profile-id={m.profileId}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  borderRadius: 'var(--radius-md)', padding: '6px 10px',
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  transition: 'background 0.2s ease', minWidth: 0,
+                }}
+              >
                 <MemberAvatar member={m} />
-                {isOwner && !m.isCreator && (
+                {(isOwner && !m.isCreator) || (!isOwner && m.userId === user?.id && !m.isCreator) ? (
                   <button
                     type="button"
                     onClick={() => kickMutation(m.id)}
-                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '4px 10px', cursor: 'pointer' }}
+                    title={isOwner ? 'Quitar miembro' : 'Salir del proyecto'}
+                    style={{
+                      fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)',
+                      background: 'none', border: 'none', borderRadius: 'var(--radius-xl)',
+                      padding: '2px 6px', cursor: 'pointer', flexShrink: 0,
+                      opacity: 0.6, transition: 'opacity 150ms',
+                    }}
+                    onPointerEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                    onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6' }}
                   >
-                    Quitar
+                    {isOwner ? 'Quitar' : 'Salir'}
                   </button>
-                )}
-                {!isOwner && m.userId === user?.id && !m.isCreator && (
-                  <button
-                    type="button"
-                    onClick={() => kickMutation(m.id)}
-                    style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '4px 10px', cursor: 'pointer' }}
-                  >
-                    Salir
-                  </button>
-                )}
+                ) : null}
               </div>
             ))}
           </div>

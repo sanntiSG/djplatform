@@ -17,8 +17,11 @@ import { DURATION, EASE, prefersReducedMotion } from '../../utils/motion.js'
 function useOtherUser(conversationId: string) {
   return useQuery({
     queryKey: ['conversations'],
-    select: (data: Awaited<ReturnType<typeof conversationsService.list>>) =>
-      data.find(c => c._id === conversationId)?.otherUser ?? null,
+    select: (data: Awaited<ReturnType<typeof conversationsService.list>>) => {
+      const conv = data.find(c => c._id === conversationId)
+      if (!conv || conv.type !== 'dm') return null
+      return conv.otherUser
+    },
   })
 }
 

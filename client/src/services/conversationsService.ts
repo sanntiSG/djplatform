@@ -1,6 +1,9 @@
 import { apiClient } from './apiClient.js'
 
-export interface ConversationItem {
+// ── Tipos base ────────────────────────────────────────────────────────────────
+
+export interface DMConversationItem {
+  type: 'dm'
   _id: string
   otherUser: {
     _id: string
@@ -14,6 +17,22 @@ export interface ConversationItem {
   lastMessageSenderId: string | null
   unreadCount: number
 }
+
+export interface ProjectConversationItem {
+  type: 'project'
+  _id: string
+  projectId: string
+  title: string
+  phase: string
+  coverSvgKey?: string
+  lastMessageAt: string
+  lastMessagePreview: string
+  lastMessageSenderId: string | null
+  unreadCount: number
+}
+
+/** Backward-compat: el backend agrega type:'dm' al listado combinado */
+export type ConversationItem = DMConversationItem | ProjectConversationItem
 
 export interface MessageAttachmentOpportunity {
   type: 'opportunity'
@@ -43,6 +62,8 @@ export interface MessageItem {
   attachment?: MessageAttachment
   createdAt: string
 }
+
+// ── Service ───────────────────────────────────────────────────────────────────
 
 export const conversationsService = {
   start: (targetUserId: string) =>
