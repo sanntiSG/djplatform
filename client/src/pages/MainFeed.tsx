@@ -28,7 +28,8 @@ import { RecommendationsSection } from '../components/feed/RecommendationsSectio
 import { useOpportunitiesForYou } from '../hooks/useOpportunitiesForYou.js'
 import { useTrendingCollabs } from '../hooks/useTrendingCollabs.js'
 import { useTrending } from '../hooks/useTrending.js'
-import { useProgressFeed } from '../hooks/useProjects.js'
+import { useProgressFeed, useRecommendedProjects } from '../hooks/useProjects.js'
+import { ProjectCard } from '../components/projects/ProjectCard.js'
 import { getMediaThumbnail } from '../utils/mediaThumbnail.js'
 import { ProgressIcon } from '../components/projects/ProjectProgressIcons.js'
 import { PROJECT_PHASE_LABELS } from '@dj/shared'
@@ -606,6 +607,7 @@ export default function MainFeed() {
   const trendingRef = useRef<HTMLElement>(null)
   const collabsRef    = useRef<HTMLElement>(null)
   const projectsInProgressRef = useRef<HTMLElement>(null)
+  const recommendedProjectsRef = useRef<HTMLElement>(null)
   const topDJsRef = useRef<HTMLElement>(null)
   const editorialRef = useRef<HTMLElement>(null)
   const genreCardsRef = useRef<HTMLElement>(null)
@@ -659,6 +661,9 @@ export default function MainFeed() {
   const trendingCollabs = (trendingCollabsQuery.data ?? []).slice(0, 8)
   const progressFeedQuery = useProgressFeed()
   const progressFeedItems = progressFeedQuery.data ?? []
+
+  const recommendedProjectsQuery = useRecommendedProjects(6)
+  const recommendedProjects = recommendedProjectsQuery.data ?? []
 
   const activityItems = activityQuery.data ?? []
   const spotlightProfile = topArtists.find((p) => p.bio && p.bio.length > 40)
@@ -743,6 +748,32 @@ export default function MainFeed() {
     }, forYouRef)
     return () => ctx.revert()
   }, [forYouItems.length])
+
+  /* Recommended projects cards — separate effect so it fires when data arrives */
+  useEffect(() => {
+    if (!recommendedProjectsRef.current || recommendedProjects.length === 0) return
+    const reduced = prefersReducedMotion()
+    const ctx = gsap.context(() => {
+      if (!reduced) {
+        gsap.fromTo(
+          '.rec-project-card',
+          { opacity: 0, y: 28, scale: 0.95 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.55,
+            ease: 'expo.out',
+            stagger: 0.09,
+            scrollTrigger: { trigger: recommendedProjectsRef.current!, start: 'top 84%', once: true },
+          },
+        )
+      } else {
+        gsap.fromTo('.rec-project-card', { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.06 })
+      }
+    }, recommendedProjectsRef)
+    return () => ctx.revert()
+  }, [recommendedProjects.length])
 
   /* Main GSAP animations */
   useEffect(() => {
@@ -1117,6 +1148,36 @@ export default function MainFeed() {
                     </div>
                   )
                 })}
+              </div>
+            </section>
+          )}
+
+          {/* Proyectos para vos — recomendaciones personalizadas por perfil */}
+          {user && recommendedProjects.length > 0 && (
+            <section ref={recommendedProjectsRef}>
+              <SectionHead kicker="Networking" title="Proyectos para vos" href="/oportunidades?tab=projects" />
+              <div
+                className="mt-5 px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              >
+                {recommendedProjects.map((project) => (
+                  <div key={project.id} className="rec-project-card flex flex-col gap-2">
+                    <ProjectCard project={project} />
+                    {project.matchReason && (
+                      <p
+                        style={{
+                          fontFamily: 'Satoshi, sans-serif',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: 'var(--text-muted)',
+                          paddingLeft: 4,
+                          letterSpacing: '0.01em',
+                        }}
+                      >
+                        {project.matchReason}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </section>
           )}

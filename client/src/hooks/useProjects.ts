@@ -27,6 +27,16 @@ export function useProjectsForMe(limit = 6) {
   })
 }
 
+export function useRecommendedProjects(limit = 6) {
+  const { token } = useAuthStore()
+  return useQuery({
+    queryKey:  ['projects', 'recommended', limit],
+    queryFn:   () => projectService.recommended(limit),
+    enabled:   Boolean(token),
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useMyProjects() {
   const { token } = useAuthStore()
   return useQuery({

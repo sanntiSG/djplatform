@@ -162,6 +162,107 @@ export async function forMe(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+/**
+ * GET /projects/recommended — proyectos personalizados para el usuario.
+ * Scoring multi-señal: roles (+3), géneros (+3), ubicación (+2), openToWork (+1), recencia (+1).
+ * Devuelve cada proyecto con campo `matchReason` (texto legible).
+ */
+export async function recommended(req: Request, res: Response, next: NextFunction) {
+  try {
+    const limit = Math.min(Number(req.query.limit ?? 6), 12)
+
+    const userProfile = await Profile.findOne({ userId: req.user!.id })
+      .select('roles genres location openToWork')
+      .lean()
+
+    if (!userProfile) {
+      res.json([])
+      return
+    }
+
+    const userRoles: string[]  = userProfile.roles ?? []
+    const userGenres: string[] = userProfile.genres ?? []
+    const userLocation: string = userProfile.location ?? ''
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+    // Excluir propios y proyectos donde ya es miembro/postulado
+    const myMemberships = await ProjectMember.find({ userId: req.user!.id }).select('projectId').lean()
+    const excludedProjectIds = myMemberships.map((m) => m.projectId)
+
+    const candidates = await Project.find({
+      isVisible: true,
+      status:    'open',
+      userId:    { $ne: new mongoose.Types.ObjectId(req.user!.id) },
+      _id:       { $nin: excludedProjectIds },
+    }).lean()
+
+    function normalizeLocation(loc?: string) {
+      if (!loc) return ''
+      return loc.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+    }
+
+    function locMatch(a: string, b: string) {
+      if (!a || !b) return false
+      const na = normalizeLocation(a); const nb = normalizeLocation(b)
+      if (na === nb) return true
+      const words = na.split(/[\s,]+/).filter((w) => w.length >= 3)
+      return words.some((w) => nb.includes(w))
+    }
+
+    const scored = candidates
+      .map((p: any) => {
+        let score = 0
+        const reasons: string[] = []
+
+        const roleMatches = userRoles.filter((r) => (p.lookingForRoles ?? []).includes(r))
+        if (roleMatches.length > 0) {
+          score += roleMatches.length * 3
+          reasons.push(`buscan ${roleMatches.slice(0, 2).join(', ')}`)
+        }
+
+        const genreMatches = userGenres.filter((g) => (p.genres ?? []).includes(g))
+        if (genreMatches.length > 0) {
+          score += genreMatches.length * 3
+          if (!reasons.some((r) => r.includes('buscan'))) {
+            reasons.push(`tu genero`)
+          } else {
+            reasons.push(`tu genero`)
+          }
+        }
+
+        if (locMatch(userLocation, p.location ?? '')) {
+          score += 2
+          reasons.push(`tu ciudad`)
+        }
+
+        if (p.updatedAt && new Date(p.updatedAt) >= thirtyDaysAgo) {
+          score += 1
+        }
+
+        return { ...p, score, matchReason: reasons.slice(0, 2).join(' · ') }
+      })
+      .filter((p) => p.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    const results = await Promise.all(
+      scored.map(async (p) => {
+        const { memberCount, pendingCount, isApplied, isMember } = await getMemberStats(
+          p._id.toString(), req.user!.id,
+        )
+        return {
+          ...serialize(p as any, memberCount, pendingCount, req.user!.id, isApplied, isMember),
+          matchReason: p.matchReason as string,
+        }
+      }),
+    )
+
+    res.json(results)
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
     const project = await Project.findById(parseObjectId(req.params.id))

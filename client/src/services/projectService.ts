@@ -40,6 +40,9 @@ export const projectService = {
   forMe: (limit = 6) =>
     apiClient.get<ProjectResponse[]>(`/projects/for-me?limit=${limit}`),
 
+  recommended: (limit = 6) =>
+    apiClient.get<Array<ProjectResponse & { matchReason: string }>>(`/projects/recommended?limit=${limit}`),
+
   mine: () => apiClient.get<ProjectResponse[]>('/projects/mine'),
 
   getById: (id: string) => apiClient.get<ProjectResponse>(`/projects/${id}`),
